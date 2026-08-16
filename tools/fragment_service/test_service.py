@@ -1,16 +1,12 @@
 import hashlib
 import json
-import tempfile
 import unittest
-from pathlib import Path
 
 import evaluator
 import server
 
 
-COMPLETE = "\n".join(
-    f".macro {name}\n.endm" for name in evaluator.REQUIRED_MACROS
-)
+COMPLETE = ".globl sobol_build_block_4096\nsobol_build_block_4096:\nret\n"
 
 
 class EvaluatorUnitTests(unittest.TestCase):
@@ -22,9 +18,9 @@ class EvaluatorUnitTests(unittest.TestCase):
         with self.assertRaisesRegex(evaluator.EvaluationError, "external"):
             evaluator.validate_candidate(COMPLETE + '\n.include "secret"')
 
-    def test_parse_fragment_report(self):
-        payload = {"status": "PASS", "mismatches": 0}
-        parsed = evaluator.parse_fragment_report(
+    def test_parse_block_report(self):
+        payload = {"status": "PASS", "mismatches": 0, "block_values": 4096}
+        parsed = evaluator.parse_block_report(
             evaluator.REPORT_PREFIX + json.dumps(payload) + "\n")
         self.assertEqual(parsed, payload)
 

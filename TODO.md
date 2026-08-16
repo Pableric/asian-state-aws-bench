@@ -5,6 +5,9 @@
 
 - Add a preparation-time mapping for caller-selected D2/other dimensions while
   retaining the current 32-path packet layout and exact Sobol point identity.
+  Build and consume 4096-point (16 KiB) dimension blocks so D1 plus one selected
+  block budgets 32 KiB of the assumed 48 KiB L1D; reuse the selected buffer
+  before preparing another dimension.
 
 - Integrate and natively compare the parameterized D1 reconstruction fragments:
   one-line `vpermd`, two-line `vpermi2d`, and direct in-register generation.
@@ -13,7 +16,7 @@
 
 - Build a scalar multidimensional reference from
   `direction_numbers/openevolve.json` and test every produced raw word and lane
-  mapping across multiple 8,192-point blocks.
+  mapping across multiple 4,096-point blocks.
 
 - Once dimension construction is correct and measured, replace the European
   terminal payoff with a 32-fixing Asian `(S,Q)` state transition. Use the
@@ -21,4 +24,3 @@
   forward construction for the new architecture.
 
 - Extend correctness tests before Gaussian, exponential, or tail optimization.
-

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Trusted evaluator for an untrusted Sobol assembly include.
+"""Trusted evaluator for an untrusted Sobol 4096-point block builder.
 
 The candidate is compiled and executed with only the public harness mounted in
 the sandbox. Private engine code is never mounted into the candidate sandbox.
@@ -18,13 +18,8 @@ import tempfile
 from typing import Any
 
 MAX_CANDIDATE_BYTES = 128 * 1024
-REPORT_PREFIX = "FRAGMENT_REPORT_JSON "
-REQUIRED_MACROS = (
-    "D1_FRAG_PERMD",
-    "D1_FRAG_PERMI2D",
-    "D1_FRAG_GEN",
-    "D1_FRAG_GEN_LOAD",
-)
+REPORT_PREFIX = "BLOCK_REPORT_JSON "
+REQUIRED_SYMBOL = "sobol_build_block_4096"
 
 
 class EvaluationError(RuntimeError):
@@ -38,9 +33,8 @@ def validate_candidate(candidate: str, claimed_sha256: str | None = None) -> str
     digest = hashlib.sha256(raw).hexdigest()
     if claimed_sha256 and claimed_sha256 != digest:
         raise EvaluationError("candidate SHA-256 does not match request")
-    missing = [name for name in REQUIRED_MACROS if f".macro {name}" not in candidate]
-    if missing:
-        raise EvaluationError("candidate does not implement the complete contract")
+    if REQUIRED_SYMBOL not in candidate or ".globl" not in candidate:
+        raise EvaluationError("candidate does not export the block-builder symbol")
     # These directives can import host files at assembly time. Candidate code
     # still runs in a filesystem sandbox, but rejecting them also keeps the
     # include self-contained and auditable.
@@ -86,7 +80,7 @@ def run_limited(
     )
 
 
-def parse_fragment_report(output: str) -> dict[str, Any]:
+def parse_block_report(output: str) -> dict[str, Any]:
     reports = [line[len(REPORT_PREFIX):] for line in output.splitlines()
                if line.startswith(REPORT_PREFIX)]
     if len(reports) != 1:
@@ -94,8 +88,8 @@ def parse_fragment_report(output: str) -> dict[str, Any]:
     try:
         report = json.loads(reports[0])
     except json.JSONDecodeError as error:
-        raise EvaluationError("candidate harness report is malformed") from error
-    if report.get("status") not in {"PASS", "FAIL", "UNSUPPORTED"}:
+        raise EvaluationError("block harness report is malformed") from error
+    if report.get("status") not in {"PASS", "FAIL", "HARNESS_ERROR", "UNSUPPORTED"}:
         raise EvaluationError("candidate harness returned an invalid status")
     return report
 
@@ -108,15 +102,19 @@ def evaluate_fragment(
     unsafe_local: bool = False,
 ) -> dict[str, Any]:
     digest = validate_candidate(candidate, claimed_sha256)
-    required = ("Makefile", "fragment_wrappers.s", "fragment_harness.c")
-    if any(not (harness_dir / name).is_file() for name in required):
+    required = ("Makefile", "block_harness.c")
+    direction_table = harness_dir / "direction_numbers" / "joe_kuo_6_21201.bin"
+    if any(not (harness_dir / name).is_file() for name in required) or not direction_table.is_file():
         raise EvaluationError("trusted public harness is incomplete")
 
     with tempfile.TemporaryDirectory(prefix="sobol-fragment-") as directory:
         stage = Path(directory)
         for name in required:
             shutil.copyfile(harness_dir / name, stage / name)
-        (stage / "candidate_fragment.inc").write_text(candidate, encoding="utf-8")
+        (stage / "direction_numbers").mkdir()
+        shutil.copyfile(direction_table,
+                        stage / "direction_numbers" / direction_table.name)
+        (stage / "candidate_block_builder.s").write_text(candidate, encoding="utf-8")
 
         prefix = [] if unsafe_local else sandbox_prefix(stage)
         build = run_limited(prefix + ["/usr/bin/make", "all"], timeout,
@@ -129,11 +127,11 @@ def evaluate_fragment(
                     (build.stdout + build.stderr).encode()).hexdigest(),
             }
 
-        run = run_limited(prefix + ["/work/fragment_harness"] if prefix
-                          else [str(stage / "fragment_harness")], timeout,
+        run = run_limited(prefix + ["/work/block_harness"] if prefix
+                          else [str(stage / "block_harness")], timeout,
                           None if prefix else stage)
         try:
-            fragment = parse_fragment_report(run.stdout)
+            block = parse_block_report(run.stdout)
         except EvaluationError:
             return {
                 "status": "RUN_FAIL",
@@ -141,15 +139,16 @@ def evaluate_fragment(
                 "exit_code": run.returncode,
             }
         return {
-            "status": fragment["status"],
+            "status": block["status"],
             "candidate_sha256": digest,
-            "fragment": fragment,
+            "block": block,
         }
 
 
 def main() -> int:
     parser = argparse.ArgumentParser()
-    parser.add_argument("candidate", type=Path)
+    parser.add_argument("candidate", type=Path,
+                        help="self-contained candidate_block_builder.s")
     parser.add_argument("--harness-dir", type=Path,
                         default=Path(__file__).with_name("public_harness"))
     parser.add_argument("--timeout", type=float, default=60.0)

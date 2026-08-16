@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Authenticated localhost service for sanitized fragment evaluation."""
+"""Authenticated localhost service for sanitized block-builder evaluation."""
 
 from __future__ import annotations
 
@@ -21,23 +21,22 @@ MAX_REQUEST_BYTES = 160 * 1024
 def format_report(result: dict[str, Any]) -> str:
     digest = result.get("candidate_sha256", "unknown")
     status = result.get("status", "ERROR")
-    lines = ["SOBOL FRAGMENT PRIVATE EVALUATION", f"candidate_sha256={digest}",
+    lines = ["SOBOL BLOCK BUILDER PRIVATE EVALUATION", f"candidate_sha256={digest}",
              f"status={status}"]
-    fragment = result.get("fragment")
-    if isinstance(fragment, dict):
-        lines.append(f"mismatches={fragment.get('mismatches', 'n/a')}")
-        cycles = fragment.get("cycles_per_call")
-        if isinstance(cycles, dict):
-            for name in ("permd", "permi2d", "gen", "gen_load"):
-                if name in cycles:
-                    lines.append(f"{name}_wrapper_cycles={float(cycles[name]):.4f}")
+    block = result.get("block")
+    if isinstance(block, dict):
+        for key in ("block_values", "block_bytes", "packets", "mismatches",
+                    "guard_failures", "cycles_per_block", "cycles_per_value"):
+            if key in block:
+                lines.append(f"{key}={block[key]}")
     baseline = result.get("private_engine_baseline")
     if isinstance(baseline, dict):
         lines.append("private_engine_baseline=PASS")
         for key in ("points", "price", "abs_err", "ns_per_sample"):
             if key in baseline:
                 lines.append(f"baseline_{key}={baseline[key]}")
-    lines.append("integration=standalone fragment; final hot-loop fusion remains manual")
+    lines.append("l1d_budget=16KiB selected block; D1+selected=32KiB of assumed 48KiB")
+    lines.append("integration=standalone block builder; final engine fusion remains manual")
     return "\n".join(lines)
 
 
@@ -181,7 +180,7 @@ def main() -> int:
         (args.listen, args.port), Handler, token, args.harness_dir.resolve(),
         baseline, args.timeout, args.unsafe_local_evaluator,
     )
-    print(f"fragment evaluator listening on {args.listen}:{args.port}", flush=True)
+    print(f"block-builder evaluator listening on {args.listen}:{args.port}", flush=True)
     server.serve_forever()
     return 0
 

@@ -34,10 +34,12 @@ the current build. The original complete directory remains recoverable at:
 
 ## Delegated assembly fragments
 
-`tools/fragment_service/` is the protected half of the external-fragment
-workflow. It accepts a register-parameterized Sobol include, evaluates it in a
-source-free Bubblewrap sandbox, and returns only whitelisted correctness and
-performance fields. The sanitized client lives in the separate
+`tools/fragment_service/` is the protected half of the external block-builder
+workflow. It accepts a standalone assembly function that prepares one
+4096-point (16 KiB) selected-dimension Sobol block, evaluates it in a source-free
+Bubblewrap sandbox, and returns only whitelisted correctness and performance
+fields. D1 plus the selected block budgets 32 KiB of an assumed 48 KiB L1D; the
+destination is reused dimension-by-dimension. The sanitized client lives in the separate
 `sobol-fragment-workbench` project; never give this private repository to the
 external assistant.
 

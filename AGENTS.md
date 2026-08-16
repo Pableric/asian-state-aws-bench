@@ -19,6 +19,10 @@ replace the terminal European payoff with the Asian Markov state `(S,Q)`.
 ## Guardrails
 
 - Keep the current two-ZMM/32-path packet shape.
+- New Asian dimension preparation uses 4096-point blocks: 16 KiB per raw
+  `uint32_t` dimension. Keep at most D1 plus one selected block resident, then
+  consume and reuse the selected buffer. Do not budget the full 48 KiB L1D for
+  three blocks.
 - Preserve point identity exactly across dimension reordering.
 - Do rank/position discovery during preparation, not inside the packet loop.
 - Compare precomputed load/permute against direct in-register construction on
@@ -43,4 +47,3 @@ make test-ordered-d1-sde
 Every multidimensional addition needs a scalar point-identity oracle and tests
 across packet, block, and multi-block boundaries. Performance conclusions must
 come from native AVX-512 timings; SDE is for correctness and instruction mix.
-

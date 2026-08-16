@@ -1,13 +1,18 @@
-# Protected fragment evaluator
+# Protected Sobol block-builder evaluator
 
 This directory belongs inside the private Asian engine. Do not copy it or the
 engine into the external assistant's workspace.
 
-The service accepts one `candidate_fragment.inc`, compiles and runs it against
-the public harness in a Bubblewrap filesystem/network sandbox, then returns
-only parsed metrics. Compiler output and generated binaries are never returned.
-The private engine baseline runs in a separate trusted process, so candidate
-code never shares its address space or filesystem view.
+The service accepts one self-contained `candidate_block_builder.s`, compiles and
+runs it against the public 4096-point harness in a Bubblewrap filesystem/network
+sandbox, then returns only parsed metrics. Compiler output and generated
+binaries are never returned. The private engine baseline runs in a separate
+trusted process, so candidate code never shares its address space or filesystem
+view.
+
+The candidate must build one 16 KiB selected-dimension block. Together with the
+16 KiB D1 block this budgets 32 KiB of the assumed 48 KiB L1D. The engine must
+consume and reuse that destination before preparing another full dimension.
 
 ## Prepare
 
@@ -44,11 +49,12 @@ to test the plumbing in an already isolated disposable environment.
 
 ## Security boundary
 
-- The candidate sandbox contains only the public harness and submitted include.
+- The candidate sandbox contains only the public harness, Joe--Kuo input and
+  submitted assembly.
 - It has no network namespace and no private source mount.
 - The complete private binary stays on the builder.
 - Responses contain whitelisted numeric fields only.
-- Final insertion into the Asian hot loop is still a deliberate manual review.
+- Final insertion into the Asian engine remains a deliberate manual review.
 
 This is practical compartmentalization, not a claim that arbitrary native code
 can be made risk-free. Run the service under a dedicated unprivileged account or
