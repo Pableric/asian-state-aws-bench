@@ -32,6 +32,15 @@ the current build. The original complete directory remains recoverable at:
 /home/pablo/Projects/asian-option-engine-archive-20260804
 ```
 
+## Delegated assembly fragments
+
+`tools/fragment_service/` is the protected half of the external-fragment
+workflow. It accepts a register-parameterized Sobol include, evaluates it in a
+source-free Bubblewrap sandbox, and returns only whitelisted correctness and
+performance fields. The sanitized client lives in the separate
+`sobol-fragment-workbench` project; never give this private repository to the
+external assistant.
+
 ## Build and verify the untouched base
 
 ```sh
@@ -43,4 +52,3 @@ python3 direction_numbers/verify_joe_kuo.py
 The first implementation step is to add caller-selected D2/other-dimension
 construction around the existing D1 packet schedule. Keep intermediate Sobol
 values in registers unless native measurements prove materialization faster.
-
