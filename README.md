@@ -1,6 +1,6 @@
 # Asian Option Engine
 
-Fresh development base for the next 32-fixing arithmetic Asian engine.
+Fresh development base for the next arithmetic Asian engine.
 
 The executable source is an exact snapshot of the corrected ordered-D1
 European engine at commit `4aa404d`. It is intentionally still a European
@@ -18,8 +18,11 @@ before Asian state and multidimensional work begins.
 
 ## Multidimensional inputs
 
-`direction_numbers/openevolve.json` contains the OpenEvolve direction-number
-input used by the Asian research harness.
+`direction_numbers/joe_kuo_6_21201.bin` contains the complete 21,201-dimension
+Joe--Kuo 6.21201 table and is the standard baseline.
+
+`direction_numbers/openevolve.json` preserves the 32-dimension OpenEvolve input
+used by the previous Asian research harness.
 
 The useful August 2026 Asian prototype is preserved under
 `research/previous_asian/`. It is reference material only and is not linked by
@@ -34,6 +37,7 @@ the current build. The original complete directory remains recoverable at:
 ```sh
 make -j4
 make test-ordered-d1-sde
+python3 direction_numbers/verify_joe_kuo.py
 ```
 
 The first implementation step is to add caller-selected D2/other-dimension
