@@ -1,0 +1,44 @@
+{
+  "block_size": 8192,
+  "bridge_stored_nodes": 16,
+  "central_fit": {
+    "blocks_fitted": 128,
+    "coefficient_bytes": 16384,
+    "coefficient_shape": [
+      128,
+      16
+    ],
+    "coefficient_slots": 2048,
+    "effective_float32_blocks": 1024,
+    "effective_float32_coverage": false,
+    "failed_slots": 0,
+    "forced_shared_slots": 9,
+    "forced_shared_target": 1.5e-05,
+    "normal_max_abs_error": 1.2819778332229248e-05,
+    "normal_slots": 1948,
+    "normal_target": 1e-05,
+    "pass": true,
+    "skip_blocks": 0,
+    "tail_cutoff": 0.02425,
+    "tail_handling": "separate masked higher-degree/LUT path",
+    "tail_slots": 100
+  },
+  "dimensions": 32,
+  "final_z_gray_basis_bytes": 640,
+  "final_z_reuse_pass": true,
+  "gaussian_slots": 2048,
+  "pair_reuse_pass": true,
+  "schema_version": 1,
+  "tables": [
+    "reference",
+    "rank1",
+    "pair",
+    "final_z"
+  ],
+  "tail_fit": {
+    "fallback_cells": 3,
+    "fit_blocks": 128,
+    "tail_cells": 100,
+    "worst_degree5_error_before_fallback": 0.5112109875759199
+  }
+}

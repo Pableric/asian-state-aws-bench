@@ -1,0 +1,12 @@
+*.o
+*.so
+bench_european
+bench_european_points
+bench_reduced_setup
+test_ordered_d1_kernel
+test_reduced_setup
+core
+core.*
+__pycache__/
+*.pyc
+
