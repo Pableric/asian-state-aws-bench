@@ -1,12 +1,13 @@
-# Asian State AWS Bench
+# Asian State AWS bench carrier
 
 This repository benchmarks only the arithmetic-Asian S/Q
 state-transition using supplied growth. It does not include Sobol
 generation, Gaussian inversion, exponential evaluation as a priced
 kernel, or a complete Asian engine.
 
-The tree is a test carrier: two stripped x86-64 executables and a
-stdlib Python runner. It is not an SDK and not a copy of any private
+The tree is a test carrier: two stripped x86-64 executables, a
+`BUILD_METADATA.json` file produced from the final unstripped ELF, and
+a stdlib Python runner. It is not an SDK and not a copy of any private
 pricing engine. The binaries may be disassembled.
 
 ## Scope
@@ -18,6 +19,13 @@ and timestep wrappers when the ISA is present.
 `asian_state_bench` times only that state-transition on native
 AVX-512. Reported cycle counts exclude Sobol, Gaussian conversion,
 exponential generation of growth, and payoff integration.
+
+`BUILD_METADATA.json` holds the compile-time static instruction audit
+of the unstripped linked ELF (`build_time_static_audit`). It is not
+embedded in the binaries. Static instruction occurrences in that file
+are distinct from the dynamic load/store counts per 32-path transition
+in `RESULT` lines of kind `static`. `scripts/run_aws.py` hashes the
+metadata file and merges it with native measurements.
 
 ## Host requirements
 
@@ -42,6 +50,11 @@ affinity set, runs the test binary first, and stops unless stdout
 contains `ASIAN_STATE_TEST PASS`. It then runs the bench binary, parses
 `RESULT` JSONL, and writes `results/aws_<cpu>_<UTC>.json` (gitignored).
 
+The 32 KiB cache-pressure scan runs immediately before `t0` of each of
+the 51 samples and is never inside `t0`–`t1`. The `pressure_32KiB`
+environment times one kernel call per sample so that scan applies to
+the timed workload.
+
 The printed decision table uses cycles per 32-path fixing from the
 1-packet 32-fixing latency series:
 
@@ -56,11 +69,12 @@ The runner does not select a production winner.
 
 ## Build record
 
-Recorded at export time `2026-08-17T01:20:46Z`.
+Recorded at export time `2026-08-17T01:37:10Z`. Full compiler, audit,
+and glibc details are in `BUILD_METADATA.json`.
 
 | Item | Value |
 | --- | --- |
-| Compiler | GCC 16.2.1 20260810 (GNU), target `x86_64-pc-linux-gnu` |
+| Compiler | gcc version 16.2.1 20260810 (GCC) |
 | Linker | GNU ld (GNU Binutils) 2.47 |
 | C flags | `-O2 -std=c23 -Wall -Wextra -ffp-contract=off -fno-fast-math -fno-tree-vectorize -fno-builtin-sqrtf -fno-math-errno -g0 -fno-ident` plus `-ffile-prefix-map`, `-fmacro-prefix-map`, `-fdebug-prefix-map` |
 | Assembler flags | `-mavx512f -g0` plus the same prefix maps |
@@ -68,16 +82,10 @@ Recorded at export time `2026-08-17T01:20:46Z`.
 | ISA | AVX-512F in the assembled wrappers; C compiled without `-march=native` |
 | `file` (both ELFs) | `ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, stripped` |
 | `ldd` | `linux-vdso.so.1`, `libm.so.6`, `libc.so.6`, `/lib64/ld-linux-x86-64.so.2` |
-| Source identity | `source_manifest_sha256` `0ffdf2fc3e9c4dd0df98ba685b08411a32c5cba35abec92df1b56027296b2031` |
-| `bin/asian_state_test` SHA-256 | `88afc0dbaa20dbb56c6c3e4e4bdef31676e6f6c0a76c989d227dbad7d3b13ca2` |
-| `bin/asian_state_bench` SHA-256 | `9da99502d0dfff1424c385a4932589480b4f31310f21ad78e7e957c6756dff12` |
+| Source identity | `source_manifest_sha256` `64bc84fc8ec6d21b346f9130e86e9ebc5d078637419b4249ba4a35d0f1f143bf` |
+| `bin/asian_state_test` SHA-256 | `bed5ba33bb2b15e78b29f7033951eb577e048dd30e442173d301fb53aef67fb8` |
+| `bin/asian_state_bench` SHA-256 | `00e0113be837d2cfc31d09cc4ed866c4fd6c53d4226fe053cc70899a1d2ba082` |
 
 Highest glibc symbol versions in the stripped ELFs: `GLIBC_2.34`
 (`__libc_start_main`), `GLIBC_2.29` (`exp`), `GLIBC_2.27` (`expf`).
 There is no `GLIBC_2.43` dependency.
-
-Embedded `build_time_static_audit` is a compile-time ELF instruction
-audit of the linked wrappers. It is not a runtime re-audit on AWS.
-Static instruction occurrences in that audit are distinct from the
-dynamic load/store counts per 32-path transition reported in `RESULT`
-lines of kind `static`.

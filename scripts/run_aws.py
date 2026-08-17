@@ -14,6 +14,7 @@ from pathlib import Path
 
 ALLOWLIST = (
     ".gitignore",
+    "BUILD_METADATA.json",
     "LICENSE",
     "README.md",
     "bin/asian_state_bench",
@@ -235,6 +236,13 @@ def main() -> int:
     if platform.system() != "Linux" or platform.machine() not in {"x86_64", "AMD64"}:
         fail("requires Linux x86-64")
     hashes = verify_checksums(root)
+    meta_path = root / "BUILD_METADATA.json"
+    try:
+        build_metadata = json.loads(meta_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        fail(f"BUILD_METADATA.json unreadable: {exc}")
+    if not isinstance(build_metadata, dict):
+        fail("BUILD_METADATA.json must be an object")
     model, flags = cpu_info()
     avx = avx512_flags(flags)
     print(f"cpu_model={model}")
@@ -297,12 +305,10 @@ def main() -> int:
         "arch": platform.machine(),
         "selected_cpu": selected,
         "binary_hashes": hashes,
+        "build_metadata": build_metadata,
+        "build_time_static_audit": build_metadata.get("build_time_static_audit"),
         "correctness_status": "PASS",
         "benchmark_measurements": rows,
-        "build_time_static_audit": next(
-            (row.get("payload") for row in rows if row.get("kind") == "build_time_static_audit"),
-            None,
-        ),
         "raw_batches": {
             f"{row.get('env')}/{row.get('candidate')}/{row.get('metric')}": row["raw_batches"]
             for row in rows
