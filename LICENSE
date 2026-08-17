@@ -1,8 +1,9 @@
 All Rights Reserved.
 
 This software and the accompanying binaries are provided solely for
-evaluation and benchmarking of the isolated arithmetic-Asian S/Q
-state-transition component.
+evaluation and benchmarking of two isolated components: the
+arithmetic-Asian S/Q state-transition, and dim-from-D1 permutation
+fragments that use synthetic maps.
 
 No license is granted to copy, modify, distribute, sublicense, or
 incorporate this material into a production pricing engine.

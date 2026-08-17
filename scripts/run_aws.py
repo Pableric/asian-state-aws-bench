@@ -1,8 +1,9 @@
 #!/usr/bin/env python3
-"""Run isolated Asian S/Q state tests and native benches. Stdlib only."""
+"""Run isolated Asian S/Q and dim-permute tests/benches. Stdlib only."""
 
 from __future__ import annotations
 
+import argparse
 import hashlib
 import json
 import os
@@ -15,12 +16,37 @@ from pathlib import Path
 ALLOWLIST = (
     ".gitignore",
     "BUILD_METADATA.json",
+    "BUILD_METADATA_dim.json",
     "LICENSE",
     "README.md",
     "bin/asian_state_bench",
     "bin/asian_state_test",
+    "bin/dim_permute_bench",
+    "bin/dim_permute_test",
     "scripts/run_aws.py",
 )
+
+ASIAN_CANDIDATES = (
+    "packet_1x",
+    "packet_2x",
+    "packet_4x",
+    "timestep_1x",
+    "timestep_2x",
+    "timestep_4x",
+)
+
+DIM_CANDIDATES = (
+    "permd_floor",
+    "resident8",
+    "resident16",
+    "affine",
+    "affine_w",
+    "generic",
+    "gen20",
+)
+
+DIM_W3_DIMS = (1, 2, 4, 8, 16)
+DIM_W3_CANDIDATES = ("generic", "affine", "resident8", "resident16", "gen20")
 
 
 def fail(message: str, code: int = 1) -> None:
@@ -198,20 +224,14 @@ def sanitize(name: str) -> str:
     return text or "cpu"
 
 
-def verdict(cycles: float | None, packet_major: bool) -> str:
-    if cycles is None:
-        return "UNSUPPORTED"
-    if not packet_major:
-        if cycles <= 6:
-            return "EXCELLENT"
-        if cycles <= 8:
-            return "REVIEW"
-        return "INVESTIGATE"
-    if cycles <= 6:
-        return "EXCELLENT"
-    if cycles <= 8:
-        return "REVIEW"
-    return "INVESTIGATE"
+def load_metadata(path: Path) -> dict[str, object]:
+    try:
+        payload = json.loads(path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        fail(f"{path.name} unreadable: {exc}")
+    if not isinstance(payload, dict):
+        fail(f"{path.name} must be an object")
+    return payload
 
 
 def pick_metric(rows: list[dict[str, object]], env: str, candidate: str, metric: str) -> float | None:
@@ -229,20 +249,115 @@ def pick_metric(rows: list[dict[str, object]], env: str, candidate: str, metric:
     return None
 
 
+def fmt(x: float | None) -> str:
+    return "n/a" if x is None else f"{x:.3f}"
+
+
+def asian_verdict(cycles: float | None) -> str:
+    if cycles is None:
+        return "UNSUPPORTED"
+    if cycles <= 6:
+        return "EXCELLENT"
+    if cycles <= 8:
+        return "REVIEW"
+    return "INVESTIGATE"
+
+
+def dim_verdict(cycles: float | None) -> str:
+    if cycles is None:
+        return "UNSUPPORTED"
+    if cycles <= 3:
+        return "EXCELLENT"
+    if cycles <= 5:
+        return "GOOD"
+    if cycles <= 7:
+        return "REVIEW"
+    return "INVESTIGATE"
+
+
+def print_asian_table(rows: list[dict[str, object]] | None) -> None:
+    print("ASIAN W2-context table (cycles/32-path-fixing; runner does not pick a winner)")
+    print("variant | environment | cycles/32-path-fixing | cycles/4096-fixing | cycles/4096x32 | verdict")
+    if rows is None:
+        print("all | n/a | n/a | n/a | n/a | UNSUPPORTED")
+        return
+    for env in ("warm_L1D", "pressure_32KiB"):
+        for cand in ASIAN_CANDIDATES:
+            c32 = pick_metric(rows, env, cand, "cycles_per_32path_fixing")
+            c4096 = pick_metric(rows, env, cand, "cycles_per_4096_state_fixing")
+            call = pick_metric(rows, env, cand, "cycles_4096_by_32fix")
+            print(f"{cand} | {env} | {fmt(c32)} | {fmt(c4096)} | {fmt(call)} | {asian_verdict(c32)}")
+
+
+def print_dim_table(rows: list[dict[str, object]] | None) -> None:
+    print("DIM W2 scored (block_1dim consume; W1 latency is not scored)")
+    print("variant | environment | cycles/packet | cycles/4096-block | values/cycle | verdict")
+    if rows is None:
+        print("all | n/a | n/a | n/a | n/a | UNSUPPORTED")
+        return
+    for env in ("warm_L1D", "pressure_32KiB"):
+        for cand in DIM_CANDIDATES:
+            pkt = pick_metric(rows, env, cand, "cycles_per_packet")
+            block = pick_metric(rows, env, cand, "cycles_per_4096_block")
+            vpc = pick_metric(rows, env, cand, "values_per_cycle")
+            print(f"{cand} | {env} | {fmt(pkt)} | {fmt(block)} | {fmt(vpc)} | {dim_verdict(pkt)}")
+    print()
+    print("DIM W3 L1D sweep (cycles/packet vs dims; stored)")
+    print("variant | d=1 | d=2 | d=4 | d=8 | d=16")
+    for cand in DIM_W3_CANDIDATES:
+        cells = [fmt(pick_metric(rows, "warm_L1D", cand, f"cycles_per_packet_d{d}")) for d in DIM_W3_DIMS]
+        print(f"{cand} | " + " | ".join(cells))
+    print()
+    looped = pick_metric(rows, "warm_L1D", "affine", "unrolled_vs_looped_looped")
+    unrolled = pick_metric(rows, "warm_L1D", "affine_unrolled", "unrolled_vs_looped_unrolled")
+    print(f"DIM W4 L1I affine looped={fmt(looped)} cycles  unrolled={fmt(unrolled)} cycles")
+
+
+def run_suite(
+    name: str,
+    test_bin: Path,
+    bench_bin: Path,
+    pass_banner: str,
+    root: Path,
+) -> tuple[str, str, list[dict[str, object]]]:
+    print(f"ldd {test_bin.name}:")
+    print(ldd(test_bin))
+    print(f"ldd {bench_bin.name}:")
+    print(ldd(bench_bin))
+    test = run_bin(test_bin, root)
+    sys.stdout.write(test.stdout)
+    sys.stderr.write(test.stderr)
+    if test.returncode != 0 or pass_banner not in test.stdout.splitlines():
+        fail(f"{name} correctness binary failed")
+    bench = run_bin(bench_bin, root)
+    sys.stdout.write(bench.stdout)
+    sys.stderr.write(bench.stderr)
+    if bench.returncode != 0:
+        fail(f"{name} benchmark binary failed")
+    rows = parse_results(bench.stdout)
+    if not rows:
+        fail(f"{name} benchmark produced no RESULT lines")
+    return test.stdout, bench.stdout, rows
+
+
 def main() -> int:
     os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
+    parser = argparse.ArgumentParser(description="Run isolated AWS bench carriers")
+    parser.add_argument(
+        "--suite",
+        choices=("all", "asian", "dim"),
+        default="all",
+        help="which component to run (default: all)",
+    )
+    args = parser.parse_args()
+
     root = repo_root()
     print(f"repo_root={root}")
     if platform.system() != "Linux" or platform.machine() not in {"x86_64", "AMD64"}:
         fail("requires Linux x86-64")
     hashes = verify_checksums(root)
-    meta_path = root / "BUILD_METADATA.json"
-    try:
-        build_metadata = json.loads(meta_path.read_text(encoding="utf-8"))
-    except (OSError, json.JSONDecodeError) as exc:
-        fail(f"BUILD_METADATA.json unreadable: {exc}")
-    if not isinstance(build_metadata, dict):
-        fail("BUILD_METADATA.json must be an object")
+    asian_meta = load_metadata(root / "BUILD_METADATA.json")
+    dim_meta = load_metadata(root / "BUILD_METADATA_dim.json")
     model, flags = cpu_info()
     avx = avx512_flags(flags)
     print(f"cpu_model={model}")
@@ -261,35 +376,42 @@ def main() -> int:
             l1i = cache["size"]
     print(f"l1d={l1d}")
     print(f"l1i={l1i}")
-    test_bin = root / "bin" / "asian_state_test"
-    bench_bin = root / "bin" / "asian_state_bench"
-    print("ldd asian_state_test:")
-    print(ldd(test_bin))
-    print("ldd asian_state_bench:")
-    print(ldd(bench_bin))
     selected = pin_cpu()
+    want_asian = args.suite in {"all", "asian"}
+    want_dim = args.suite in {"all", "dim"}
+
+    asian_rows: list[dict[str, object]] | None = None
+    dim_rows: list[dict[str, object]] | None = None
+    asian_test = ""
+    asian_bench = ""
+    dim_test = ""
+    dim_bench = ""
 
     if "avx512f" not in flags:
         print("UNSUPPORTED: CPU lacks avx512f; not launching binaries")
-        print("variant | environment | cycles/32-path-fixing | cycles/4096-fixing | cycles/4096x32 | verdict")
-        print("all | n/a | n/a | n/a | n/a | UNSUPPORTED")
+        if want_asian:
+            print_asian_table(None)
+        if want_dim:
+            print_dim_table(None)
         print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
         return 2
 
-    test = run_bin(test_bin, root)
-    sys.stdout.write(test.stdout)
-    sys.stderr.write(test.stderr)
-    if test.returncode != 0 or "ASIAN_STATE_TEST PASS" not in test.stdout.splitlines():
-        fail("correctness binary failed")
-
-    bench = run_bin(bench_bin, root)
-    sys.stdout.write(bench.stdout)
-    sys.stderr.write(bench.stderr)
-    if bench.returncode != 0:
-        fail("benchmark binary failed")
-    rows = parse_results(bench.stdout)
-    if not rows:
-        fail("benchmark produced no RESULT lines")
+    if want_asian:
+        asian_test, asian_bench, asian_rows = run_suite(
+            "asian",
+            root / "bin" / "asian_state_test",
+            root / "bin" / "asian_state_bench",
+            "ASIAN_STATE_TEST PASS",
+            root,
+        )
+    if want_dim:
+        dim_test, dim_bench, dim_rows = run_suite(
+            "dim",
+            root / "bin" / "dim_permute_test",
+            root / "bin" / "dim_permute_bench",
+            "DIM_PERMUTE_TEST PASS",
+            root,
+        )
 
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
@@ -304,44 +426,48 @@ def main() -> int:
         "python": sys.version.split()[0],
         "arch": platform.machine(),
         "selected_cpu": selected,
+        "suite": args.suite,
         "binary_hashes": hashes,
-        "build_metadata": build_metadata,
-        "build_time_static_audit": build_metadata.get("build_time_static_audit"),
+        "build_metadata": asian_meta,
+        "build_metadata_dim": dim_meta,
+        "build_time_static_audit": asian_meta.get("build_time_static_audit"),
+        "build_time_static_audit_dim": dim_meta.get("build_time_static_audit"),
         "correctness_status": "PASS",
-        "benchmark_measurements": rows,
-        "raw_batches": {
-            f"{row.get('env')}/{row.get('candidate')}/{row.get('metric')}": row["raw_batches"]
-            for row in rows
-            if isinstance(row.get("raw_batches"), list)
+        "asian": None
+        if asian_rows is None
+        else {
+            "benchmark_measurements": asian_rows,
+            "raw_batches": {
+                f"{row.get('env')}/{row.get('candidate')}/{row.get('metric')}": row["raw_batches"]
+                for row in asian_rows
+                if isinstance(row.get("raw_batches"), list)
+            },
+            "test_stdout": asian_test,
+            "bench_stdout": asian_bench,
         },
-        "raw_result_lines": [ln for ln in bench.stdout.splitlines() if ln.startswith("RESULT ")],
+        "dim": None
+        if dim_rows is None
+        else {
+            "benchmark_measurements": dim_rows,
+            "raw_batches": {
+                f"{row.get('env')}/{row.get('candidate')}/{row.get('metric')}": row["raw_batches"]
+                for row in dim_rows
+                if isinstance(row.get("raw_batches"), list)
+            },
+            "test_stdout": dim_test,
+            "bench_stdout": dim_bench,
+        },
         "utc_timestamp": stamp,
-        "test_stdout": test.stdout,
-        "bench_stdout": bench.stdout,
     }
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(f"wrote {out_path}")
-
     print()
-    print("variant | environment | cycles/32-path-fixing | cycles/4096-fixing | cycles/4096x32 | verdict")
-    for env in ("warm_L1D", "pressure_32KiB"):
-        for cand in (
-            "packet_1x",
-            "packet_2x",
-            "packet_4x",
-            "timestep_1x",
-            "timestep_2x",
-            "timestep_4x",
-        ):
-            c32 = pick_metric(rows, env, cand, "cycles_per_32path_fixing")
-            c4096 = pick_metric(rows, env, cand, "cycles_per_4096_state_fixing")
-            call = pick_metric(rows, env, cand, "cycles_4096_by_32fix")
-            packet = cand.startswith("packet_")
-            v = verdict(c32, packet)
-            def fmt(x: float | None) -> str:
-                return "n/a" if x is None else f"{x:.3f}"
-
-            print(f"{cand} | {env} | {fmt(c32)} | {fmt(c4096)} | {fmt(call)} | {v}")
+    if want_asian:
+        print_asian_table(asian_rows)
+        print()
+    if want_dim:
+        print_dim_table(dim_rows)
+        print()
     print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
     return 0
 
