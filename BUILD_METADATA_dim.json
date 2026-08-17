@@ -4,6 +4,7 @@
     "dim_permute_bench": {
       "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, stripped",
       "glibc_undefined": [
+        "0000000000000000 DF *UND* 0000000000000000 (GLIBC_2.2.5) getenv",
         "0000000000000000 DF *UND* 0000000000000000 (GLIBC_2.2.5) free",
         "0000000000000000 DF *UND* 0000000000000000 (GLIBC_2.2.5) putchar",
         "0000000000000000 DF *UND* 0000000000000000 (GLIBC_2.34) __libc_start_main",
@@ -31,7 +32,7 @@
         "libc.so.6",
         "/lib64/ld-linux-x86-64.so.2"
       ],
-      "sha256": "2341f89d28ae4564ea6b8b85334560d4af293b6dd5cca3fbe9459c88e17c62b3"
+      "sha256": "994dec9f03582745b1bd416878c5ef3e2efd037aae7da891e28fcdadeaeb76fc"
     },
     "dim_permute_test": {
       "file": "ELF 64-bit LSB pie executable, x86-64, version 1 (SYSV), dynamically linked, interpreter /lib64/ld-linux-x86-64.so.2, for GNU/Linux 4.4.0, stripped",
@@ -54,7 +55,7 @@
         "libc.so.6",
         "/lib64/ld-linux-x86-64.so.2"
       ],
-      "sha256": "841a62a07017e1b442acd122703f087b293aa8fab325c05e04970e45d2c014a7"
+      "sha256": "5f0cf18fc60c563940f70858fb4ac71997f1b1755691a1da3509672c3f65b7db"
     }
   },
   "build_time_static_audit": {
@@ -699,6 +700,89 @@
         "vector_loads": 48,
         "vpermd": 32
       },
+      "dpb_resident2_xor_block": {
+        "calls": 0,
+        "elf": "bench_dim",
+        "gathers": 0,
+        "instructions": 58,
+        "live_gpr": [
+          "r10",
+          "r15",
+          "r8",
+          "r9",
+          "rax",
+          "rbp",
+          "rbx",
+          "rcx",
+          "rdi",
+          "rdx",
+          "rsi"
+        ],
+        "live_gpr_count": 11,
+        "live_zmm": [
+          0,
+          1,
+          2,
+          3,
+          4,
+          16,
+          17,
+          31
+        ],
+        "live_zmm_count": 8,
+        "loads": 10,
+        "spills": 0,
+        "static_load_insns": 10,
+        "static_store_insns": 0,
+        "status": "PASS",
+        "stores": 0,
+        "text_bytes": 255,
+        "vector_loads": 6,
+        "vpermd": 2
+      },
+      "dpb_resident2_xor_block_store": {
+        "calls": 0,
+        "elf": "bench_dim",
+        "gathers": 0,
+        "instructions": 62,
+        "live_gpr": [
+          "r10",
+          "r11",
+          "r12",
+          "r13",
+          "r14",
+          "r15",
+          "r8",
+          "r9",
+          "rax",
+          "rbp",
+          "rbx",
+          "rcx",
+          "rdi",
+          "rdx",
+          "rsi"
+        ],
+        "live_gpr_count": 15,
+        "live_zmm": [
+          0,
+          1,
+          2,
+          3,
+          16,
+          17,
+          31
+        ],
+        "live_zmm_count": 7,
+        "loads": 12,
+        "spills": 0,
+        "static_load_insns": 12,
+        "static_store_insns": 2,
+        "status": "PASS",
+        "stores": 2,
+        "text_bytes": 257,
+        "vector_loads": 6,
+        "vpermd": 2
+      },
       "dpb_resident8_block": {
         "calls": 0,
         "elf": "bench_dim",
@@ -786,7 +870,7 @@
       }
     }
   },
-  "build_utc": "2026-08-17T02:52:34Z",
+  "build_utc": "2026-08-17T16:03:07Z",
   "cflags": "-O2 -std=c23 -Wall -Wextra -g0 -fno-ident -ffile-prefix-map -fmacro-prefix-map -fdebug-prefix-map",
   "compiler": "GCC 16",
   "compiler_version_string": "gcc version 16.2.1 20260810 (GCC)",
@@ -794,7 +878,7 @@
   "label": "build_time_static_audit",
   "ldflags": "-Wl,--build-id=none",
   "linker": "GNU ld (GNU Binutils) 2.47",
-  "source_identity": "5d5cf7d121da1bc4bc585d5a6785c285a46c46c73cd15a63d4c32967061bdc3c",
+  "source_identity": "8cf464470ec4f7f9d8e11ab8b72639b6a6a37460e95e2810b794fe9013035f55",
   "source_identity_kind": "source_manifest_sha256",
   "stripped_after_audit": true,
   "target_isa": "AVX-512F (+BW for gen20); portable C (no -march=native)"

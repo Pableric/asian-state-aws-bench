@@ -92,14 +92,13 @@ There is no `GLIBC_2.43` dependency.
 `dim_permute_test` checks every candidate against a scalar integer
 oracle (bit-exact) when AVX-512F is present.
 
-`dim_permute_bench` times those kernels. W1 `latency_1pkt` is printed
-but not scored. The printed dim table scores **W2 `block_1dim`
-consume** (cycles per 32-value packet). W3 is the L1D sweep (`d` in
-1,2,4,8,16). W4 compares affine looped vs 128-packet unroll (L1I).
+The runner prints aligned tables only (no raw 51-batch dumps). W1 is not scored.
+W3 uses derived cycles/packet. `resident2_xor` is the 2-ZMM XOR/swap walk.
 
 | name | insns / packet | notes |
 | --- | --- | --- |
 | `permd_floor` | 4 | controls already live; throughput floor |
+| `resident2_xor` | ~6 inner | 2 live masks; XOR/swap between Gray groups |
 | `resident8` | ~6 inner | zmm16–23 live |
 | `resident16` | ~6 inner | zmm16–31 live |
 | `affine` | 11 | 448 B map |
@@ -119,7 +118,7 @@ Cache budgets: D1 block 16 KiB shared; stored output 16 KiB/dim;
 generic map 1600 B/dim; affine map 448 B/dim; resident schedule 256 B.
 Worst unroll `dpb_affine_unrolled_block` is 8650 B ≪ 32 KiB L1I.
 
-Build record (dim) at export `2026-08-17T02:52:34Z`. Full compiler,
+Build record (dim) at export `2026-08-17T16:03:07Z`. Full compiler,
 audit, and glibc details are in `BUILD_METADATA_dim.json`.
 
 | Item | Value |
@@ -129,5 +128,5 @@ audit, and glibc details are in `BUILD_METADATA_dim.json`.
 | C flags | `-O2 -std=c23 -Wall -Wextra -g0 -fno-ident` plus prefix maps |
 | Assembler flags | `-mavx512f -mavx512bw -g0` plus prefix maps |
 | Linker flags | `-Wl,--build-id=none` |
-| `bin/dim_permute_test` SHA-256 | `841a62a07017e1b442acd122703f087b293aa8fab325c05e04970e45d2c014a7` |
-| `bin/dim_permute_bench` SHA-256 | `2341f89d28ae4564ea6b8b85334560d4af293b6dd5cca3fbe9459c88e17c62b3` |
+| `bin/dim_permute_test` SHA-256 | `5f0cf18fc60c563940f70858fb4ac71997f1b1755691a1da3509672c3f65b7db` |
+| `bin/dim_permute_bench` SHA-256 | `994dec9f03582745b1bd416878c5ef3e2efd037aae7da891e28fcdadeaeb76fc` |

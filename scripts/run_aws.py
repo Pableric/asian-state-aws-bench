@@ -37,6 +37,7 @@ ASIAN_CANDIDATES = (
 
 DIM_CANDIDATES = (
     "permd_floor",
+    "resident2_xor",
     "resident8",
     "resident16",
     "affine",
@@ -46,7 +47,14 @@ DIM_CANDIDATES = (
 )
 
 DIM_W3_DIMS = (1, 2, 4, 8, 16)
-DIM_W3_CANDIDATES = ("generic", "affine", "resident8", "resident16", "gen20")
+DIM_W3_CANDIDATES = (
+    "resident2_xor",
+    "resident8",
+    "resident16",
+    "affine",
+    "generic",
+    "gen20",
+)
 
 
 def fail(message: str, code: int = 1) -> None:
@@ -234,8 +242,16 @@ def load_metadata(path: Path) -> dict[str, object]:
     return payload
 
 
-def pick_metric(rows: list[dict[str, object]], env: str, candidate: str, metric: str) -> float | None:
+def pick_metric(
+    rows: list[dict[str, object]],
+    env: str,
+    candidate: str,
+    metric: str,
+    kind: str | None = None,
+) -> float | None:
     for row in rows:
+        if kind is not None and row.get("kind") != kind:
+            continue
         if (
             row.get("kind") in {"measured_native", "derived_native"}
             and row.get("env") == env
@@ -276,41 +292,51 @@ def dim_verdict(cycles: float | None) -> str:
 
 
 def print_asian_table(rows: list[dict[str, object]] | None) -> None:
-    print("ASIAN W2-context table (cycles/32-path-fixing; runner does not pick a winner)")
-    print("variant | environment | cycles/32-path-fixing | cycles/4096-fixing | cycles/4096x32 | verdict")
+    print("ASIAN W2 (cycles / 32-path-fixing; not a winner pick)")
+    hdr = f"{'variant':<14} {'env':<16} {'cyc/32fix':>10} {'cyc/4096':>10} {'cyc/4096x32':>12} {'verdict':<12}"
+    print(hdr)
     if rows is None:
-        print("all | n/a | n/a | n/a | n/a | UNSUPPORTED")
+        print(f"{'all':<14} {'n/a':<16} {'n/a':>10} {'n/a':>10} {'n/a':>12} {'UNSUPPORTED':<12}")
         return
     for env in ("warm_L1D", "pressure_32KiB"):
         for cand in ASIAN_CANDIDATES:
-            c32 = pick_metric(rows, env, cand, "cycles_per_32path_fixing")
+            c32 = pick_metric(rows, env, cand, "cycles_per_32path_fixing", kind="derived_native")
+            if c32 is None:
+                c32 = pick_metric(rows, env, cand, "cycles_per_32path_fixing")
             c4096 = pick_metric(rows, env, cand, "cycles_per_4096_state_fixing")
             call = pick_metric(rows, env, cand, "cycles_4096_by_32fix")
-            print(f"{cand} | {env} | {fmt(c32)} | {fmt(c4096)} | {fmt(call)} | {asian_verdict(c32)}")
+            print(
+                f"{cand:<14} {env:<16} {fmt(c32):>10} {fmt(c4096):>10} {fmt(call):>12} {asian_verdict(c32):<12}"
+            )
 
 
 def print_dim_table(rows: list[dict[str, object]] | None) -> None:
-    print("DIM W2 scored (block_1dim consume; W1 latency is not scored)")
-    print("variant | environment | cycles/packet | cycles/4096-block | values/cycle | verdict")
+    print("DIM W2 consume (scored; W1 latency ignored)")
+    print(f"{'candidate':<14} {'env':<16} {'cyc/pkt':>10} {'cyc/4096':>10} {'val/cyc':>10} {'verdict':<12}")
     if rows is None:
-        print("all | n/a | n/a | n/a | n/a | UNSUPPORTED")
+        print(f"{'all':<14} {'n/a':<16} {'n/a':>10} {'n/a':>10} {'n/a':>10} {'UNSUPPORTED':<12}")
         return
     for env in ("warm_L1D", "pressure_32KiB"):
         for cand in DIM_CANDIDATES:
-            pkt = pick_metric(rows, env, cand, "cycles_per_packet")
-            block = pick_metric(rows, env, cand, "cycles_per_4096_block")
-            vpc = pick_metric(rows, env, cand, "values_per_cycle")
-            print(f"{cand} | {env} | {fmt(pkt)} | {fmt(block)} | {fmt(vpc)} | {dim_verdict(pkt)}")
+            pkt = pick_metric(rows, env, cand, "cycles_per_packet", kind="derived_native")
+            block = pick_metric(rows, env, cand, "cycles_per_4096_block", kind="derived_native")
+            vpc = pick_metric(rows, env, cand, "values_per_cycle", kind="derived_native")
+            print(
+                f"{cand:<14} {env:<16} {fmt(pkt):>10} {fmt(block):>10} {fmt(vpc):>10} {dim_verdict(pkt):<12}"
+            )
     print()
-    print("DIM W3 L1D sweep (cycles/packet vs dims; stored)")
-    print("variant | d=1 | d=2 | d=4 | d=8 | d=16")
+    print("DIM W3 L1D sweep (cycles/packet, stored)")
+    print(f"{'candidate':<14} {'d=1':>8} {'d=2':>8} {'d=4':>8} {'d=8':>8} {'d=16':>8}")
     for cand in DIM_W3_CANDIDATES:
-        cells = [fmt(pick_metric(rows, "warm_L1D", cand, f"cycles_per_packet_d{d}")) for d in DIM_W3_DIMS]
-        print(f"{cand} | " + " | ".join(cells))
+        cells = [
+            fmt(pick_metric(rows, "warm_L1D", cand, f"cycles_per_packet_d{d}", kind="derived_native"))
+            for d in DIM_W3_DIMS
+        ]
+        print(f"{cand:<14} " + " ".join(f"{c:>8}" for c in cells))
     print()
     looped = pick_metric(rows, "warm_L1D", "affine", "unrolled_vs_looped_looped")
     unrolled = pick_metric(rows, "warm_L1D", "affine_unrolled", "unrolled_vs_looped_unrolled")
-    print(f"DIM W4 L1I affine looped={fmt(looped)} cycles  unrolled={fmt(unrolled)} cycles")
+    print(f"DIM W4 L1I affine  looped={fmt(looped)}  unrolled={fmt(unrolled)}  cycles/block")
 
 
 def run_suite(
@@ -325,18 +351,22 @@ def run_suite(
     print(f"ldd {bench_bin.name}:")
     print(ldd(bench_bin))
     test = run_bin(test_bin, root)
-    sys.stdout.write(test.stdout)
     sys.stderr.write(test.stderr)
     if test.returncode != 0 or pass_banner not in test.stdout.splitlines():
+        sys.stdout.write(test.stdout)
         fail(f"{name} correctness binary failed")
+    for line in test.stdout.splitlines():
+        if line.startswith("DIM_PERMUTE_TEST") or line.startswith("ASIAN_STATE_TEST") or line.startswith("tests="):
+            print(line)
     bench = run_bin(bench_bin, root)
-    sys.stdout.write(bench.stdout)
     sys.stderr.write(bench.stderr)
     if bench.returncode != 0:
+        sys.stdout.write(bench.stdout)
         fail(f"{name} benchmark binary failed")
     rows = parse_results(bench.stdout)
     if not rows:
         fail(f"{name} benchmark produced no RESULT lines")
+    print(f"{name} bench: {len(rows)} RESULT rows (tables below)")
     return test.stdout, bench.stdout, rows
 
 
