@@ -14,8 +14,9 @@ disassembled.
 1. **Asian S/Q state** — `bin/asian_state_test` / `bin/asian_state_bench`,
    audit in `BUILD_METADATA.json`.
 2. **Dim-from-D1 permute** — `bin/dim_permute_test` / `bin/dim_permute_bench`,
-   audit in `BUILD_METADATA_dim.json`. Maps are synthetic (LCG-seeded
-   structural twins), not production tables.
+   audit in `BUILD_METADATA_dim.json`. `real_block_maps.bin` contains the
+   validated source-index permutations for the 18 exact dimensions; it does
+   not contain Sobol, Gaussian, exponential, state, or pricing code.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -32,8 +33,8 @@ The runner verifies `SHA256SUMS` (every file except `SHA256SUMS`
 itself), prints CPU model, AVX-512 flags, sysfs L1D/L1I, kernel,
 Python, arch, and `ldd`, pins to CPU 0 when that CPU is in the process
 affinity set, runs each selected test binary first, and stops on
-failure. It then runs the matching bench binary, parses `RESULT` JSONL,
-and writes `results/aws_<cpu>_<UTC>.json` (gitignored).
+failure. It parses Asian `RESULT` JSONL or the dimension benchmark's validated
+key/value records, then writes `results/aws_<cpu>_<UTC>.json` (gitignored).
 
 The 32 KiB cache-pressure scan runs immediately before `t0` of each of
 the 51 samples and is never inside `t0`–`t1`. The `pressure_32KiB`
@@ -46,7 +47,6 @@ The runner does not select a production winner.
 
 - Linux x86-64
 - CPU flag `avx512f` (the runner does not launch the binaries without it)
-- `avx512bw` for the dim `gen20` candidate
 - glibc providing `GLIBC_2.34` (`__libc_start_main`); the Asian binaries
   also need `GLIBC_2.29` (`exp`) and `GLIBC_2.27` (`expf`)
 - Python 3 with the standard library only
@@ -90,21 +90,24 @@ There is no `GLIBC_2.43` dependency.
 ## Dim-from-D1 permute
 
 `dim_permute_test` checks every candidate against a scalar integer
-oracle (bit-exact) when AVX-512F is present.
+oracle (bit-exact) when AVX-512F is present. A native run must report exactly
+`dim_provider_test PASS tests=6101 native_avx512=1`; prepare-only coverage is
+not accepted as the AWS correctness result.
 
-The runner prints aligned tables only (no raw 51-batch dumps). W1 is not scored.
-W3 uses derived cycles/packet. `resident2_xor` is the 2-ZMM XOR/swap walk.
+The benchmark validates `real_block_maps.bin`, checks every real map/candidate
+against the scalar oracle before timing, and measures the complete sequential
+destination-order path: preload once, then packets `p=0..127`. It reports each
+real dimension separately under warm-L1D and competing-32-KiB pressure, plus
+the median across dimensions and the worst dimension. Synthetic A8 results are
+a separate control and are excluded from the aggregate.
 
-| name | insns / packet | notes |
+Only three candidates are shipped:
+
+| name | packet probe | notes |
 | --- | --- | --- |
-| `permd_floor` | 4 | controls already live; throughput floor |
-| `resident2_xor` | ~6 inner | 2 live masks; XOR/swap between Gray groups |
-| `resident8` | ~6 inner | zmm16–23 live |
-| `resident16` | ~6 inner | zmm16–31 live |
-| `affine` | 11 | 448 B map |
-| `affine_w` | 12 | packed selector |
-| `generic` | 14 | 1600 B map; always valid |
-| `gen20` | 20 | 0 loads; AVX-512BW; compute reference |
+| `generic` | 14 instructions | 1600 B context; 4 scalar + 4 ZMM loads, 2 `vpermd` |
+| `affine` | 11 instructions | 448 B context; 2 scalar + 2 payload ZMM loads, resident controls |
+| `res2xor` | 15 instructions | 448 B context; 2 live masks with XOR/swap updates |
 
 | cycles / packet | verdict |
 | --- | --- |
@@ -114,19 +117,20 @@ W3 uses derived cycles/packet. `resident2_xor` is the 2-ZMM XOR/swap walk.
 | > 8 | INVESTIGATE |
 | no native AVX-512 | UNSUPPORTED |
 
-Cache budgets: D1 block 16 KiB shared; stored output 16 KiB/dim;
-generic map 1600 B/dim; affine map 448 B/dim; resident schedule 256 B.
-Worst unroll `dpb_affine_unrolled_block` is 8650 B ≪ 32 KiB L1I.
+The fragment audit reports zero calls, stores, gathers, and stack spills. The
+benchmark itself consumes the two output ZMMs; it does not time a theoretical
+two-load/two-permute floor. Context warmup uses the exact sizes: 1600 B for
+generic and 448 B for affine/RES2XOR.
 
-Build record (dim) at export `2026-08-17T16:03:07Z`. Full compiler,
+Build record (dim) at export `2026-08-17T19:18:17Z`. Full compiler,
 audit, and glibc details are in `BUILD_METADATA_dim.json`.
 
 | Item | Value |
 | --- | --- |
-| Compiler | gcc version 16.2.1 20260810 (GCC) |
+| Compiler | gcc (GCC) 16.2.1 20260810 |
 | Linker | GNU ld (GNU Binutils) 2.47 |
-| C flags | `-O2 -std=c23 -Wall -Wextra -g0 -fno-ident` plus prefix maps |
-| Assembler flags | `-mavx512f -mavx512bw -g0` plus prefix maps |
-| Linker flags | `-Wl,--build-id=none` |
-| `bin/dim_permute_test` SHA-256 | `5f0cf18fc60c563940f70858fb4ac71997f1b1755691a1da3509672c3f65b7db` |
-| `bin/dim_permute_bench` SHA-256 | `994dec9f03582745b1bd416878c5ef3e2efd037aae7da891e28fcdadeaeb76fc` |
+| C flags | `-O2 -std=c11 -Wall -Wextra -Werror` plus prefix maps |
+| Assembler flags | `-O2 -Wall -Werror -mavx512f` plus prefix maps |
+| `bin/dim_permute_test` SHA-256 | `d7170dd491013e9d6705c8fe77dd04e20c38bf91a24cc6ec92146a34ae5477f3` |
+| `bin/dim_permute_bench` SHA-256 | `88f0456ae1bcd4d894dabaef31cd10ccae8c7aa5fadea9915ee47d45b84e73e5` |
+| `real_block_maps.bin` SHA-256 | `37c1a5c5b95053f52662dc56801e867ac93060eb7bbee9daa77588945a022bfb` |

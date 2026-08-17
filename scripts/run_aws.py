@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import platform
+import shlex
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -23,6 +24,7 @@ ALLOWLIST = (
     "bin/asian_state_test",
     "bin/dim_permute_bench",
     "bin/dim_permute_test",
+    "real_block_maps.bin",
     "scripts/run_aws.py",
 )
 
@@ -36,24 +38,30 @@ ASIAN_CANDIDATES = (
 )
 
 DIM_CANDIDATES = (
-    "permd_floor",
-    "resident2_xor",
-    "resident8",
-    "resident16",
-    "affine",
-    "affine_w",
     "generic",
-    "gen20",
+    "affine",
+    "res2xor",
 )
 
-DIM_W3_DIMS = (1, 2, 4, 8, 16)
-DIM_W3_CANDIDATES = (
-    "resident2_xor",
-    "resident8",
-    "resident16",
-    "affine",
-    "generic",
-    "gen20",
+DIM_REAL_DIMS = (
+    1,
+    5,
+    6,
+    7,
+    8,
+    9,
+    11,
+    13,
+    15,
+    17,
+    19,
+    21,
+    23,
+    26,
+    27,
+    28,
+    29,
+    31,
 )
 
 
@@ -219,6 +227,99 @@ def parse_results(stdout: str) -> list[dict[str, object]]:
     return rows
 
 
+def parse_kv_line(line: str) -> dict[str, object]:
+    fields: dict[str, object] = {}
+    for token in shlex.split(line):
+        if "=" not in token:
+            continue
+        key, value = token.split("=", 1)
+        fields[key] = value
+    return fields
+
+
+def parse_dim_results(stdout: str) -> list[dict[str, object]]:
+    """Parse and validate Junior's complete dest-order real-map benchmark."""
+    rows: list[dict[str, object]] = []
+    aggregates: dict[tuple[str, str], dict[str, object]] = {}
+    real_rows: set[tuple[int, str, str]] = set()
+    native_banner = False
+
+    for line in stdout.splitlines():
+        if line.startswith("dim_provider_bench native_avx512=1 "):
+            native_banner = True
+        if line.startswith("map="):
+            row = parse_kv_line(line)
+            row["kind"] = "dim_native"
+            rows.append(row)
+            if row.get("map") == "real" and row.get("mode") in {
+                "warm_L1D",
+                "pressure_32KiB",
+            }:
+                try:
+                    key = (int(str(row["dim"])), str(row["variant"]), str(row["mode"]))
+                    median = float(str(row["median_cyc"]))
+                    p10 = float(str(row["p10"]))
+                    p90 = float(str(row["p90"]))
+                    float(str(row["cyc_per_128_block"]))
+                    float(str(row["cyc_per_packet"]))
+                except (KeyError, TypeError, ValueError) as exc:
+                    fail(f"malformed real dimension row: {line}: {exc}")
+                if not p10 <= median <= p90:
+                    fail(f"invalid percentile order: {line}")
+                if key in real_rows:
+                    fail(f"duplicate real dimension row: {key}")
+                real_rows.add(key)
+        elif line.startswith("aggregate "):
+            row = parse_kv_line(line)
+            row["kind"] = "dim_aggregate_native"
+            rows.append(row)
+            try:
+                key = (str(row["variant"]), str(row["mode"]))
+                float(str(row["real_median_cyc"]))
+                float(str(row["real_median_cyc_per_packet"]))
+                worst_dim = int(str(row["worst_dim"]))
+                float(str(row["worst_median_cyc"]))
+                float(str(row["worst_cyc_per_packet"]))
+                n_dims = int(str(row["n_dims"]))
+            except (KeyError, TypeError, ValueError) as exc:
+                fail(f"malformed dimension aggregate: {line}: {exc}")
+            if row.get("map") != "real":
+                fail(f"non-real map included in aggregate: {line}")
+            if worst_dim not in DIM_REAL_DIMS or n_dims != len(DIM_REAL_DIMS):
+                fail(f"invalid aggregate dimension coverage: {line}")
+            if key in aggregates:
+                fail(f"duplicate dimension aggregate: {key}")
+            aggregates[key] = row
+        elif line.startswith(("host ", "cache ", "timing_envelope ")):
+            row = parse_kv_line(line)
+            row["kind"] = line.split()[0]
+            rows.append(row)
+
+    if not native_banner:
+        fail("dimension benchmark missing native AVX-512 banner")
+    expected_rows = {
+        (dim, candidate, env)
+        for dim in DIM_REAL_DIMS
+        for candidate in DIM_CANDIDATES
+        for env in ("warm_L1D", "pressure_32KiB")
+    }
+    if real_rows != expected_rows:
+        missing = sorted(expected_rows - real_rows)
+        extra = sorted(real_rows - expected_rows)
+        fail(f"dimension real-map coverage mismatch: missing={missing} extra={extra}")
+    expected_aggregates = {
+        (candidate, env)
+        for candidate in DIM_CANDIDATES
+        for env in ("warm_L1D", "pressure_32KiB")
+    }
+    if set(aggregates) != expected_aggregates:
+        fail(
+            "dimension aggregate coverage mismatch: "
+            f"got={sorted(aggregates)} expected={sorted(expected_aggregates)}"
+        )
+    return rows
+
+
 def sanitize(name: str) -> str:
     out = []
     for ch in name.lower():
@@ -311,35 +412,41 @@ def print_asian_table(rows: list[dict[str, object]] | None) -> None:
 
 
 def print_dim_table(rows: list[dict[str, object]] | None) -> None:
-    print("DIM W2 consume (scored; W1 latency ignored)")
-    print(f"{'candidate':<14} {'env':<16} {'cyc/pkt':>10} {'cyc/4096':>10} {'val/cyc':>10} {'verdict':<12}")
+    print("DIM dest-order real-map aggregate (18 dimensions; not a winner pick)")
+    print(
+        f"{'candidate':<10} {'env':<16} {'median block':>13} {'median pkt':>11} "
+        f"{'worst dim':>9} {'worst block':>12} {'worst pkt':>10} {'verdict':<12}"
+    )
     if rows is None:
-        print(f"{'all':<14} {'n/a':<16} {'n/a':>10} {'n/a':>10} {'n/a':>10} {'UNSUPPORTED':<12}")
+        print(
+            f"{'all':<10} {'n/a':<16} {'n/a':>13} {'n/a':>11} "
+            f"{'n/a':>9} {'n/a':>12} {'n/a':>10} {'UNSUPPORTED':<12}"
+        )
         return
     for env in ("warm_L1D", "pressure_32KiB"):
         for cand in DIM_CANDIDATES:
-            pkt = pick_metric(rows, env, cand, "cycles_per_packet", kind="derived_native")
-            block = pick_metric(rows, env, cand, "cycles_per_4096_block", kind="derived_native")
-            vpc = pick_metric(rows, env, cand, "values_per_cycle", kind="derived_native")
+            matches = [
+                row
+                for row in rows
+                if row.get("kind") == "dim_aggregate_native"
+                and row.get("variant") == cand
+                and row.get("mode") == env
+            ]
+            if len(matches) != 1:
+                fail(f"missing dimension aggregate for {cand}/{env}")
+            row = matches[0]
+            block = float(str(row["real_median_cyc"]))
+            pkt = float(str(row["real_median_cyc_per_packet"]))
+            worst_dim = int(str(row["worst_dim"]))
+            worst_block = float(str(row["worst_median_cyc"]))
+            worst_pkt = float(str(row["worst_cyc_per_packet"]))
             print(
-                f"{cand:<14} {env:<16} {fmt(pkt):>10} {fmt(block):>10} {fmt(vpc):>10} {dim_verdict(pkt):<12}"
+                f"{cand:<10} {env:<16} {block:>13.1f} {pkt:>11.3f} "
+                f"{worst_dim:>9} {worst_block:>12.1f} {worst_pkt:>10.3f} {dim_verdict(pkt):<12}"
             )
-    print()
-    print("DIM W3 L1D sweep (cycles/packet, stored)")
-    print(f"{'candidate':<14} {'d=1':>8} {'d=2':>8} {'d=4':>8} {'d=8':>8} {'d=16':>8}")
-    for cand in DIM_W3_CANDIDATES:
-        cells = [
-            fmt(pick_metric(rows, "warm_L1D", cand, f"cycles_per_packet_d{d}", kind="derived_native"))
-            for d in DIM_W3_DIMS
-        ]
-        print(f"{cand:<14} " + " ".join(f"{c:>8}" for c in cells))
-    print()
-    looped = pick_metric(rows, "warm_L1D", "affine", "unrolled_vs_looped_looped")
-    unrolled = pick_metric(rows, "warm_L1D", "affine_unrolled", "unrolled_vs_looped_unrolled")
-    print(f"DIM W4 L1I affine  looped={fmt(looped)}  unrolled={fmt(unrolled)}  cycles/block")
 
 
-def run_suite(
+def run_asian_suite(
     name: str,
     test_bin: Path,
     bench_bin: Path,
@@ -367,6 +474,32 @@ def run_suite(
     if not rows:
         fail(f"{name} benchmark produced no RESULT lines")
     print(f"{name} bench: {len(rows)} RESULT rows (tables below)")
+    return test.stdout, bench.stdout, rows
+
+
+def run_dim_suite(root: Path) -> tuple[str, str, list[dict[str, object]]]:
+    test_bin = root / "bin" / "dim_permute_test"
+    bench_bin = root / "bin" / "dim_permute_bench"
+    print(f"ldd {test_bin.name}:")
+    print(ldd(test_bin))
+    print(f"ldd {bench_bin.name}:")
+    print(ldd(bench_bin))
+
+    test = run_bin(test_bin, root)
+    sys.stderr.write(test.stderr)
+    expected = "dim_provider_test PASS tests=6101 native_avx512=1"
+    if test.returncode != 0 or expected not in test.stdout.splitlines():
+        sys.stdout.write(test.stdout)
+        fail("dim correctness binary failed or reported prepare-only coverage")
+    print(expected)
+
+    bench = run_bin(bench_bin, root)
+    sys.stderr.write(bench.stderr)
+    if bench.returncode != 0:
+        sys.stdout.write(bench.stdout)
+        fail("dim benchmark binary failed")
+    rows = parse_dim_results(bench.stdout)
+    print(f"dim bench: validated {len(rows)} native records (table below)")
     return test.stdout, bench.stdout, rows
 
 
@@ -423,11 +556,11 @@ def main() -> int:
             print_asian_table(None)
         if want_dim:
             print_dim_table(None)
-        print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
+        print("NO NATIVE DATA COLLECTED — AVX-512F HOST REQUIRED")
         return 2
 
     if want_asian:
-        asian_test, asian_bench, asian_rows = run_suite(
+        asian_test, asian_bench, asian_rows = run_asian_suite(
             "asian",
             root / "bin" / "asian_state_test",
             root / "bin" / "asian_state_bench",
@@ -435,13 +568,7 @@ def main() -> int:
             root,
         )
     if want_dim:
-        dim_test, dim_bench, dim_rows = run_suite(
-            "dim",
-            root / "bin" / "dim_permute_test",
-            root / "bin" / "dim_permute_bench",
-            "DIM_PERMUTE_TEST PASS",
-            root,
-        )
+        dim_test, dim_bench, dim_rows = run_dim_suite(root)
 
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
@@ -461,7 +588,7 @@ def main() -> int:
         "build_metadata": asian_meta,
         "build_metadata_dim": dim_meta,
         "build_time_static_audit": asian_meta.get("build_time_static_audit"),
-        "build_time_static_audit_dim": dim_meta.get("build_time_static_audit"),
+        "build_time_static_audit_dim": dim_meta.get("object_audit"),
         "correctness_status": "PASS",
         "asian": None
         if asian_rows is None
