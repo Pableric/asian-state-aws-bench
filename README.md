@@ -1,6 +1,6 @@
 # AWS bench carrier
 
-This repository benchmarks two isolated AVX-512 components. It does not
+This repository benchmarks isolated AVX-512 components. It does not
 include Sobol generation, Gaussian inversion, exponential evaluation as
 a priced kernel, or a complete pricing engine.
 
@@ -22,6 +22,10 @@ disassembled.
    `direction_numbers/joe_kuo_6_21201.bin`. This is explicitly incomplete:
    D1 plus 17 affine-routable dimensions, `dt=T/32`, no payoff and no missing
    dimensions.
+4. **Growth-payload affine 18-step diagnostic** —
+   `bin/asian_affine_growth_18diag_bench`. This tests the algebraic rewrite
+   that converts corrected D1 Gaussian Z to growth once and then permutes the
+   growth payload. It is the same incomplete 18-step scope as `affine18`.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -33,6 +37,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py
 # or: python3 scripts/run_aws.py --suite asian
 # or: python3 scripts/run_aws.py --suite dim
 # or: python3 scripts/run_aws.py --suite affine18
+# or: python3 scripts/run_aws.py --suite growth18
 ```
 
 The runner verifies `SHA256SUMS` (every file except `SHA256SUMS`
@@ -60,6 +65,41 @@ matched-frequency warm and competing-32-KiB protocols.
 
 This suite answers whether affine permutation cost is hidden by fusion. It is
 not a complete 32-fixing Asian price and makes no Brownian-bridge claim.
+
+## Growth-payload 18-step diagnostic
+
+The `growth18` suite first runs a standalone correctness-only invocation and
+then repeats the same bit-exact state comparison before native timing. The
+conversion uses the qualified private p0--p8 sequence once on the corrected
+D1 block. The hot affine kernels contain no Gaussian-exp polynomial: they
+permute final float32 growth bits, then perform separate `S *= growth` and
+`Q += S` operations.
+
+The timing rows deliberately keep three denominators separate:
+
+- `d1_z_to_growth_inplace`: cycles per 4,096-value block;
+- `growth_affine_provider_17`: cycles per routed dimension;
+- all state candidates: cycles per 18-step simulation and derived per-step,
+  per-path-step, and per-packet-step values.
+
+The runner validates all 51 samples and the candidate-specific denominators.
+It also checks the printed comparisons against the frozen warm packet-major
+Z-to-exp references (31,612 cycles kernel-only and 33,232 cycles including
+corrected D1 production). These are historical same-host references embedded
+by the diagnostic, not universal performance baselines.
+
+Correctness covers all 18 dimensions, all 4,096 values, corrected hard
+head/tail positions, every intermediate S/Q state, and both loop
+organizations. This still is not a complete 32-fixing price: it has no payoff,
+no unresolved dimensions, and no Brownian bridge.
+
+| Item | Value |
+| --- | --- |
+| `bin/asian_affine_growth_18diag_bench` SHA-256 | `b910c03efacd351bd77a5534e853944126e24f062ec8bea04166f2e04a22ba55` |
+| Growth dimension-major hot text | 366 bytes |
+| Growth packet-major hot text | 259 bytes |
+| Hot payload work | 4,352 `vpermd`, 4,608 `vmulps`, 4,608 `vaddps` |
+| Hot payload exclusions | zero FMA, calls, stack operations, spills, gathers, or intermediate payload stores |
 
 ## Host requirements
 
