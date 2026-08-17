@@ -8,6 +8,7 @@ import hashlib
 import json
 import os
 import platform
+import re
 import shlex
 import subprocess
 import sys
@@ -22,8 +23,10 @@ ALLOWLIST = (
     "README.md",
     "bin/asian_state_bench",
     "bin/asian_state_test",
+    "bin/asian_affine_18diag_bench",
     "bin/dim_permute_bench",
     "bin/dim_permute_test",
+    "direction_numbers/joe_kuo_6_21201.bin",
     "real_block_maps.bin",
     "scripts/run_aws.py",
 )
@@ -63,6 +66,22 @@ DIM_REAL_DIMS = (
     29,
     31,
 )
+
+AFFINE18_CANDIDATES = (
+    "affine_provider_only_one_4096_block",
+    "affine_provider_only_17",
+    "exp_sq_exact_z_dimension_major",
+    "exp_sq_exact_z_packet_major",
+    "unfused_temp16k_dimension_major",
+    "unfused_temp128_packet_major",
+    "fused_dimension_major_18diag",
+    "fused_packet_major_18diag",
+    "d1_producer_corrected",
+    "combined_d1_fused_dimension_major_18diag",
+    "combined_d1_fused_packet_major_18diag",
+)
+
+AFFINE18_MODES = ("warm_L1D", "competing_32KiB")
 
 
 def fail(message: str, code: int = 1) -> None:
@@ -193,7 +212,9 @@ def pin_cpu() -> int:
     return selected
 
 
-def run_bin(path: Path, root: Path) -> subprocess.CompletedProcess[str]:
+def run_bin(
+    path: Path, root: Path, args: tuple[str, ...] = ()
+) -> subprocess.CompletedProcess[str]:
     resolved = path.resolve()
     try:
         resolved.relative_to(root.resolve())
@@ -204,7 +225,7 @@ def run_bin(path: Path, root: Path) -> subprocess.CompletedProcess[str]:
     if not resolved.is_file() or not os.access(resolved, os.X_OK):
         fail(f"binary not executable: {path}")
     return subprocess.run(
-        [str(resolved)],
+        [str(resolved), *args],
         cwd=str(root),
         capture_output=True,
         text=True,
@@ -316,6 +337,74 @@ def parse_dim_results(stdout: str) -> list[dict[str, object]]:
         fail(
             "dimension aggregate coverage mismatch: "
             f"got={sorted(aggregates)} expected={sorted(expected_aggregates)}"
+        )
+    return rows
+
+
+def parse_affine18_results(stdout: str) -> list[dict[str, object]]:
+    pattern = re.compile(
+        r"^candidate=(\S+) mode=(\S+) median=(\d+) p10=(\d+) p90=(\d+) "
+        r"cycles_per_step=([0-9.]+) cycles_per_path_step=([0-9.]+) "
+        r"raw=\[([0-9,]+)\]$"
+    )
+    rows: list[dict[str, object]] = []
+    seen: set[tuple[str, str]] = set()
+    native_banner = False
+    layout_banner = False
+    checksum_banner = False
+
+    for line in stdout.splitlines():
+        if line.startswith("asian_affine_18diag_bench native_avx512=1 "):
+            native_banner = True
+            continue
+        if line.startswith("layouts z_dimension_major="):
+            layout_banner = True
+            continue
+        if line.startswith("checksum="):
+            checksum_banner = True
+            continue
+        match = pattern.match(line)
+        if not match:
+            continue
+        candidate, mode = match.group(1), match.group(2)
+        median, p10, p90 = (int(match.group(i)) for i in (3, 4, 5))
+        raw = [int(value) for value in match.group(8).split(",")]
+        if len(raw) != 51:
+            fail(f"affine18 {candidate}/{mode} has {len(raw)} samples, expected 51")
+        ordered = sorted(raw)
+        if (p10, median, p90) != (ordered[5], ordered[25], ordered[45]):
+            fail(f"affine18 percentile mismatch for {candidate}/{mode}")
+        if not p10 <= median <= p90:
+            fail(f"affine18 percentile order invalid for {candidate}/{mode}")
+        key = (candidate, mode)
+        if key in seen:
+            fail(f"duplicate affine18 result: {key}")
+        seen.add(key)
+        rows.append(
+            {
+                "kind": "affine18_native",
+                "candidate": candidate,
+                "mode": mode,
+                "median": median,
+                "p10": p10,
+                "p90": p90,
+                "cycles_per_step": float(match.group(6)),
+                "cycles_per_path_step": float(match.group(7)),
+                "raw_batches": raw,
+            }
+        )
+
+    expected = {
+        (candidate, mode)
+        for candidate in AFFINE18_CANDIDATES
+        for mode in AFFINE18_MODES
+    }
+    if not native_banner or not layout_banner or not checksum_banner:
+        fail("affine18 benchmark missing correctness/layout/checksum banner")
+    if seen != expected:
+        fail(
+            "affine18 result coverage mismatch: "
+            f"missing={sorted(expected - seen)} extra={sorted(seen - expected)}"
         )
     return rows
 
@@ -446,6 +535,32 @@ def print_dim_table(rows: list[dict[str, object]] | None) -> None:
             )
 
 
+def print_affine18_table(rows: list[dict[str, object]] | None) -> None:
+    print("AFFINE18 fused chronological diagnostic (incomplete 18 steps)")
+    print(
+        f"{'candidate':<45} {'mode':<18} {'median':>10} {'p10':>10} "
+        f"{'p90':>10} {'cyc/step':>10}"
+    )
+    if rows is None:
+        print(f"{'all':<45} {'n/a':<18} {'n/a':>10} {'n/a':>10} {'n/a':>10} {'n/a':>10}")
+        return
+    for mode in AFFINE18_MODES:
+        for candidate in AFFINE18_CANDIDATES:
+            matches = [
+                row
+                for row in rows
+                if row.get("candidate") == candidate and row.get("mode") == mode
+            ]
+            if len(matches) != 1:
+                fail(f"missing affine18 result for {candidate}/{mode}")
+            row = matches[0]
+            print(
+                f"{candidate:<45} {mode:<18} {int(row['median']):>10} "
+                f"{int(row['p10']):>10} {int(row['p90']):>10} "
+                f"{float(row['cycles_per_step']):>10.3f}"
+            )
+
+
 def run_asian_suite(
     name: str,
     test_bin: Path,
@@ -503,12 +618,29 @@ def run_dim_suite(root: Path) -> tuple[str, str, list[dict[str, object]]]:
     return test.stdout, bench.stdout, rows
 
 
+def run_affine18_suite(
+    root: Path, selected_cpu: int
+) -> tuple[str, list[dict[str, object]]]:
+    bench_bin = root / "bin" / "asian_affine_18diag_bench"
+    print(f"ldd {bench_bin.name}:")
+    print(ldd(bench_bin))
+    args = () if selected_cpu < 0 else (str(selected_cpu),)
+    bench = run_bin(bench_bin, root, args)
+    sys.stderr.write(bench.stderr)
+    if bench.returncode != 0:
+        sys.stdout.write(bench.stdout)
+        fail("affine18 benchmark or its pre-timing correctness checks failed")
+    rows = parse_affine18_results(bench.stdout)
+    print(f"affine18 bench: validated {len(rows)} native records (table below)")
+    return bench.stdout, rows
+
+
 def main() -> int:
     os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
     parser = argparse.ArgumentParser(description="Run isolated AWS bench carriers")
     parser.add_argument(
         "--suite",
-        choices=("all", "asian", "dim"),
+        choices=("all", "asian", "dim", "affine18"),
         default="all",
         help="which component to run (default: all)",
     )
@@ -542,6 +674,7 @@ def main() -> int:
     selected = pin_cpu()
     want_asian = args.suite in {"all", "asian"}
     want_dim = args.suite in {"all", "dim"}
+    want_affine18 = args.suite in {"all", "affine18"}
 
     asian_rows: list[dict[str, object]] | None = None
     dim_rows: list[dict[str, object]] | None = None
@@ -549,6 +682,8 @@ def main() -> int:
     asian_bench = ""
     dim_test = ""
     dim_bench = ""
+    affine18_rows: list[dict[str, object]] | None = None
+    affine18_bench = ""
 
     if "avx512f" not in flags:
         print("UNSUPPORTED: CPU lacks avx512f; not launching binaries")
@@ -556,6 +691,8 @@ def main() -> int:
             print_asian_table(None)
         if want_dim:
             print_dim_table(None)
+        if want_affine18:
+            print_affine18_table(None)
         print("NO NATIVE DATA COLLECTED — AVX-512F HOST REQUIRED")
         return 2
 
@@ -569,6 +706,8 @@ def main() -> int:
         )
     if want_dim:
         dim_test, dim_bench, dim_rows = run_dim_suite(root)
+    if want_affine18:
+        affine18_bench, affine18_rows = run_affine18_suite(root, selected)
 
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
@@ -614,6 +753,17 @@ def main() -> int:
             "test_stdout": dim_test,
             "bench_stdout": dim_bench,
         },
+        "affine18": None
+        if affine18_rows is None
+        else {
+            "scope": "incomplete_18_steps_dt_T_over_32",
+            "benchmark_measurements": affine18_rows,
+            "raw_batches": {
+                f"{row.get('mode')}/{row.get('candidate')}": row["raw_batches"]
+                for row in affine18_rows
+            },
+            "bench_stdout": affine18_bench,
+        },
         "utc_timestamp": stamp,
     }
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -624,6 +774,9 @@ def main() -> int:
         print()
     if want_dim:
         print_dim_table(dim_rows)
+        print()
+    if want_affine18:
+        print_affine18_table(affine18_rows)
         print()
     print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
     return 0

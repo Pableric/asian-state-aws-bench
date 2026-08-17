@@ -17,6 +17,11 @@ disassembled.
    audit in `BUILD_METADATA_dim.json`. `real_block_maps.bin` contains the
    validated source-index permutations for the 18 exact dimensions; it does
    not contain Sobol, Gaussian, exponential, state, or pricing code.
+3. **Private affine 18-step fusion diagnostic** —
+   `bin/asian_affine_18diag_bench`, using the public Joe--Kuo table at
+   `direction_numbers/joe_kuo_6_21201.bin`. This is explicitly incomplete:
+   D1 plus 17 affine-routable dimensions, `dt=T/32`, no payoff and no missing
+   dimensions.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -27,6 +32,7 @@ cd asian-state-aws-bench
 PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py
 # or: python3 scripts/run_aws.py --suite asian
 # or: python3 scripts/run_aws.py --suite dim
+# or: python3 scripts/run_aws.py --suite affine18
 ```
 
 The runner verifies `SHA256SUMS` (every file except `SHA256SUMS`
@@ -42,6 +48,18 @@ environment times one kernel call per sample so that scan applies to
 the timed workload.
 
 The runner does not select a production winner.
+
+## Affine 18-step fusion diagnostic
+
+The `affine18` suite runs its complete vector correctness comparison before
+printing the native timing banner. It then measures provider-only, exact-Z
+exp/SQ, structurally matching unfused paths, fused dimension-major and
+packet-major paths, corrected D1 production, and genuinely combined
+D1-plus-fused paths. Each row contains 51 raw samples and median/p10/p90 under
+matched-frequency warm and competing-32-KiB protocols.
+
+This suite answers whether affine permutation cost is hidden by fusion. It is
+not a complete 32-fixing Asian price and makes no Brownian-bridge claim.
 
 ## Host requirements
 
