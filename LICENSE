@@ -1,0 +1,17 @@
+All Rights Reserved.
+
+This software and the accompanying binaries are provided solely for
+evaluation and benchmarking of the isolated arithmetic-Asian S/Q
+state-transition component.
+
+No license is granted to copy, modify, distribute, sublicense, or
+incorporate this material into a production pricing engine.
+
+No license is granted to use this material to reconstruct or implement
+Sobol generation, direction-number processing, Gaussian inversion,
+Gaussian coefficient tables, exponential approximation, global Sobol
+block routing, or any private engine.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
