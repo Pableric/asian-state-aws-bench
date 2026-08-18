@@ -32,6 +32,12 @@ disassembled.
    update, and executes the 17 certified residual routes. It separately times
    residual accumulation, accurate scalar research `log`/CDF payoff work, and
    complete research diagnostics. It is not a complete 32-fixing price.
+6. **Vector conditional-payoff diagnostic** —
+   `bin/asian_conditional_payoff_18diag_bench`. This compares the qualified
+   vector log and Φ-table kernels (1024/2048/4096 entries), fused conditional
+   payoff paths, and the accurate scalar `libm` research oracle. It remains
+   the incomplete 18-route canonical block and is not a complete 32-fixing
+   production price.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -45,6 +51,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py
 # or: python3 scripts/run_aws.py --suite affine18
 # or: python3 scripts/run_aws.py --suite growth18
 # or: python3 scripts/run_aws.py --suite conditional18
+# or: python3 scripts/run_aws.py --suite conditional_payoff
 ```
 
 The runner verifies `SHA256SUMS` (every file except `SHA256SUMS`
@@ -90,6 +97,16 @@ vectorized production implementation.
 The output validates all nine candidates in both warm-L1D and
 competing-32-KiB modes, with 51 raw samples and median/p10/p90. Frozen growth
 and Z-exp medians are printed only as immutable same-host comparison metadata.
+
+## Vector conditional-payoff diagnostic
+
+The `conditional_payoff` suite runs the fused LUT candidates only after their
+pre-timing correctness check. It reports 51 native samples in warm-L1D and
+competing-32-KiB modes for vector log alone, paired Φ lookup, the 1024/2048/4096
+fused paths, D1-plus-fused paths, and an accurate scalar `libm` research oracle.
+The scalar row is a timing reference, not a production contender. LUT accuracy
+is checked against the 4096-entry candidate before timing; the benchmark does
+not claim that the canonical affine maps survive a future Sobol randomization.
 
 ## Growth-payload 18-step diagnostic
 

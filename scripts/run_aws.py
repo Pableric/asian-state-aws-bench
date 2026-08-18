@@ -25,6 +25,7 @@ ALLOWLIST = (
     "bin/asian_state_test",
     "bin/asian_affine_18diag_bench",
     "bin/asian_affine_conditional_18diag_bench",
+    "bin/asian_conditional_payoff_18diag_bench",
     "bin/asian_affine_growth_18diag_bench",
     "bin/dim_permute_bench",
     "bin/dim_permute_test",
@@ -117,6 +118,19 @@ CONDITIONAL18_CANDIDATES = (
     "conditional_scalar_accurate_payoff",
     "initialize_residual_scalar_payoff",
     "d1_initialize_residual_scalar_payoff",
+)
+
+CONDITIONAL_PAYOFF_CANDIDATES = (
+    "frozen_growth_packet_major_18diag",
+    "vector_log_degree6",
+    "paired_phi_lut2048",
+    "conditional_lut1024_kernel",
+    "conditional_lut2048_kernel",
+    "conditional_lut4096_kernel",
+    "combined_d1_conditional_lut1024",
+    "combined_d1_conditional_lut2048",
+    "combined_d1_conditional_lut4096",
+    "scalar_accurate_research_oracle",
 )
 
 
@@ -705,6 +719,97 @@ def parse_conditional18_results(stdout: str) -> list[dict[str, object]]:
     return rows
 
 
+def parse_conditional_payoff_results(stdout: str) -> list[dict[str, object]]:
+    """Validate vector-log/CDF and fused conditional-payoff timing output."""
+    rows: list[dict[str, object]] = []
+    seen: set[tuple[str, str]] = set()
+    native_banner = False
+    checksum_banner = False
+
+    for line in stdout.splitlines():
+        if line.startswith("cpu="):
+            fields = parse_kv_line(line)
+            if fields.get("canonical_only") != "1":
+                fail("conditional payoff benchmark did not declare canonical-only scope")
+            if fields.get("scalar_oracle_research_only") != "1":
+                fail("conditional payoff benchmark did not label scalar oracle scope")
+            if fields.get("samples") != "51":
+                fail("conditional payoff benchmark did not use 51 samples")
+            native_banner = True
+            continue
+        if line.startswith("checksum="):
+            fields = parse_kv_line(line)
+            try:
+                int(str(fields["checksum"]))
+            except (KeyError, TypeError, ValueError) as exc:
+                fail(f"malformed conditional payoff checksum: {line}: {exc}")
+            checksum_banner = True
+            continue
+        if not line.startswith("candidate="):
+            continue
+
+        fields = parse_kv_line(line)
+        try:
+            candidate = str(fields["candidate"])
+            label = str(fields["label"])
+            mode = str(fields["mode"])
+            median = int(str(fields["median"]))
+            p10 = int(str(fields["p10"]))
+            p90 = int(str(fields["p90"]))
+            cycles_per_path = float(str(fields["cycles_per_path"]))
+            raw_text = str(fields["raw"])
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"malformed conditional payoff result: {line}: {exc}")
+        if candidate not in CONDITIONAL_PAYOFF_CANDIDATES or mode not in AFFINE18_MODES:
+            fail(f"unexpected conditional payoff candidate/mode: {candidate}/{mode}")
+        if not (raw_text.startswith("[") and raw_text.endswith("]")):
+            fail(f"malformed conditional payoff raw samples: {candidate}/{mode}")
+        try:
+            raw = [int(value) for value in raw_text[1:-1].split(",")]
+        except ValueError as exc:
+            fail(f"malformed conditional payoff raw value: {candidate}/{mode}: {exc}")
+        if len(raw) != 51:
+            fail(f"conditional payoff {candidate}/{mode} has {len(raw)} samples, expected 51")
+        ordered = sorted(raw)
+        if (p10, median, p90) != (ordered[5], ordered[25], ordered[45]):
+            fail(f"conditional payoff percentile mismatch for {candidate}/{mode}")
+        if not p10 <= median <= p90:
+            fail(f"conditional payoff percentile order invalid for {candidate}/{mode}")
+        if abs(cycles_per_path - median / 4096.0) > 0.000001:
+            fail(f"conditional payoff path denominator mismatch for {candidate}/{mode}")
+        key = (candidate, mode)
+        if key in seen:
+            fail(f"duplicate conditional payoff result: {key}")
+        seen.add(key)
+        rows.append(
+            {
+                "kind": "conditional_payoff_native",
+                "candidate": candidate,
+                "label": label,
+                "mode": mode,
+                "median": median,
+                "p10": p10,
+                "p90": p90,
+                "cycles_per_path": cycles_per_path,
+                "raw_batches": raw,
+            }
+        )
+
+    expected = {
+        (candidate, mode)
+        for candidate in CONDITIONAL_PAYOFF_CANDIDATES
+        for mode in AFFINE18_MODES
+    }
+    if not native_banner or not checksum_banner:
+        fail("conditional payoff benchmark missing native/checksum banner")
+    if seen != expected:
+        fail(
+            "conditional payoff result coverage mismatch: "
+            f"missing={sorted(expected - seen)} extra={sorted(seen - expected)}"
+        )
+    return rows
+
+
 def sanitize(name: str) -> str:
     out = []
     for ch in name.lower():
@@ -913,6 +1018,32 @@ def print_conditional18_table(rows: list[dict[str, object]] | None) -> None:
             )
 
 
+def print_conditional_payoff_table(rows: list[dict[str, object]] | None) -> None:
+    print("CONDITIONAL PAYOFF vector log/CDF and fused diagnostic (incomplete 18 routes)")
+    print(
+        f"{'candidate':<44} {'mode':<18} {'median':>10} {'p10':>10} "
+        f"{'p90':>10} {'cyc/path':>12}"
+    )
+    if rows is None:
+        print(f"{'all':<44} {'n/a':<18} {'n/a':>10} {'n/a':>10} {'n/a':>10} {'n/a':>12}")
+        return
+    for mode in AFFINE18_MODES:
+        for candidate in CONDITIONAL_PAYOFF_CANDIDATES:
+            matches = [
+                row
+                for row in rows
+                if row.get("candidate") == candidate and row.get("mode") == mode
+            ]
+            if len(matches) != 1:
+                fail(f"missing conditional payoff result for {candidate}/{mode}")
+            row = matches[0]
+            print(
+                f"{candidate:<44} {mode:<18} {int(row['median']):>10} "
+                f"{int(row['p10']):>10} {int(row['p90']):>10} "
+                f"{float(row['cycles_per_path']):>12.6f}"
+            )
+
+
 def run_asian_suite(
     name: str,
     test_bin: Path,
@@ -1039,12 +1170,45 @@ def run_conditional18_suite(
     return bench.stdout, rows
 
 
+def run_conditional_payoff_suite(
+    root: Path,
+) -> tuple[str, list[dict[str, object]]]:
+    bench_bin = root / "bin" / "asian_conditional_payoff_18diag_bench"
+    print(f"ldd {bench_bin.name}:")
+    print(ldd(bench_bin))
+
+    check = run_bin(bench_bin, root, ("--check-only",))
+    sys.stderr.write(check.stderr)
+    expected = "asian_conditional_payoff_18diag_bench correctness=PASS timing=SKIPPED"
+    if check.returncode != 0 or expected not in check.stdout.splitlines():
+        sys.stdout.write(check.stdout)
+        fail("conditional payoff standalone correctness gate failed")
+    print(expected)
+
+    bench = run_bin(bench_bin, root)
+    sys.stderr.write(bench.stderr)
+    if bench.returncode != 0:
+        sys.stdout.write(bench.stdout)
+        fail("conditional payoff benchmark or its pre-timing correctness checks failed")
+    rows = parse_conditional_payoff_results(bench.stdout)
+    print(f"conditional payoff bench: validated {len(rows)} native records (table below)")
+    return bench.stdout, rows
+
+
 def main() -> int:
     os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
     parser = argparse.ArgumentParser(description="Run isolated AWS bench carriers")
     parser.add_argument(
         "--suite",
-        choices=("all", "asian", "dim", "affine18", "growth18", "conditional18"),
+        choices=(
+            "all",
+            "asian",
+            "dim",
+            "affine18",
+            "growth18",
+            "conditional18",
+            "conditional_payoff",
+        ),
         default="all",
         help="which component to run (default: all)",
     )
@@ -1081,6 +1245,7 @@ def main() -> int:
     want_affine18 = args.suite in {"all", "affine18"}
     want_growth18 = args.suite in {"all", "growth18"}
     want_conditional18 = args.suite in {"all", "conditional18"}
+    want_conditional_payoff = args.suite in {"all", "conditional_payoff"}
 
     asian_rows: list[dict[str, object]] | None = None
     dim_rows: list[dict[str, object]] | None = None
@@ -1094,6 +1259,8 @@ def main() -> int:
     growth18_bench = ""
     conditional18_rows: list[dict[str, object]] | None = None
     conditional18_bench = ""
+    conditional_payoff_rows: list[dict[str, object]] | None = None
+    conditional_payoff_bench = ""
 
     if "avx512f" not in flags:
         print("UNSUPPORTED: CPU lacks avx512f; not launching binaries")
@@ -1107,6 +1274,8 @@ def main() -> int:
             print_growth18_table(None)
         if want_conditional18:
             print_conditional18_table(None)
+        if want_conditional_payoff:
+            print_conditional_payoff_table(None)
         print("NO NATIVE DATA COLLECTED — AVX-512F HOST REQUIRED")
         return 2
 
@@ -1126,6 +1295,8 @@ def main() -> int:
         growth18_bench, growth18_rows = run_growth18_suite(root, selected)
     if want_conditional18:
         conditional18_bench, conditional18_rows = run_conditional18_suite(root)
+    if want_conditional_payoff:
+        conditional_payoff_bench, conditional_payoff_rows = run_conditional_payoff_suite(root)
 
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
@@ -1205,6 +1376,17 @@ def main() -> int:
             },
             "bench_stdout": conditional18_bench,
         },
+        "conditional_payoff": None
+        if conditional_payoff_rows is None
+        else {
+            "scope": "incomplete_18_routes_vector_log_cdf_and_fused_payoff",
+            "benchmark_measurements": conditional_payoff_rows,
+            "raw_batches": {
+                f"{row.get('mode')}/{row.get('candidate')}": row["raw_batches"]
+                for row in conditional_payoff_rows
+            },
+            "bench_stdout": conditional_payoff_bench,
+        },
         "utc_timestamp": stamp,
     }
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -1224,6 +1406,9 @@ def main() -> int:
         print()
     if want_conditional18:
         print_conditional18_table(conditional18_rows)
+        print()
+    if want_conditional_payoff:
+        print_conditional_payoff_table(conditional_payoff_rows)
         print()
     print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
     return 0
