@@ -725,6 +725,7 @@ def parse_conditional_payoff_results(stdout: str) -> list[dict[str, object]]:
     seen: set[tuple[str, str]] = set()
     native_banner = False
     checksum_banner = False
+    accuracy: dict[str, float] | None = None
 
     for line in stdout.splitlines():
         if line.startswith("cpu="):
@@ -744,6 +745,29 @@ def parse_conditional_payoff_results(stdout: str) -> list[dict[str, object]]:
             except (KeyError, TypeError, ValueError) as exc:
                 fail(f"malformed conditional payoff checksum: {line}: {exc}")
             checksum_banner = True
+            continue
+        if line.startswith("accuracy "):
+            fields = parse_kv_line(line)
+            try:
+                parsed = {
+                    "libm_reference": float(str(fields["libm_reference"])),
+                    "lut1024_abs_error": float(str(fields["lut1024_abs_error"])),
+                    "lut2048_abs_error": float(str(fields["lut2048_abs_error"])),
+                    "lut4096_abs_error": float(str(fields["lut4096_abs_error"])),
+                    "threshold": float(str(fields["threshold"])),
+                }
+            except (KeyError, TypeError, ValueError) as exc:
+                fail(f"malformed conditional payoff accuracy line: {line}: {exc}")
+            if any(value != value for value in parsed.values()):
+                fail(f"non-finite conditional payoff accuracy line: {line}")
+            if parsed["threshold"] != 1e-4:
+                fail(f"unexpected conditional payoff accuracy threshold: {line}")
+            if any(
+                parsed[name] > parsed["threshold"]
+                for name in ("lut1024_abs_error", "lut2048_abs_error", "lut4096_abs_error")
+            ):
+                fail(f"conditional payoff accuracy threshold failed: {line}")
+            accuracy = parsed
             continue
         if not line.startswith("candidate="):
             continue
@@ -802,11 +826,14 @@ def parse_conditional_payoff_results(stdout: str) -> list[dict[str, object]]:
     }
     if not native_banner or not checksum_banner:
         fail("conditional payoff benchmark missing native/checksum banner")
+    if accuracy is None:
+        fail("conditional payoff benchmark missing libm accuracy line")
     if seen != expected:
         fail(
             "conditional payoff result coverage mismatch: "
             f"missing={sorted(expected - seen)} extra={sorted(seen - expected)}"
         )
+    rows.append({"kind": "conditional_payoff_accuracy", **accuracy})
     return rows
 
 
@@ -1027,6 +1054,16 @@ def print_conditional_payoff_table(rows: list[dict[str, object]] | None) -> None
     if rows is None:
         print(f"{'all':<44} {'n/a':<18} {'n/a':>10} {'n/a':>10} {'n/a':>10} {'n/a':>12}")
         return
+    for row in rows:
+        if row.get("kind") == "conditional_payoff_accuracy":
+            print(
+                "accuracy "
+                f"libm_reference={float(row['libm_reference']):.9g} "
+                f"lut1024_abs_error={float(row['lut1024_abs_error']):.9g} "
+                f"lut2048_abs_error={float(row['lut2048_abs_error']):.9g} "
+                f"lut4096_abs_error={float(row['lut4096_abs_error']):.9g} "
+                f"threshold={float(row['threshold']):.9g}"
+            )
     for mode in AFFINE18_MODES:
         for candidate in CONDITIONAL_PAYOFF_CANDIDATES:
             matches = [
@@ -1191,7 +1228,8 @@ def run_conditional_payoff_suite(
         sys.stdout.write(bench.stdout)
         fail("conditional payoff benchmark or its pre-timing correctness checks failed")
     rows = parse_conditional_payoff_results(bench.stdout)
-    print(f"conditional payoff bench: validated {len(rows)} native records (table below)")
+    native_rows = [row for row in rows if row.get("kind") == "conditional_payoff_native"]
+    print(f"conditional payoff bench: validated {len(native_rows)} native records (table below)")
     return bench.stdout, rows
 
 
@@ -1384,6 +1422,7 @@ def main() -> int:
             "raw_batches": {
                 f"{row.get('mode')}/{row.get('candidate')}": row["raw_batches"]
                 for row in conditional_payoff_rows
+                if isinstance(row.get("raw_batches"), list)
             },
             "bench_stdout": conditional_payoff_bench,
         },
