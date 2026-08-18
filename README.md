@@ -26,6 +26,12 @@ disassembled.
    `bin/asian_affine_growth_18diag_bench`. This tests the algebraic rewrite
    that converts corrected D1 Gaussian Z to growth once and then permutes the
    growth payload. It is the same incomplete 18-step scope as `affine18`.
+5. **Exact first-increment conditional diagnostic** —
+   `bin/asian_affine_conditional_18diag_bench`. This keeps `dt=T/32`, uses D1
+   as the canonical growth source without applying it as a stochastic first
+   update, and executes the 17 certified residual routes. It separately times
+   residual accumulation, accurate scalar research `log`/CDF payoff work, and
+   complete research diagnostics. It is not a complete 32-fixing price.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -38,6 +44,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py
 # or: python3 scripts/run_aws.py --suite dim
 # or: python3 scripts/run_aws.py --suite affine18
 # or: python3 scripts/run_aws.py --suite growth18
+# or: python3 scripts/run_aws.py --suite conditional18
 ```
 
 The runner verifies `SHA256SUMS` (every file except `SHA256SUMS`
@@ -65,6 +72,24 @@ matched-frequency warm and competing-32-KiB protocols.
 
 This suite answers whether affine permutation cost is hidden by fusion. It is
 not a complete 32-fixing Asian price and makes no Brownian-bridge claim.
+
+## Exact first-increment conditional diagnostic
+
+The `conditional18` suite runs a standalone correctness gate before timing.
+Its canonical provider block is deliberately separate from the randomized
+statistical experiment: no claim is made that the affine maps survive a
+digital shift or scramble.
+
+The candidate initializes the residual first fixing deterministically, then
+consumes 17 affine growth routes. The expensive first Brownian factor is
+integrated analytically in the research payoff. Complete timings include the
+deterministic initialization. The scalar `log` plus two Gaussian CDFs use
+accurate research math and are explicitly not a projection of a future
+vectorized production implementation.
+
+The output validates all nine candidates in both warm-L1D and
+competing-32-KiB modes, with 51 raw samples and median/p10/p90. Frozen growth
+and Z-exp medians are printed only as immutable same-host comparison metadata.
 
 ## Growth-payload 18-step diagnostic
 

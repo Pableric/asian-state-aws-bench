@@ -24,6 +24,7 @@ ALLOWLIST = (
     "bin/asian_state_bench",
     "bin/asian_state_test",
     "bin/asian_affine_18diag_bench",
+    "bin/asian_affine_conditional_18diag_bench",
     "bin/asian_affine_growth_18diag_bench",
     "bin/dim_permute_bench",
     "bin/dim_permute_test",
@@ -105,6 +106,18 @@ GROWTH18_DENOMINATORS = {
         for candidate in GROWTH18_CANDIDATES[2:]
     },
 }
+
+CONDITIONAL18_CANDIDATES = (
+    "frozen_growth_packet_major_18diag",
+    "conditional_residual_packet_major_18diag",
+    "conditional_residual_dimension_major_18diag",
+    "conditional_deterministic_initialization",
+    "corrected_d1_producer",
+    "d1_convert_initialize_residual",
+    "conditional_scalar_accurate_payoff",
+    "initialize_residual_scalar_payoff",
+    "d1_initialize_residual_scalar_payoff",
+)
 
 
 def fail(message: str, code: int = 1) -> None:
@@ -597,6 +610,101 @@ def parse_growth18_results(stdout: str) -> list[dict[str, object]]:
     return rows
 
 
+def parse_conditional18_results(stdout: str) -> list[dict[str, object]]:
+    """Validate the complete first-increment conditional diagnostic output."""
+    rows: list[dict[str, object]] = []
+    seen: set[tuple[str, str]] = set()
+    native_banner = False
+    scope_banner = False
+    frozen_banner = False
+    checksum_banner = False
+
+    for line in stdout.splitlines():
+        if line.startswith("asian_affine_conditional_18diag_bench cpu="):
+            native_banner = True
+            fields = parse_kv_line(line)
+            if fields.get("canonical_provider_block_only") != "1":
+                fail("conditional18 benchmark did not declare canonical-only provider scope")
+            if fields.get("randomized_statistics") != "separate":
+                fail("conditional18 benchmark mixed randomized statistics into provider timing")
+            continue
+        if line == "scalar payoff is accurate research math, not projected vectorized production performance":
+            scope_banner = True
+            continue
+        if line == (
+            "frozen_aws growth_pm=12288 growth_dm=14510 "
+            "combined_growth_pm=14376 combined_growth_dm=17442 "
+            "zexp_pm=31176 combined_zexp_pm=32036"
+        ):
+            frozen_banner = True
+            continue
+        if line.startswith("checksum="):
+            fields = parse_kv_line(line)
+            try:
+                int(str(fields["checksum"]))
+            except (KeyError, TypeError, ValueError) as exc:
+                fail(f"malformed conditional18 checksum: {line}: {exc}")
+            checksum_banner = True
+            continue
+        if not line.startswith("candidate="):
+            continue
+
+        fields = parse_kv_line(line)
+        try:
+            candidate = str(fields["candidate"])
+            label = str(fields["label"])
+            mode = str(fields["mode"])
+            median = int(str(fields["median"]))
+            p10 = int(str(fields["p10"]))
+            p90 = int(str(fields["p90"]))
+            raw_text = str(fields["raw"])
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"malformed conditional18 result: {line}: {exc}")
+        if candidate not in CONDITIONAL18_CANDIDATES or mode not in AFFINE18_MODES:
+            fail(f"unexpected conditional18 candidate/mode: {candidate}/{mode}")
+        if not (raw_text.startswith("[") and raw_text.endswith("]")):
+            fail(f"malformed conditional18 raw samples: {candidate}/{mode}")
+        try:
+            raw = [int(value) for value in raw_text[1:-1].split(",")]
+        except ValueError as exc:
+            fail(f"malformed conditional18 raw value: {candidate}/{mode}: {exc}")
+        if len(raw) != 51:
+            fail(f"conditional18 {candidate}/{mode} has {len(raw)} samples, expected 51")
+        ordered = sorted(raw)
+        if (p10, median, p90) != (ordered[5], ordered[25], ordered[45]):
+            fail(f"conditional18 percentile mismatch for {candidate}/{mode}")
+        key = (candidate, mode)
+        if key in seen:
+            fail(f"duplicate conditional18 result: {key}")
+        seen.add(key)
+        rows.append(
+            {
+                "kind": "conditional18_native",
+                "candidate": candidate,
+                "label": label,
+                "mode": mode,
+                "median": median,
+                "p10": p10,
+                "p90": p90,
+                "raw_batches": raw,
+            }
+        )
+
+    expected = {
+        (candidate, mode)
+        for candidate in CONDITIONAL18_CANDIDATES
+        for mode in AFFINE18_MODES
+    }
+    if not all((native_banner, scope_banner, frozen_banner, checksum_banner)):
+        fail("conditional18 benchmark missing native/scope/reference/checksum banner")
+    if seen != expected:
+        fail(
+            "conditional18 result coverage mismatch: "
+            f"missing={sorted(expected - seen)} extra={sorted(seen - expected)}"
+        )
+    return rows
+
+
 def sanitize(name: str) -> str:
     out = []
     for ch in name.lower():
@@ -781,6 +889,30 @@ def print_growth18_table(rows: list[dict[str, object]] | None) -> None:
             )
 
 
+def print_conditional18_table(rows: list[dict[str, object]] | None) -> None:
+    print("CONDITIONAL18 exact first-increment diagnostic (incomplete 18 routes, dt=T/32)")
+    print(
+        f"{'candidate':<48} {'mode':<18} {'median':>10} {'p10':>10} {'p90':>10}"
+    )
+    if rows is None:
+        print(f"{'all':<48} {'n/a':<18} {'n/a':>10} {'n/a':>10} {'n/a':>10}")
+        return
+    for mode in AFFINE18_MODES:
+        for candidate in CONDITIONAL18_CANDIDATES:
+            matches = [
+                row
+                for row in rows
+                if row.get("candidate") == candidate and row.get("mode") == mode
+            ]
+            if len(matches) != 1:
+                fail(f"missing conditional18 result for {candidate}/{mode}")
+            row = matches[0]
+            print(
+                f"{candidate:<48} {mode:<18} {int(row['median']):>10} "
+                f"{int(row['p10']):>10} {int(row['p90']):>10}"
+            )
+
+
 def run_asian_suite(
     name: str,
     test_bin: Path,
@@ -882,12 +1014,37 @@ def run_growth18_suite(
     return bench.stdout, rows
 
 
+def run_conditional18_suite(
+    root: Path,
+) -> tuple[str, list[dict[str, object]]]:
+    bench_bin = root / "bin" / "asian_affine_conditional_18diag_bench"
+    print(f"ldd {bench_bin.name}:")
+    print(ldd(bench_bin))
+
+    check = run_bin(bench_bin, root, ("--check-only",))
+    sys.stderr.write(check.stderr)
+    expected = "asian_affine_conditional_18diag_bench correctness=PASS timing=SKIPPED"
+    if check.returncode != 0 or expected not in check.stdout.splitlines():
+        sys.stdout.write(check.stdout)
+        fail("conditional18 standalone correctness gate failed")
+    print(expected)
+
+    bench = run_bin(bench_bin, root)
+    sys.stderr.write(bench.stderr)
+    if bench.returncode != 0:
+        sys.stdout.write(bench.stdout)
+        fail("conditional18 benchmark or its pre-timing correctness checks failed")
+    rows = parse_conditional18_results(bench.stdout)
+    print(f"conditional18 bench: validated {len(rows)} native records (table below)")
+    return bench.stdout, rows
+
+
 def main() -> int:
     os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
     parser = argparse.ArgumentParser(description="Run isolated AWS bench carriers")
     parser.add_argument(
         "--suite",
-        choices=("all", "asian", "dim", "affine18", "growth18"),
+        choices=("all", "asian", "dim", "affine18", "growth18", "conditional18"),
         default="all",
         help="which component to run (default: all)",
     )
@@ -923,6 +1080,7 @@ def main() -> int:
     want_dim = args.suite in {"all", "dim"}
     want_affine18 = args.suite in {"all", "affine18"}
     want_growth18 = args.suite in {"all", "growth18"}
+    want_conditional18 = args.suite in {"all", "conditional18"}
 
     asian_rows: list[dict[str, object]] | None = None
     dim_rows: list[dict[str, object]] | None = None
@@ -934,6 +1092,8 @@ def main() -> int:
     affine18_bench = ""
     growth18_rows: list[dict[str, object]] | None = None
     growth18_bench = ""
+    conditional18_rows: list[dict[str, object]] | None = None
+    conditional18_bench = ""
 
     if "avx512f" not in flags:
         print("UNSUPPORTED: CPU lacks avx512f; not launching binaries")
@@ -945,6 +1105,8 @@ def main() -> int:
             print_affine18_table(None)
         if want_growth18:
             print_growth18_table(None)
+        if want_conditional18:
+            print_conditional18_table(None)
         print("NO NATIVE DATA COLLECTED — AVX-512F HOST REQUIRED")
         return 2
 
@@ -962,6 +1124,8 @@ def main() -> int:
         affine18_bench, affine18_rows = run_affine18_suite(root, selected)
     if want_growth18:
         growth18_bench, growth18_rows = run_growth18_suite(root, selected)
+    if want_conditional18:
+        conditional18_bench, conditional18_rows = run_conditional18_suite(root)
 
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
@@ -1030,6 +1194,17 @@ def main() -> int:
             },
             "bench_stdout": growth18_bench,
         },
+        "conditional18": None
+        if conditional18_rows is None
+        else {
+            "scope": "incomplete_18_routes_dt_T_over_32_exact_first_increment_conditioning",
+            "benchmark_measurements": conditional18_rows,
+            "raw_batches": {
+                f"{row.get('mode')}/{row.get('candidate')}": row["raw_batches"]
+                for row in conditional18_rows
+            },
+            "bench_stdout": conditional18_bench,
+        },
         "utc_timestamp": stamp,
     }
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -1046,6 +1221,9 @@ def main() -> int:
         print()
     if want_growth18:
         print_growth18_table(growth18_rows)
+        print()
+    if want_conditional18:
+        print_conditional18_table(conditional18_rows)
         print()
     print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
     return 0
