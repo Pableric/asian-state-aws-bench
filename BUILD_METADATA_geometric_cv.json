@@ -1,0 +1,111 @@
+{
+  "failures": [],
+  "hot_text_bytes": 1735,
+  "status": "PASS",
+  "symbols": {
+    "arithmetic": {
+      "branches": 128,
+      "calls": 0,
+      "dynamic_instructions": 2195,
+      "fmas": 0,
+      "gathers": 0,
+      "loads_4": 1024,
+      "loads_64": 256,
+      "stack": 0,
+      "stores_64": 0,
+      "symbol": "asian_arithmetic_payoff_reduce_diag",
+      "symbol_bytes": 201,
+      "zmm_registers": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        29,
+        30,
+        31
+      ]
+    },
+    "combined": {
+      "branches": 128,
+      "calls": 0,
+      "dynamic_instructions": 7828,
+      "fmas": 2560,
+      "gathers": 0,
+      "loads_4": 5120,
+      "loads_64": 512,
+      "stack": 0,
+      "stores_64": 0,
+      "symbol": "asian_geometric_cv_payoff_reduce_diag",
+      "symbol_bytes": 583,
+      "zmm_registers": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        12,
+        13,
+        14,
+        15,
+        29,
+        30,
+        31
+      ]
+    },
+    "exp": {
+      "branches": 128,
+      "calls": 0,
+      "dynamic_instructions": 4739,
+      "fmas": 2560,
+      "gathers": 0,
+      "loads_4": 3072,
+      "loads_64": 256,
+      "stack": 0,
+      "stores_64": 256,
+      "symbol": "asian_vector_exp_range_reduced_array_diag",
+      "symbol_bytes": 332,
+      "zmm_registers": [
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11
+      ]
+    },
+    "geometric": {
+      "branches": 128,
+      "calls": 0,
+      "dynamic_instructions": 6035,
+      "fmas": 2560,
+      "gathers": 0,
+      "loads_4": 4096,
+      "loads_64": 256,
+      "stack": 0,
+      "stores_64": 0,
+      "symbol": "asian_geometric_payoff_reduce_diag",
+      "symbol_bytes": 483,
+      "zmm_registers": [
+        0,
+        4,
+        5,
+        6,
+        7,
+        8,
+        9,
+        10,
+        11,
+        29,
+        30,
+        31
+      ]
+    }
+  }
+}
