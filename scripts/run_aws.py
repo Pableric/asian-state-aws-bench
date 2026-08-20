@@ -22,6 +22,7 @@ ALLOWLIST = (
     "BUILD_METADATA_dim.json",
     "BUILD_METADATA_geometric_cv.json",
     "BUILD_METADATA_sql18.json",
+    "BUILD_METADATA_onemkl_x.json",
     "LICENSE",
     "README.md",
     "bin/asian_state_bench",
@@ -34,6 +35,7 @@ ALLOWLIST = (
     "bin/asian_affine_x_growth_1dim_bench",
     "bin/dim_permute_bench",
     "bin/dim_permute_test",
+    "bin/onemkl_sobol_x_bench",
     "direction_numbers/joe_kuo_6_21201.bin",
     "real_block_maps.bin",
     "scripts/run_aws.py",
@@ -172,6 +174,19 @@ SQL18_CANDIDATES = (
 )
 
 SQL18_MODES = ("warm", "competing_32KiB")
+
+ONEMKL_X_CANDIDATES = (
+    "our_canonical_sobol_to_x",
+    "oneMKL_native_sobol_to_x",
+)
+
+ONEMKL_X_MODES = ("warm", "competing_32KiB")
+
+ONEMKL_X_CONTRACTS = (
+    (0.03, 0.20),
+    (-0.07, 0.10),
+    (-0.25, 0.00),
+)
 
 
 def fail(message: str, code: int = 1) -> None:
@@ -1001,6 +1016,170 @@ def parse_sql18_results(stdout: str) -> list[dict[str, object]]:
     return rows
 
 
+def parse_onemkl_x_results(payload: object) -> list[dict[str, object]]:
+    """Validate the native 4,096-value Sobol-to-x throughput comparison."""
+    if not isinstance(payload, dict):
+        fail("oneMKL Sobol-to-x report must be an object")
+    if payload.get("benchmark") != "minimal_onemkl_sobol_to_x":
+        fail("oneMKL Sobol-to-x benchmark identity mismatch")
+    if payload.get("status") != "PASS" or payload.get("native_avx512f") is not True:
+        fail("oneMKL Sobol-to-x benchmark did not report native PASS")
+
+    parameters = payload.get("parameters")
+    if not isinstance(parameters, dict):
+        fail("oneMKL Sobol-to-x report is missing parameters")
+    expected_parameters = {
+        "values": 4096,
+        "sobol_start_point": 8192,
+        "oneMKL_skip_elements": 262112,
+        "warmups": 16,
+        "samples": 51,
+    }
+    for key, expected in expected_parameters.items():
+        if parameters.get(key) != expected:
+            fail(f"oneMKL Sobol-to-x parameter mismatch: {key}")
+    if parameters.get("our_layout") != "4096 consecutive canonical D1 points":
+        fail("oneMKL comparison changed the canonical D1 layout")
+    if parameters.get("oneMKL_layout") != "128 points x 32 dimensions, native point-major":
+        fail("oneMKL comparison changed the native vendor layout")
+    if payload.get("sobol_output_permutation_or_adapter") is not False:
+        fail("oneMKL comparison unexpectedly added an output adapter")
+    compatibility = payload.get("direction_order_compatibility")
+    if not isinstance(compatibility, dict) or compatibility.get("status") != "different_native_layouts":
+        fail("oneMKL comparison omitted the different-layout scope")
+    if compatibility.get("value_by_value_comparison") is not False:
+        fail("oneMKL comparison made a forbidden value-by-value claim")
+    if payload.get("candidates") != ["old_canonical_sobol_to_x", *ONEMKL_X_CANDIDATES]:
+        fail("oneMKL comparison candidate list changed")
+    old = payload.get("old_canonical_sobol_to_x")
+    if not isinstance(old, dict) or old.get("status") != "unavailable":
+        fail("oneMKL comparison reconstructed the unavailable old x baseline")
+    if payload.get("threading") != {"layer": "sequential", "dynamic": False, "threads": 1}:
+        fail("oneMKL comparison is not single-threaded sequential")
+    if payload.get("candidate_order_shuffle_only") is not True:
+        fail("oneMKL comparison did not preserve shuffled candidate ordering")
+
+    correctness = payload.get("correctness")
+    if not isinstance(correctness, dict) or correctness.get("status") != "PASS":
+        fail("oneMKL Sobol-to-x correctness gate did not pass")
+    contracts = correctness.get("contracts")
+    if not isinstance(contracts, list) or len(contracts) != len(ONEMKL_X_CONTRACTS):
+        fail("oneMKL Sobol-to-x correctness contract coverage mismatch")
+    for index, ((drift, diffusion), record) in enumerate(zip(ONEMKL_X_CONTRACTS, contracts)):
+        if not isinstance(record, dict):
+            fail(f"oneMKL correctness contract {index} is malformed")
+        if abs(float(record.get("drift", 99.0)) - drift) > 1e-7:
+            fail(f"oneMKL correctness drift mismatch for contract {index}")
+        if abs(float(record.get("diffusion", 99.0)) - diffusion) > 1e-7:
+            fail(f"oneMKL correctness diffusion mismatch for contract {index}")
+        ours = record.get("ours")
+        mkl = record.get("oneMKL")
+        if not isinstance(ours, dict) or ours.get("deterministic") is not True:
+            fail(f"our x producer is not deterministic for contract {index}")
+        if not isinstance(mkl, dict):
+            fail(f"oneMKL correctness result missing for contract {index}")
+        if diffusion == 0.0:
+            if mkl.get("status") != "UNSUPPORTED_ZERO_STANDARD_DEVIATION":
+                fail("oneMKL zero-standard-deviation behavior changed")
+        elif mkl.get("status") != "PASS" or mkl.get("deterministic") is not True:
+            fail(f"oneMKL correctness failed for contract {index}")
+
+    timings = payload.get("timings")
+    if not isinstance(timings, list):
+        fail("oneMKL Sobol-to-x timings must be a list")
+    rows: list[dict[str, object]] = []
+    seen: set[tuple[int, str, str]] = set()
+    medians: dict[tuple[int, str, str], int] = {}
+    for item in timings:
+        if not isinstance(item, dict):
+            fail("oneMKL Sobol-to-x timing record must be an object")
+        try:
+            contract = int(item["contract"])
+            mode = str(item["mode"])
+            candidate = str(item["candidate"])
+            median = int(item["median_cycles_per_block"])
+            p10 = int(item["p10"])
+            p90 = int(item["p90"])
+            per_value = float(item["median_cycles_per_value"])
+            raw = [int(value) for value in item["raw_cycles"]]
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"malformed oneMKL Sobol-to-x timing record: {item}: {exc}")
+        if contract not in range(len(ONEMKL_X_CONTRACTS)):
+            fail(f"unexpected oneMKL Sobol-to-x contract: {contract}")
+        if mode not in ONEMKL_X_MODES or candidate not in ONEMKL_X_CANDIDATES:
+            fail(f"unexpected oneMKL Sobol-to-x candidate/mode: {candidate}/{mode}")
+        if contract == 2 and candidate == "oneMKL_native_sobol_to_x":
+            fail("oneMKL zero-standard-deviation case was timed despite being unsupported")
+        if len(raw) != 51:
+            fail(f"oneMKL Sobol-to-x {contract}/{candidate}/{mode} has {len(raw)} samples")
+        ordered = sorted(raw)
+        if (p10, median, p90) != (ordered[5], ordered[25], ordered[45]):
+            fail(f"oneMKL Sobol-to-x percentile mismatch for {contract}/{candidate}/{mode}")
+        if abs(per_value - median / 4096.0) > 0.000001:
+            fail(f"oneMKL Sobol-to-x denominator mismatch for {contract}/{candidate}/{mode}")
+        expected_drift, expected_diffusion = ONEMKL_X_CONTRACTS[contract]
+        if abs(float(item.get("drift", 99.0)) - expected_drift) > 1e-7:
+            fail(f"oneMKL timing drift mismatch for contract {contract}")
+        if abs(float(item.get("diffusion", 99.0)) - expected_diffusion) > 1e-7:
+            fail(f"oneMKL timing diffusion mismatch for contract {contract}")
+        key = (contract, mode, candidate)
+        if key in seen:
+            fail(f"duplicate oneMKL Sobol-to-x timing: {key}")
+        seen.add(key)
+        medians[key] = median
+        rows.append({"kind": "onemkl_sobol_x_native", "contract": contract,
+                     "drift": expected_drift, "diffusion": expected_diffusion,
+                     "candidate": candidate, "mode": mode, "median": median,
+                     "p10": p10, "p90": p90, "cycles_per_value": per_value,
+                     "raw_batches": raw})
+
+    expected = {
+        (contract, mode, candidate)
+        for contract in range(len(ONEMKL_X_CONTRACTS))
+        for mode in ONEMKL_X_MODES
+        for candidate in ONEMKL_X_CANDIDATES
+        if not (contract == 2 and candidate == "oneMKL_native_sobol_to_x")
+    }
+    if seen != expected:
+        fail("oneMKL Sobol-to-x coverage mismatch: "
+             f"missing={sorted(expected - seen)} extra={sorted(seen - expected)}")
+
+    ratios = payload.get("ratios")
+    if not isinstance(ratios, list) or len(ratios) != len(ONEMKL_X_CONTRACTS) * len(ONEMKL_X_MODES):
+        fail("oneMKL Sobol-to-x ratio coverage mismatch")
+    ratio_seen: set[tuple[int, str]] = set()
+    for item in ratios:
+        if not isinstance(item, dict):
+            fail("oneMKL Sobol-to-x ratio record must be an object")
+        try:
+            contract = int(item["contract"])
+            mode = str(item["mode"])
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"malformed oneMKL Sobol-to-x ratio record: {item}: {exc}")
+        key = (contract, mode)
+        if key in ratio_seen:
+            fail(f"duplicate oneMKL Sobol-to-x ratio: {key}")
+        ratio_seen.add(key)
+        if item.get("old_over_new") is not None:
+            fail("oneMKL comparison reported a fabricated old/new ratio")
+        reported = item.get("oneMKL_over_new")
+        if contract == 2:
+            if reported is not None:
+                fail("oneMKL comparison reported a zero-sigma vendor ratio")
+        else:
+            expected_ratio = (medians[(contract, mode, "oneMKL_native_sobol_to_x")]
+                              / medians[(contract, mode, "our_canonical_sobol_to_x")])
+            try:
+                actual_ratio = float(reported)
+            except (TypeError, ValueError) as exc:
+                fail(f"malformed oneMKL Sobol-to-x ratio: {item}: {exc}")
+            if abs(actual_ratio - expected_ratio) > 0.000000001:
+                fail(f"oneMKL Sobol-to-x ratio mismatch for {contract}/{mode}")
+    if not isinstance(payload.get("setup_cycles"), dict):
+        fail("oneMKL Sobol-to-x report omitted setup timings")
+    return rows
+
+
 def parse_xgrowth1_results(stdout: str) -> dict[str, object]:
     """Validate the complete D5 stored-payload x/growth benchmark report."""
     try:
@@ -1572,6 +1751,34 @@ def print_sql18_table(rows: list[dict[str, object]] | None) -> None:
             )
 
 
+def print_onemkl_x_table(rows: list[dict[str, object]] | None) -> None:
+    print("oneMKL vs canonical ordered-D1 Sobol-to-x throughput (different native layouts)")
+    print(f"{'contract':<9} {'candidate':<30} {'mode':<18} {'median':>10} "
+          f"{'p10':>10} {'p90':>10} {'cyc/value':>12}")
+    if rows is None:
+        print(f"{'all':<9} {'all':<30} {'n/a':<18} {'n/a':>10} "
+              f"{'n/a':>10} {'n/a':>10} {'n/a':>12}")
+        return
+    for contract in range(len(ONEMKL_X_CONTRACTS)):
+        for mode in ONEMKL_X_MODES:
+            for candidate in ONEMKL_X_CANDIDATES:
+                matches = [row for row in rows
+                           if row.get("kind") == "onemkl_sobol_x_native"
+                           and row.get("contract") == contract
+                           and row.get("candidate") == candidate
+                           and row.get("mode") == mode]
+                if contract == 2 and candidate == "oneMKL_native_sobol_to_x":
+                    if matches:
+                        fail("oneMKL zero-standard-deviation timing unexpectedly present")
+                    continue
+                if len(matches) != 1:
+                    fail(f"missing oneMKL Sobol-to-x result for {contract}/{candidate}/{mode}")
+                row = matches[0]
+                print(f"{contract:<9} {candidate:<30} {mode:<18} "
+                      f"{int(row['median']):>10} {int(row['p10']):>10} "
+                      f"{int(row['p90']):>10} {float(row['cycles_per_value']):>12.6f}")
+
+
 def print_xgrowth1_table(rows: list[dict[str, object]] | None) -> None:
     print("XGROWTH1 D5 stored-payload x/growth and S/Q/L diagnostic")
     print(
@@ -1806,6 +2013,40 @@ def run_sql18_suite(root: Path) -> tuple[str, list[dict[str, object]]]:
     return bench.stdout, rows
 
 
+def run_onemkl_x_suite(
+    root: Path,
+) -> tuple[str, dict[str, object], list[dict[str, object]]]:
+    bench_bin = root / "bin" / "onemkl_sobol_x_bench"
+    dependencies = ldd(bench_bin)
+    print(f"ldd {bench_bin.name}:")
+    print(dependencies)
+    if "libmkl_rt.so" not in dependencies or "not found" in dependencies:
+        fail("oneMKL runtime is unavailable; install/source oneAPI MKL so "
+             "libmkl_rt.so.3 resolves")
+    results_dir = root / "results"
+    results_dir.mkdir(exist_ok=True)
+    native_path = results_dir / "onemkl_sobol_to_x_native.json"
+    os.environ["MKL_THREADING_LAYER"] = "SEQUENTIAL"
+    os.environ["MKL_NUM_THREADS"] = "1"
+    os.environ["MKL_DYNAMIC"] = "FALSE"
+    bench = run_bin(bench_bin, root, ("--json", str(native_path)))
+    sys.stderr.write(bench.stderr)
+    if bench.returncode != 0:
+        sys.stdout.write(bench.stdout)
+        fail("oneMKL Sobol-to-x benchmark failed")
+    if not any(line.startswith("onemkl_sobol_x benchmark PASS")
+               for line in bench.stdout.splitlines()):
+        sys.stdout.write(bench.stdout)
+        fail("oneMKL Sobol-to-x benchmark omitted its native PASS banner")
+    try:
+        payload = json.loads(native_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        fail(f"oneMKL Sobol-to-x native JSON is unreadable: {exc}")
+    rows = parse_onemkl_x_results(payload)
+    print(f"oneMKL Sobol-to-x bench: validated {len(rows)} native records (table below)")
+    return bench.stdout, payload, rows
+
+
 def run_xgrowth1_suite(
     root: Path,
 ) -> tuple[str, list[dict[str, object]], dict[str, object]]:
@@ -1849,6 +2090,7 @@ def main() -> int:
             "conditional_payoff",
             "xgrowth1",
             "sql18",
+            "onemkl_x",
         ),
         default="all",
         help="which component to run (default: all)",
@@ -1864,6 +2106,7 @@ def main() -> int:
     dim_meta = load_metadata(root / "BUILD_METADATA_dim.json")
     sql18_meta = load_metadata(root / "BUILD_METADATA_sql18.json")
     geometric_cv_meta = load_metadata(root / "BUILD_METADATA_geometric_cv.json")
+    onemkl_x_meta = load_metadata(root / "BUILD_METADATA_onemkl_x.json")
     model, flags = cpu_info()
     avx = avx512_flags(flags)
     print(f"cpu_model={model}")
@@ -1891,6 +2134,7 @@ def main() -> int:
     want_conditional_payoff = args.suite in {"all", "conditional_payoff"}
     want_xgrowth1 = args.suite in {"all", "xgrowth1"}
     want_sql18 = args.suite in {"all", "sql18"}
+    want_onemkl_x = args.suite in {"all", "onemkl_x"}
 
     asian_rows: list[dict[str, object]] | None = None
     dim_rows: list[dict[str, object]] | None = None
@@ -1911,6 +2155,9 @@ def main() -> int:
     xgrowth1_bench = ""
     sql18_rows: list[dict[str, object]] | None = None
     sql18_bench = ""
+    onemkl_x_rows: list[dict[str, object]] | None = None
+    onemkl_x_bench = ""
+    onemkl_x_report: dict[str, object] | None = None
 
     if "avx512f" not in flags:
         print("UNSUPPORTED: CPU lacks avx512f; not launching binaries")
@@ -1930,6 +2177,8 @@ def main() -> int:
             print_xgrowth1_table(None)
         if want_sql18:
             print_sql18_table(None)
+        if want_onemkl_x:
+            print_onemkl_x_table(None)
         print("NO NATIVE DATA COLLECTED — AVX-512F HOST REQUIRED")
         return 2
 
@@ -1955,6 +2204,8 @@ def main() -> int:
         xgrowth1_bench, xgrowth1_rows, xgrowth1_report = run_xgrowth1_suite(root)
     if want_sql18:
         sql18_bench, sql18_rows = run_sql18_suite(root)
+    if want_onemkl_x:
+        onemkl_x_bench, onemkl_x_report, onemkl_x_rows = run_onemkl_x_suite(root)
 
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
@@ -1975,6 +2226,7 @@ def main() -> int:
         "build_metadata_dim": dim_meta,
         "build_metadata_sql18": sql18_meta,
         "build_metadata_geometric_cv": geometric_cv_meta,
+        "build_metadata_onemkl_x": onemkl_x_meta,
         "build_time_static_audit": asian_meta.get("build_time_static_audit"),
         "build_time_static_audit_dim": dim_meta.get("object_audit"),
         "correctness_status": "PASS",
@@ -2072,6 +2324,19 @@ def main() -> int:
             },
             "bench_stdout": sql18_bench,
         },
+        "onemkl_x": None
+        if onemkl_x_rows is None
+        else {
+            "scope": "throughput comparison only; different native Sobol layouts; no adapter",
+            "benchmark_measurements": onemkl_x_rows,
+            "raw_batches": {
+                f"contract{row.get('contract')}/{row.get('mode')}/{row.get('candidate')}": row["raw_batches"]
+                for row in onemkl_x_rows
+                if isinstance(row.get("raw_batches"), list)
+            },
+            "native_report": onemkl_x_report,
+            "bench_stdout": onemkl_x_bench,
+        },
         "utc_timestamp": stamp,
     }
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -2100,6 +2365,9 @@ def main() -> int:
         print()
     if want_sql18:
         print_sql18_table(sql18_rows)
+        print()
+    if want_onemkl_x:
+        print_onemkl_x_table(onemkl_x_rows)
         print()
     print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
     return 0

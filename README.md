@@ -1,8 +1,9 @@
 # AWS bench carrier
 
-This repository benchmarks isolated AVX-512 components. It does not
-include Sobol generation, Gaussian inversion, exponential evaluation as
-a priced kernel, or a complete pricing engine.
+This repository benchmarks isolated AVX-512 components. Except for the
+explicit `onemkl_x` producer-throughput suite, it does not include Sobol
+generation or Gaussian inversion. It does not contain a complete pricing
+engine.
 
 The tree is a test carrier: stripped x86-64 executables, compile-time
 ELF audits in JSON, and a stdlib Python runner. It is not an SDK and
@@ -50,6 +51,12 @@ disassembled.
    mechanics and partial producer-plus-consumer compositions. The path has
    only the 18 certified chronological routes; no result is a complete Asian
    price and no benchmark winner is embedded.
+9. **oneMKL Sobol-to-x throughput comparison** —
+   `bin/onemkl_sobol_x_bench`. This measures 4,096 materialized float values
+   from the qualified canonical ordered-D1 x producer and oneMKL's native
+   32-dimensional Sobol-plus-Gaussian path. The layouts are intentionally
+   different and no permutation adapter is included, so this is a producer
+   throughput comparison, not a value-by-value sequence comparison.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -66,6 +73,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py
 # or: python3 scripts/run_aws.py --suite conditional_payoff
 # or: python3 scripts/run_aws.py --suite xgrowth1
 # or: python3 scripts/run_aws.py --suite sql18
+# or: python3 scripts/run_aws.py --suite onemkl_x
 ```
 
 The runner verifies `SHA256SUMS` (every file except `SHA256SUMS`
@@ -208,6 +216,32 @@ Build-time audits are carried in `BUILD_METADATA_sql18.json` and
 `BUILD_METADATA_geometric_cv.json`. Native AWS timing, not static counts,
 selects among weight schedules.
 
+## oneMKL Sobol-to-x throughput comparison
+
+The `onemkl_x` suite compares exactly 4,096 materialized float outputs per
+timed call under two nonzero contracts. The qualified ordered-D1 candidate
+produces 4,096 consecutive canonical D1 points beginning at Sobol index 8192.
+oneMKL produces 128 native point-major points across 32 dimensions after the
+corresponding native stream skip. No output permutation or compatibility
+claim is made.
+
+Both candidates run single-threaded. Stream restoration, output reset, cache
+conditioning, status checks, and checksums stay outside the timed region. The
+third zero-diffusion contract validates the ordered-D1 producer but is reported
+as unsupported by `vsRngGaussian` and is not timed as a vendor ratio.
+
+The suite requires Intel oneAPI MKL 2026 or another installation providing
+`libmkl_rt.so.3`. With the default installation, run:
+
+```sh
+source /opt/intel/oneapi/setvars.sh
+MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+  PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py --suite onemkl_x
+```
+
+Build provenance and the frozen carrier hashes are in
+`BUILD_METADATA_onemkl_x.json`.
+
 ## Host requirements
 
 - Linux x86-64
@@ -215,6 +249,7 @@ selects among weight schedules.
 - glibc providing `GLIBC_2.34` (`__libc_start_main`); the Asian binaries
   also need `GLIBC_2.29` (`exp`) and `GLIBC_2.27` (`expf`)
 - Python 3 with the standard library only
+- Intel oneAPI MKL runtime providing `libmkl_rt.so.3` for `--suite onemkl_x`
 
 ## Asian S/Q state
 
