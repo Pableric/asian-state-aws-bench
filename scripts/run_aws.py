@@ -6,6 +6,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import math
 import os
 import platform
 import re
@@ -148,6 +149,12 @@ XGROWTH1_CANDIDATES = (
 )
 
 XGROWTH1_MODES = ("warm", "competing_32KiB")
+
+XGROWTH1_SOURCE_CANDIDATES = (
+    "old_growth_source",
+    "new_growth_source",
+    "new_dual_source",
+)
 
 
 def fail(message: str, code: int = 1) -> None:
@@ -970,6 +977,173 @@ def parse_xgrowth1_results(stdout: str) -> dict[str, object]:
         if actual != expected_value:
             fail(f"xgrowth1 incremental field mismatch: {name}")
 
+    source = report.get("source_production")
+    if not isinstance(source, dict):
+        fail("xgrowth1 matched source-production cohort missing")
+    if source.get("candidate_order") != list(XGROWTH1_SOURCE_CANDIDATES):
+        fail("xgrowth1 matched source candidate order changed")
+    if source.get("scope") != (
+        "canonical indices 8192..12287; source production only; "
+        "no D5 permutation, recurrence, setup, or payoff timed"
+    ):
+        fail("xgrowth1 matched source scope changed")
+
+    source_raw_rows = source.get("candidates")
+    if not isinstance(source_raw_rows, list):
+        fail("xgrowth1 matched source rows missing")
+    source_seen: set[tuple[str, str]] = set()
+    source_medians: dict[tuple[str, str], int] = {}
+    for raw_row in source_raw_rows:
+        if not isinstance(raw_row, dict):
+            fail("xgrowth1 matched source row must be an object")
+        try:
+            candidate = str(raw_row["name"])
+            mode = str(raw_row["mode"])
+            median = int(raw_row["median"])
+            p10 = int(raw_row["p10"])
+            p90 = int(raw_row["p90"])
+            cycles_per_block = int(raw_row["cycles_per_block"])
+            cycles_per_value = float(raw_row["cycles_per_value"])
+            raw = [int(value) for value in raw_row["raw"]]
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"malformed xgrowth1 matched source row: {exc}")
+        if candidate not in XGROWTH1_SOURCE_CANDIDATES or mode not in XGROWTH1_MODES:
+            fail(f"unexpected xgrowth1 matched source row: {candidate}/{mode}")
+        key = (candidate, mode)
+        if key in source_seen:
+            fail(f"duplicate xgrowth1 matched source row: {key}")
+        if len(raw) != 51:
+            fail(f"xgrowth1 matched source {candidate}/{mode} has {len(raw)} samples")
+        ordered = sorted(raw)
+        if (p10, median, p90) != (ordered[5], ordered[25], ordered[45]):
+            fail(f"xgrowth1 matched source percentile mismatch: {candidate}/{mode}")
+        if cycles_per_block != median:
+            fail(f"xgrowth1 matched source block denominator mismatch: {candidate}/{mode}")
+        if abs(cycles_per_value - median / 4096.0) > 0.000001:
+            fail(f"xgrowth1 matched source value denominator mismatch: {candidate}/{mode}")
+        source_seen.add(key)
+        source_medians[key] = median
+        rows.append(
+            {
+                "kind": "xgrowth1_source_native",
+                "candidate": candidate,
+                "mode": mode,
+                "median": median,
+                "p10": p10,
+                "p90": p90,
+                "cycles_per_block": cycles_per_block,
+                "cycles_per_value": cycles_per_value,
+                "raw_batches": raw,
+            }
+        )
+    source_expected = {
+        (candidate, mode)
+        for candidate in XGROWTH1_SOURCE_CANDIDATES
+        for mode in XGROWTH1_MODES
+    }
+    if source_seen != source_expected:
+        fail(
+            "xgrowth1 matched source coverage mismatch: "
+            f"missing={sorted(source_expected - source_seen)} "
+            f"extra={sorted(source_seen - source_expected)}"
+        )
+
+    ratios = source.get("ratios_and_delta")
+    if not isinstance(ratios, dict) or set(ratios) != set(XGROWTH1_MODES):
+        fail("xgrowth1 matched source ratios missing")
+    for mode in XGROWTH1_MODES:
+        row = ratios[mode]
+        if not isinstance(row, dict):
+            fail(f"xgrowth1 matched source ratio row malformed: {mode}")
+        old = source_medians[("old_growth_source", mode)]
+        new_growth = source_medians[("new_growth_source", mode)]
+        new_dual = source_medians[("new_dual_source", mode)]
+        try:
+            old_over_growth = float(row["old_over_new_growth"])
+            old_over_dual = float(row["old_over_new_dual"])
+            dual_delta = int(row["new_dual_minus_new_growth"])
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"xgrowth1 matched source ratio row malformed: {mode}: {exc}")
+        if abs(old_over_growth - old / new_growth) > 0.000000001:
+            fail(f"xgrowth1 old/new-growth ratio mismatch: {mode}")
+        if abs(old_over_dual - old / new_dual) > 0.000000001:
+            fail(f"xgrowth1 old/new-dual ratio mismatch: {mode}")
+        if dual_delta != new_dual - new_growth:
+            fail(f"xgrowth1 dual-growth delta mismatch: {mode}")
+
+    correctness = source.get("correctness")
+    if not isinstance(correctness, dict):
+        fail("xgrowth1 matched source correctness report missing")
+    limits = correctness.get("growth_relative_limits")
+    if limits != {
+        "old_p8_vs_exp_of_frozen_z": 4e-7,
+        "new_growth_complete": 3e-7,
+        "new_dual_complete": 3e-7,
+    }:
+        fail("xgrowth1 matched source growth limits changed")
+    frozen = correctness.get("frozen_z_limits")
+    if not isinstance(frozen, dict) or frozen != {
+        "all_max_absolute": 0.013,
+        "hard_max_absolute": 5e-7,
+        "runtime_bit_mismatches_vs_fixture": 0,
+    }:
+        fail("xgrowth1 frozen Z contract or fixture identity failed")
+    try:
+        dual_x_limit = float(correctness["dual_x_absolute_limit"])
+        dual_x_max = float(correctness["dual_x_max_absolute"])
+    except (KeyError, TypeError, ValueError) as exc:
+        fail(f"xgrowth1 dual x correctness malformed: {exc}")
+    if not math.isfinite(dual_x_max) or dual_x_max > dual_x_limit:
+        fail("xgrowth1 dual x correctness gate failed")
+
+    pairwise = correctness.get("pairwise")
+    if not isinstance(pairwise, dict):
+        fail("xgrowth1 pairwise correctness missing")
+    new_pair = pairwise.get("new_growth_vs_new_dual")
+    if new_pair != {"bit_identical": True, "mismatches": 0, "max_ulp": 0}:
+        fail("xgrowth1 new growth and dual growth are not bit-identical")
+    for name in ("old_vs_new_growth", "old_vs_new_dual"):
+        item = pairwise.get(name)
+        if not isinstance(item, dict) or item.get("bit_identical") is not False:
+            fail(f"xgrowth1 expected old/new distinction missing: {name}")
+        if int(item.get("mismatches", 0)) <= 0 or int(item.get("max_ulp", 0)) <= 0:
+            fail(f"xgrowth1 expected old/new error metrics missing: {name}")
+
+    accuracy_rows = correctness.get("candidates")
+    if not isinstance(accuracy_rows, list):
+        fail("xgrowth1 source accuracy rows missing")
+    accuracy_by_name: dict[str, dict[str, object]] = {}
+    for row in accuracy_rows:
+        if not isinstance(row, dict) or str(row.get("name")) in accuracy_by_name:
+            fail("xgrowth1 source accuracy row malformed or duplicated")
+        accuracy_by_name[str(row.get("name"))] = row
+        for field in (
+            "complete_growth_max_relative_vs_true_mpfr",
+            "local_exp_max_relative",
+            "hard_growth_max_relative_vs_true_mpfr",
+            "call_price",
+            "call_reference",
+            "call_error",
+            "put_price",
+            "put_reference",
+            "put_error",
+        ):
+            try:
+                value = float(row[field])
+            except (KeyError, TypeError, ValueError) as exc:
+                fail(f"xgrowth1 source accuracy field malformed: {field}: {exc}")
+            if not math.isfinite(value):
+                fail(f"xgrowth1 source accuracy field non-finite: {field}")
+        if int(row.get("exercise_decision_flips", -1)) != 0:
+            fail(f"xgrowth1 source exercise flips: {row.get('name')}")
+    if set(accuracy_by_name) != set(XGROWTH1_SOURCE_CANDIDATES):
+        fail("xgrowth1 source accuracy candidate coverage mismatch")
+    if float(accuracy_by_name["old_growth_source"]["local_exp_max_relative"]) > 4e-7:
+        fail("xgrowth1 old local P8 gate failed")
+    for name in ("new_growth_source", "new_dual_source"):
+        if float(accuracy_by_name[name]["complete_growth_max_relative_vs_true_mpfr"]) > 3e-7:
+            fail(f"xgrowth1 complete true-MPFR growth gate failed: {name}")
+
     nominal = report.get("nominal_bytes")
     expected_nominal = {
         "growth_source": 16384,
@@ -1253,6 +1427,38 @@ def print_xgrowth1_table(rows: list[dict[str, object]] | None) -> None:
                 f"{int(row['p10']):>10} {int(row['p90']):>10} "
                 f"{float(row['cycles_per_packet']):>12.6f}"
             )
+    print()
+    print("XGROWTH1 matched canonical source production")
+    print(
+        f"{'candidate':<28} {'mode':<18} {'median':>10} {'p10':>10} "
+        f"{'p90':>10} {'cyc/value':>12}"
+    )
+    for mode in XGROWTH1_MODES:
+        mode_rows: dict[str, dict[str, object]] = {}
+        for candidate in XGROWTH1_SOURCE_CANDIDATES:
+            matches = [
+                row
+                for row in rows
+                if row.get("kind") == "xgrowth1_source_native"
+                and row.get("candidate") == candidate
+                and row.get("mode") == mode
+            ]
+            if len(matches) != 1:
+                fail(f"missing xgrowth1 matched source result for {candidate}/{mode}")
+            row = matches[0]
+            mode_rows[candidate] = row
+            print(
+                f"{candidate:<28} {mode:<18} {int(row['median']):>10} "
+                f"{int(row['p10']):>10} {int(row['p90']):>10} "
+                f"{float(row['cycles_per_value']):>12.6f}"
+            )
+        old = int(mode_rows["old_growth_source"]["median"])
+        growth = int(mode_rows["new_growth_source"]["median"])
+        dual = int(mode_rows["new_dual_source"]["median"])
+        print(
+            f"source_summary mode={mode} old/new_growth={old / growth:.6f} "
+            f"old/new_dual={old / dual:.6f} dual-growth={dual - growth}"
+        )
 
 
 def run_asian_suite(

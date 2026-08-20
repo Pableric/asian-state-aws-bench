@@ -167,6 +167,21 @@ The deciding comparison is `fused_dual_provider_sql` against
 transition. It does not implement missing dimensions, a complete chronological
 path, payoff, conditioning, or production routing.
 
+A second, separately shuffled cohort answers the source-production question
+under the same native protocol:
+
+```text
+old_growth_source: corrected D1 Z producer -> frozen P8 growth conversion
+new_growth_source: position-aware Sobol -> growth directly
+new_dual_source:   position-aware Sobol -> x and growth directly
+```
+
+The runner validates both accuracy contracts independently. The frozen path's
+P8 result is checked relative to its certified approximate Z payload, while the
+new paths are checked against true correctly rounded MPFR growth with the
+complete 3e-7 relative-error gate. It also reports the frozen path's true-MPFR
+and normalized call/put proxy errors; none of that correctness work is timed.
+
 ## Host requirements
 
 - Linux x86-64
