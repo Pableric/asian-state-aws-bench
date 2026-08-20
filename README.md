@@ -43,6 +43,13 @@ disassembled.
    D1 x/growth arrays first, applies the same prepared D5 affine source map to
    both payloads, and compares growth-only S/Q with dual S/Q/L. It is one
    fixing only and is not a complete Asian price.
+8. **Weighted S/Q/L and geometric-control diagnostic** —
+   `bin/asian_affine_dual_sql_18diag_bench`. This compares the frozen S/Q
+   path with memory-broadcast, decrementing-weight, explicit-broadcast, and
+   general-loop S/Q/L paths. It also times arithmetic/geometric payoff
+   mechanics and partial producer-plus-consumer compositions. The path has
+   only the 18 certified chronological routes; no result is a complete Asian
+   price and no benchmark winner is embedded.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -58,6 +65,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py
 # or: python3 scripts/run_aws.py --suite conditional18
 # or: python3 scripts/run_aws.py --suite conditional_payoff
 # or: python3 scripts/run_aws.py --suite xgrowth1
+# or: python3 scripts/run_aws.py --suite sql18
 ```
 
 The runner verifies `SHA256SUMS` (every file except `SHA256SUMS`
@@ -181,6 +189,24 @@ P8 result is checked relative to its certified approximate Z payload, while the
 new paths are checked against true correctly rounded MPFR growth with the
 complete 3e-7 relative-error gate. It also reports the frozen path's true-MPFR
 and normalized call/put proxy errors; none of that correctness work is timed.
+
+## Weighted S/Q/L and geometric-control diagnostic
+
+The `sql18` suite runs a standalone correctness gate before timing and then
+validates all 18 native candidate/mode records. Its primary kernel keeps two
+halves each of S, Q, and weighted-log state L live across the complete partial
+chronology. Exact zero-based weights are `(32-k)/32` for `k=0..17`.
+
+Three otherwise matched weight schedules are measured: EVEX scalar-memory
+broadcast operands, a bit-qualified decrementing vector, and explicit scalar
+broadcast. A general route-count loop is reported separately. Payoff-only and
+producer-plus-consumer rows remain partial mechanics; the executable emits
+`complete_price_cycles: null` because 14 future dimensions are unresolved.
+The scalar libm oracle is excluded from candidate ranking.
+
+Build-time audits are carried in `BUILD_METADATA_sql18.json` and
+`BUILD_METADATA_geometric_cv.json`. Native AWS timing, not static counts,
+selects among weight schedules.
 
 ## Host requirements
 

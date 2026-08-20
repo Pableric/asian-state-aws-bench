@@ -20,12 +20,15 @@ ALLOWLIST = (
     ".gitignore",
     "BUILD_METADATA.json",
     "BUILD_METADATA_dim.json",
+    "BUILD_METADATA_geometric_cv.json",
+    "BUILD_METADATA_sql18.json",
     "LICENSE",
     "README.md",
     "bin/asian_state_bench",
     "bin/asian_state_test",
     "bin/asian_affine_18diag_bench",
     "bin/asian_affine_conditional_18diag_bench",
+    "bin/asian_affine_dual_sql_18diag_bench",
     "bin/asian_conditional_payoff_18diag_bench",
     "bin/asian_affine_growth_18diag_bench",
     "bin/asian_affine_x_growth_1dim_bench",
@@ -155,6 +158,20 @@ XGROWTH1_SOURCE_CANDIDATES = (
     "new_growth_source",
     "new_dual_source",
 )
+
+SQL18_CANDIDATES = (
+    "path_frozen_sq",
+    "path_sql_memory_bcst",
+    "path_sql_decrement",
+    "path_sql_explicit_bcst",
+    "path_sql_general_loop",
+    "payoff_arithmetic_only",
+    "payoff_geometric_only",
+    "partial_complete_arithmetic_diag",
+    "partial_complete_geometric_cv_diag",
+)
+
+SQL18_MODES = ("warm", "competing_32KiB")
 
 
 def fail(message: str, code: int = 1) -> None:
@@ -860,6 +877,130 @@ def parse_conditional_payoff_results(stdout: str) -> list[dict[str, object]]:
     return rows
 
 
+def parse_sql18_results(stdout: str) -> list[dict[str, object]]:
+    """Validate the partial weighted S/Q/L and geometric-payoff diagnostic."""
+    try:
+        payload = json.loads(stdout)
+    except json.JSONDecodeError as exc:
+        fail(f"sql18 benchmark did not emit valid JSON: {exc}")
+    if not isinstance(payload, dict):
+        fail("sql18 benchmark JSON must be an object")
+    if payload.get("status") != "PASS" or payload.get("native_avx512") is not True:
+        fail("sql18 benchmark did not report native PASS")
+    if payload.get("warmups") != 16 or payload.get("samples") != 51:
+        fail("sql18 benchmark warmup/sample contract mismatch")
+    if payload.get("scope") != "partial_18diag_path_and_payoff_mechanics; not an Asian price":
+        fail("sql18 benchmark did not preserve partial-price scope")
+    if payload.get("complete_price_cycles") is not None or payload.get("winner") is not None:
+        fail("sql18 benchmark made a forbidden complete-price or winner claim")
+    if payload.get("complete_price_reason") != "14 future dimensions unresolved":
+        fail("sql18 benchmark omitted unresolved-dimension reason")
+
+    candidates = payload.get("candidates")
+    if not isinstance(candidates, list):
+        fail("sql18 benchmark candidates must be a list")
+    rows: list[dict[str, object]] = []
+    seen: set[tuple[str, str]] = set()
+    medians: dict[tuple[str, str], int] = {}
+    for item in candidates:
+        if not isinstance(item, dict):
+            fail("sql18 candidate record must be an object")
+        try:
+            candidate = str(item["name"])
+            mode = str(item["mode"])
+            median = int(item["median"])
+            p10 = int(item["p10"])
+            p90 = int(item["p90"])
+            packet_fixing = float(item["cycles_per_packet_fixing"])
+            path_fixing = float(item["cycles_per_path_fixing"])
+            raw = [int(value) for value in item["raw"]]
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"malformed sql18 candidate record: {item}: {exc}")
+        if candidate not in SQL18_CANDIDATES or mode not in SQL18_MODES:
+            fail(f"unexpected sql18 candidate/mode: {candidate}/{mode}")
+        if len(raw) != 51:
+            fail(f"sql18 {candidate}/{mode} has {len(raw)} samples, expected 51")
+        ordered = sorted(raw)
+        if (p10, median, p90) != (ordered[5], ordered[25], ordered[45]):
+            fail(f"sql18 percentile mismatch for {candidate}/{mode}")
+        if abs(packet_fixing - median / (128.0 * 18.0)) > 0.000001:
+            fail(f"sql18 packet-fixing denominator mismatch for {candidate}/{mode}")
+        if abs(path_fixing - median / (4096.0 * 18.0)) > 0.000000001:
+            fail(f"sql18 path-fixing denominator mismatch for {candidate}/{mode}")
+        key = (candidate, mode)
+        if key in seen:
+            fail(f"duplicate sql18 result: {key}")
+        seen.add(key)
+        medians[key] = median
+        rows.append(
+            {
+                "kind": "sql18_native",
+                "candidate": candidate,
+                "mode": mode,
+                "median": median,
+                "p10": p10,
+                "p90": p90,
+                "cycles_per_packet_fixing": packet_fixing,
+                "cycles_per_path_fixing": path_fixing,
+                "raw_batches": raw,
+            }
+        )
+
+    expected = {
+        (candidate, mode)
+        for candidate in SQL18_CANDIDATES
+        for mode in SQL18_MODES
+    }
+    if seen != expected:
+        fail(
+            "sql18 result coverage mismatch: "
+            f"missing={sorted(expected - seen)} extra={sorted(seen - expected)}"
+        )
+
+    increments = payload.get("incremental_vs_frozen_sq")
+    if not isinstance(increments, dict):
+        fail("sql18 benchmark missing incremental comparison")
+    for mode in SQL18_MODES:
+        reported = increments.get(mode)
+        if not isinstance(reported, dict):
+            fail(f"sql18 benchmark missing {mode} incremental comparison")
+        baseline = medians[("path_frozen_sq", mode)]
+        for candidate in SQL18_CANDIDATES[1:]:
+            try:
+                delta = int(reported[candidate])
+            except (KeyError, TypeError, ValueError) as exc:
+                fail(f"malformed sql18 increment for {candidate}/{mode}: {exc}")
+            if delta != medians[(candidate, mode)] - baseline:
+                fail(f"sql18 increment mismatch for {candidate}/{mode}")
+
+    scalar = payload.get("scalar_libm_oracle_excluded")
+    setup = payload.get("setup")
+    if not isinstance(scalar, dict) or not isinstance(setup, dict):
+        fail("sql18 benchmark missing scalar-oracle/setup records")
+    try:
+        scalar_p10 = int(scalar["p10"])
+        scalar_median = int(scalar["median"])
+        scalar_p90 = int(scalar["p90"])
+        route_setup = int(setup["route_and_producer_median"])
+        payoff_setup = int(setup["payoff_median"])
+        equivalent = float(setup["equivalent_partial_cv_blocks"])
+    except (KeyError, TypeError, ValueError) as exc:
+        fail(f"malformed sql18 scalar-oracle/setup records: {exc}")
+    if not scalar_p10 <= scalar_median <= scalar_p90:
+        fail("sql18 scalar-oracle percentile order invalid")
+    if route_setup < 0 or payoff_setup < 0 or equivalent < 0:
+        fail("sql18 setup record contains negative values")
+    rows.append(
+        {
+            "kind": "sql18_summary",
+            "scalar_libm_oracle_excluded": scalar,
+            "setup": setup,
+            "incremental_vs_frozen_sq": increments,
+        }
+    )
+    return rows
+
+
 def parse_xgrowth1_results(stdout: str) -> dict[str, object]:
     """Validate the complete D5 stored-payload x/growth benchmark report."""
     try:
@@ -1403,6 +1544,34 @@ def print_conditional_payoff_table(rows: list[dict[str, object]] | None) -> None
             )
 
 
+def print_sql18_table(rows: list[dict[str, object]] | None) -> None:
+    print("SQL18 weighted S/Q/L and geometric-control diagnostic (partial 18 routes)")
+    print(
+        f"{'candidate':<42} {'mode':<18} {'median':>10} {'p10':>10} "
+        f"{'p90':>10} {'cyc/pkt-fix':>12}"
+    )
+    if rows is None:
+        print(f"{'all':<42} {'n/a':<18} {'n/a':>10} {'n/a':>10} {'n/a':>10} {'n/a':>12}")
+        return
+    for mode in SQL18_MODES:
+        for candidate in SQL18_CANDIDATES:
+            matches = [
+                row
+                for row in rows
+                if row.get("kind") == "sql18_native"
+                and row.get("candidate") == candidate
+                and row.get("mode") == mode
+            ]
+            if len(matches) != 1:
+                fail(f"missing sql18 result for {candidate}/{mode}")
+            row = matches[0]
+            print(
+                f"{candidate:<42} {mode:<18} {int(row['median']):>10} "
+                f"{int(row['p10']):>10} {int(row['p90']):>10} "
+                f"{float(row['cycles_per_packet_fixing']):>12.6f}"
+            )
+
+
 def print_xgrowth1_table(rows: list[dict[str, object]] | None) -> None:
     print("XGROWTH1 D5 stored-payload x/growth and S/Q/L diagnostic")
     print(
@@ -1613,6 +1782,30 @@ def run_conditional_payoff_suite(
     return bench.stdout, rows
 
 
+def run_sql18_suite(root: Path) -> tuple[str, list[dict[str, object]]]:
+    bench_bin = root / "bin" / "asian_affine_dual_sql_18diag_bench"
+    print(f"ldd {bench_bin.name}:")
+    print(ldd(bench_bin))
+
+    check = run_bin(bench_bin, root, ("--check-only",))
+    sys.stderr.write(check.stderr)
+    expected = "asian_sql18_bench correctness=PASS timing=SKIPPED"
+    if check.returncode != 0 or expected not in check.stdout.splitlines():
+        sys.stdout.write(check.stdout)
+        fail("sql18 standalone correctness gate failed")
+    print(expected)
+
+    bench = run_bin(bench_bin, root)
+    sys.stderr.write(bench.stderr)
+    if bench.returncode != 0:
+        sys.stdout.write(bench.stdout)
+        fail("sql18 benchmark or its pre-timing correctness checks failed")
+    rows = parse_sql18_results(bench.stdout)
+    native_rows = [row for row in rows if row.get("kind") == "sql18_native"]
+    print(f"sql18 bench: validated {len(native_rows)} native records (table below)")
+    return bench.stdout, rows
+
+
 def run_xgrowth1_suite(
     root: Path,
 ) -> tuple[str, list[dict[str, object]], dict[str, object]]:
@@ -1655,6 +1848,7 @@ def main() -> int:
             "conditional18",
             "conditional_payoff",
             "xgrowth1",
+            "sql18",
         ),
         default="all",
         help="which component to run (default: all)",
@@ -1668,6 +1862,8 @@ def main() -> int:
     hashes = verify_checksums(root)
     asian_meta = load_metadata(root / "BUILD_METADATA.json")
     dim_meta = load_metadata(root / "BUILD_METADATA_dim.json")
+    sql18_meta = load_metadata(root / "BUILD_METADATA_sql18.json")
+    geometric_cv_meta = load_metadata(root / "BUILD_METADATA_geometric_cv.json")
     model, flags = cpu_info()
     avx = avx512_flags(flags)
     print(f"cpu_model={model}")
@@ -1694,6 +1890,7 @@ def main() -> int:
     want_conditional18 = args.suite in {"all", "conditional18"}
     want_conditional_payoff = args.suite in {"all", "conditional_payoff"}
     want_xgrowth1 = args.suite in {"all", "xgrowth1"}
+    want_sql18 = args.suite in {"all", "sql18"}
 
     asian_rows: list[dict[str, object]] | None = None
     dim_rows: list[dict[str, object]] | None = None
@@ -1712,6 +1909,8 @@ def main() -> int:
     xgrowth1_rows: list[dict[str, object]] | None = None
     xgrowth1_report: dict[str, object] | None = None
     xgrowth1_bench = ""
+    sql18_rows: list[dict[str, object]] | None = None
+    sql18_bench = ""
 
     if "avx512f" not in flags:
         print("UNSUPPORTED: CPU lacks avx512f; not launching binaries")
@@ -1729,6 +1928,8 @@ def main() -> int:
             print_conditional_payoff_table(None)
         if want_xgrowth1:
             print_xgrowth1_table(None)
+        if want_sql18:
+            print_sql18_table(None)
         print("NO NATIVE DATA COLLECTED — AVX-512F HOST REQUIRED")
         return 2
 
@@ -1752,6 +1953,8 @@ def main() -> int:
         conditional_payoff_bench, conditional_payoff_rows = run_conditional_payoff_suite(root)
     if want_xgrowth1:
         xgrowth1_bench, xgrowth1_rows, xgrowth1_report = run_xgrowth1_suite(root)
+    if want_sql18:
+        sql18_bench, sql18_rows = run_sql18_suite(root)
 
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
@@ -1770,6 +1973,8 @@ def main() -> int:
         "binary_hashes": hashes,
         "build_metadata": asian_meta,
         "build_metadata_dim": dim_meta,
+        "build_metadata_sql18": sql18_meta,
+        "build_metadata_geometric_cv": geometric_cv_meta,
         "build_time_static_audit": asian_meta.get("build_time_static_audit"),
         "build_time_static_audit_dim": dim_meta.get("object_audit"),
         "correctness_status": "PASS",
@@ -1855,6 +2060,18 @@ def main() -> int:
             "native_report": xgrowth1_report,
             "bench_stdout": xgrowth1_bench,
         },
+        "sql18": None
+        if sql18_rows is None
+        else {
+            "scope": "partial_18_routes_weighted_sql_and_geometric_control_mechanics",
+            "benchmark_measurements": sql18_rows,
+            "raw_batches": {
+                f"{row.get('mode')}/{row.get('candidate')}": row["raw_batches"]
+                for row in sql18_rows
+                if isinstance(row.get("raw_batches"), list)
+            },
+            "bench_stdout": sql18_bench,
+        },
         "utc_timestamp": stamp,
     }
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -1880,6 +2097,9 @@ def main() -> int:
         print()
     if want_xgrowth1:
         print_xgrowth1_table(xgrowth1_rows)
+        print()
+    if want_sql18:
+        print_sql18_table(sql18_rows)
         print()
     print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
     return 0
