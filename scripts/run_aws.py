@@ -27,6 +27,7 @@ ALLOWLIST = (
     "bin/asian_affine_conditional_18diag_bench",
     "bin/asian_conditional_payoff_18diag_bench",
     "bin/asian_affine_growth_18diag_bench",
+    "bin/asian_affine_x_growth_1dim_bench",
     "bin/dim_permute_bench",
     "bin/dim_permute_test",
     "direction_numbers/joe_kuo_6_21201.bin",
@@ -132,6 +133,21 @@ CONDITIONAL_PAYOFF_CANDIDATES = (
     "combined_d1_conditional_lut4096",
     "scalar_accurate_research_oracle",
 )
+
+XGROWTH1_CANDIDATES = (
+    "canonical_growth_producer",
+    "canonical_dual_x_growth_producer",
+    "growth_affine_provider",
+    "dual_affine_provider",
+    "recurrence_sq",
+    "recurrence_sql",
+    "fused_growth_provider_sq",
+    "fused_dual_provider_sql",
+    "combined_growth_producer_fused_sq",
+    "combined_dual_producer_fused_sql",
+)
+
+XGROWTH1_MODES = ("warm", "competing_32KiB")
 
 
 def fail(message: str, code: int = 1) -> None:
@@ -837,6 +853,138 @@ def parse_conditional_payoff_results(stdout: str) -> list[dict[str, object]]:
     return rows
 
 
+def parse_xgrowth1_results(stdout: str) -> dict[str, object]:
+    """Validate the complete D5 stored-payload x/growth benchmark report."""
+    try:
+        report = json.loads(stdout)
+    except json.JSONDecodeError as exc:
+        fail(f"malformed xgrowth1 JSON output: {exc}")
+    if not isinstance(report, dict):
+        fail("xgrowth1 output must be a JSON object")
+    if report.get("status") != "PASS" or report.get("native_avx512") is not True:
+        fail("xgrowth1 benchmark did not report native PASS")
+    if report.get("samples") != 51 or report.get("warmups") != 16:
+        fail("xgrowth1 benchmark used unexpected sample/warmup counts")
+    if report.get("protocols") != list(XGROWTH1_MODES):
+        fail("xgrowth1 benchmark used unexpected cache protocols")
+
+    raw_rows = report.get("candidates")
+    if not isinstance(raw_rows, list):
+        fail("xgrowth1 candidate rows missing")
+    rows: list[dict[str, object]] = []
+    seen: set[tuple[str, str]] = set()
+    medians: dict[tuple[str, str], int] = {}
+    for raw_row in raw_rows:
+        if not isinstance(raw_row, dict):
+            fail("xgrowth1 candidate row must be an object")
+        try:
+            candidate = str(raw_row["name"])
+            mode = str(raw_row["mode"])
+            median = int(raw_row["median"])
+            p10 = int(raw_row["p10"])
+            p90 = int(raw_row["p90"])
+            cycles_per_packet = float(raw_row["cycles_per_packet"])
+            cycles_per_dimension = int(raw_row["cycles_per_dimension"])
+            raw = [int(value) for value in raw_row["raw"]]
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"malformed xgrowth1 row: {exc}")
+        if candidate not in XGROWTH1_CANDIDATES or mode not in XGROWTH1_MODES:
+            fail(f"unexpected xgrowth1 candidate/mode: {candidate}/{mode}")
+        key = (candidate, mode)
+        if key in seen:
+            fail(f"duplicate xgrowth1 row: {key}")
+        if len(raw) != 51:
+            fail(f"xgrowth1 {candidate}/{mode} has {len(raw)} samples")
+        ordered = sorted(raw)
+        if (p10, median, p90) != (ordered[5], ordered[25], ordered[45]):
+            fail(f"xgrowth1 percentile mismatch: {candidate}/{mode}")
+        if abs(cycles_per_packet - median / 128.0) > 0.000001:
+            fail(f"xgrowth1 packet denominator mismatch: {candidate}/{mode}")
+        if cycles_per_dimension != median:
+            fail(f"xgrowth1 dimension denominator mismatch: {candidate}/{mode}")
+        seen.add(key)
+        medians[key] = median
+        rows.append(
+            {
+                "kind": "xgrowth1_native",
+                "candidate": candidate,
+                "mode": mode,
+                "median": median,
+                "p10": p10,
+                "p90": p90,
+                "cycles_per_packet": cycles_per_packet,
+                "cycles_per_dimension": cycles_per_dimension,
+                "raw_batches": raw,
+            }
+        )
+
+    expected = {
+        (candidate, mode)
+        for candidate in XGROWTH1_CANDIDATES
+        for mode in XGROWTH1_MODES
+    }
+    if seen != expected:
+        fail(
+            "xgrowth1 coverage mismatch: "
+            f"missing={sorted(expected - seen)} extra={sorted(seen - expected)}"
+        )
+
+    setup = report.get("setup")
+    if not isinstance(setup, dict) or set(setup) != {"growth", "dual"}:
+        fail("xgrowth1 setup measurements missing")
+    for name in ("growth", "dual"):
+        row = setup[name]
+        if not isinstance(row, dict):
+            fail(f"xgrowth1 {name} setup row malformed")
+        try:
+            p10, median, p90 = int(row["p10"]), int(row["median"]), int(row["p90"])
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"xgrowth1 {name} setup row malformed: {exc}")
+        if not p10 <= median <= p90:
+            fail(f"xgrowth1 {name} setup percentile order invalid")
+
+    incremental = report.get("incremental_median_cycles")
+    if not isinstance(incremental, dict):
+        fail("xgrowth1 incremental medians missing")
+    expected_incremental = {
+        "warm_x_producer": medians[("canonical_dual_x_growth_producer", "warm")]
+        - medians[("canonical_growth_producer", "warm")],
+        "warm_x_provider": medians[("dual_affine_provider", "warm")]
+        - medians[("growth_affine_provider", "warm")],
+        "warm_l_recurrence": medians[("recurrence_sql", "warm")]
+        - medians[("recurrence_sq", "warm")],
+        "warm_fused_dual_minus_growth": medians[("fused_dual_provider_sql", "warm")]
+        - medians[("fused_growth_provider_sq", "warm")],
+        "warm_combined_dual_minus_growth": medians[("combined_dual_producer_fused_sql", "warm")]
+        - medians[("combined_growth_producer_fused_sq", "warm")],
+        "competing_fused_dual_minus_growth": medians[("fused_dual_provider_sql", "competing_32KiB")]
+        - medians[("fused_growth_provider_sq", "competing_32KiB")],
+        "dual_setup_minus_growth": int(setup["dual"]["median"])
+        - int(setup["growth"]["median"]),
+    }
+    for name, expected_value in expected_incremental.items():
+        try:
+            actual = int(incremental[name])
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"xgrowth1 incremental field {name} malformed: {exc}")
+        if actual != expected_value:
+            fail(f"xgrowth1 incremental field mismatch: {name}")
+
+    nominal = report.get("nominal_bytes")
+    expected_nominal = {
+        "growth_source": 16384,
+        "dual_sources": 32768,
+        "affine_map": 448,
+        "sq_state": 32768,
+        "sql_state": 49152,
+        "carrier_context": 181568,
+        "diagnostic_context": 182080,
+    }
+    if nominal != expected_nominal:
+        fail("xgrowth1 nominal footprint report mismatch")
+    return {"report": report, "rows": rows}
+
+
 def sanitize(name: str) -> str:
     out = []
     for ch in name.lower():
@@ -1081,6 +1229,32 @@ def print_conditional_payoff_table(rows: list[dict[str, object]] | None) -> None
             )
 
 
+def print_xgrowth1_table(rows: list[dict[str, object]] | None) -> None:
+    print("XGROWTH1 D5 stored-payload x/growth and S/Q/L diagnostic")
+    print(
+        f"{'candidate':<44} {'mode':<18} {'median':>10} {'p10':>10} "
+        f"{'p90':>10} {'cyc/packet':>12}"
+    )
+    if rows is None:
+        print(f"{'all':<44} {'n/a':<18} {'n/a':>10} {'n/a':>10} {'n/a':>10} {'n/a':>12}")
+        return
+    for mode in XGROWTH1_MODES:
+        for candidate in XGROWTH1_CANDIDATES:
+            matches = [
+                row
+                for row in rows
+                if row.get("candidate") == candidate and row.get("mode") == mode
+            ]
+            if len(matches) != 1:
+                fail(f"missing xgrowth1 result for {candidate}/{mode}")
+            row = matches[0]
+            print(
+                f"{candidate:<44} {mode:<18} {int(row['median']):>10} "
+                f"{int(row['p10']):>10} {int(row['p90']):>10} "
+                f"{float(row['cycles_per_packet']):>12.6f}"
+            )
+
+
 def run_asian_suite(
     name: str,
     test_bin: Path,
@@ -1233,6 +1407,34 @@ def run_conditional_payoff_suite(
     return bench.stdout, rows
 
 
+def run_xgrowth1_suite(
+    root: Path,
+) -> tuple[str, list[dict[str, object]], dict[str, object]]:
+    bench_bin = root / "bin" / "asian_affine_x_growth_1dim_bench"
+    print(f"ldd {bench_bin.name}:")
+    print(ldd(bench_bin))
+
+    check = run_bin(bench_bin, root, ("--check-only",))
+    sys.stderr.write(check.stderr)
+    expected = "asian_affine_x_growth_1dim_bench correctness=PASS timing=SKIPPED"
+    if check.returncode != 0 or expected not in check.stdout.splitlines():
+        sys.stdout.write(check.stdout)
+        fail("xgrowth1 standalone correctness gate failed")
+    print(expected)
+
+    bench = run_bin(bench_bin, root)
+    sys.stderr.write(bench.stderr)
+    if bench.returncode != 0:
+        sys.stdout.write(bench.stdout)
+        fail("xgrowth1 benchmark or its repeated pre-timing correctness checks failed")
+    parsed = parse_xgrowth1_results(bench.stdout)
+    rows = parsed["rows"]
+    if not isinstance(rows, list):
+        fail("internal xgrowth1 row parsing failure")
+    print(f"xgrowth1 bench: validated {len(rows)} native records (table below)")
+    return bench.stdout, rows, parsed["report"]
+
+
 def main() -> int:
     os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
     parser = argparse.ArgumentParser(description="Run isolated AWS bench carriers")
@@ -1246,6 +1448,7 @@ def main() -> int:
             "growth18",
             "conditional18",
             "conditional_payoff",
+            "xgrowth1",
         ),
         default="all",
         help="which component to run (default: all)",
@@ -1284,6 +1487,7 @@ def main() -> int:
     want_growth18 = args.suite in {"all", "growth18"}
     want_conditional18 = args.suite in {"all", "conditional18"}
     want_conditional_payoff = args.suite in {"all", "conditional_payoff"}
+    want_xgrowth1 = args.suite in {"all", "xgrowth1"}
 
     asian_rows: list[dict[str, object]] | None = None
     dim_rows: list[dict[str, object]] | None = None
@@ -1299,6 +1503,9 @@ def main() -> int:
     conditional18_bench = ""
     conditional_payoff_rows: list[dict[str, object]] | None = None
     conditional_payoff_bench = ""
+    xgrowth1_rows: list[dict[str, object]] | None = None
+    xgrowth1_report: dict[str, object] | None = None
+    xgrowth1_bench = ""
 
     if "avx512f" not in flags:
         print("UNSUPPORTED: CPU lacks avx512f; not launching binaries")
@@ -1314,6 +1521,8 @@ def main() -> int:
             print_conditional18_table(None)
         if want_conditional_payoff:
             print_conditional_payoff_table(None)
+        if want_xgrowth1:
+            print_xgrowth1_table(None)
         print("NO NATIVE DATA COLLECTED — AVX-512F HOST REQUIRED")
         return 2
 
@@ -1335,6 +1544,8 @@ def main() -> int:
         conditional18_bench, conditional18_rows = run_conditional18_suite(root)
     if want_conditional_payoff:
         conditional_payoff_bench, conditional_payoff_rows = run_conditional_payoff_suite(root)
+    if want_xgrowth1:
+        xgrowth1_bench, xgrowth1_rows, xgrowth1_report = run_xgrowth1_suite(root)
 
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
@@ -1426,6 +1637,18 @@ def main() -> int:
             },
             "bench_stdout": conditional_payoff_bench,
         },
+        "xgrowth1": None
+        if xgrowth1_rows is None
+        else {
+            "scope": "one_D5_stored_payload_transition_not_complete_asian_pricing",
+            "benchmark_measurements": xgrowth1_rows,
+            "raw_batches": {
+                f"{row.get('mode')}/{row.get('candidate')}": row["raw_batches"]
+                for row in xgrowth1_rows
+            },
+            "native_report": xgrowth1_report,
+            "bench_stdout": xgrowth1_bench,
+        },
         "utc_timestamp": stamp,
     }
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -1448,6 +1671,9 @@ def main() -> int:
         print()
     if want_conditional_payoff:
         print_conditional_payoff_table(conditional_payoff_rows)
+        print()
+    if want_xgrowth1:
+        print_xgrowth1_table(xgrowth1_rows)
         print()
     print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
     return 0

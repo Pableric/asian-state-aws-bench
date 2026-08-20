@@ -38,6 +38,11 @@ disassembled.
    payoff paths, and the accurate scalar `libm` research oracle. It remains
    the incomplete 18-route canonical block and is not a complete 32-fixing
    production price.
+7. **D5 stored-payload x/growth diagnostic** —
+   `bin/asian_affine_x_growth_1dim_bench`. This produces completed canonical
+   D1 x/growth arrays first, applies the same prepared D5 affine source map to
+   both payloads, and compares growth-only S/Q with dual S/Q/L. It is one
+   fixing only and is not a complete Asian price.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -52,6 +57,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py
 # or: python3 scripts/run_aws.py --suite growth18
 # or: python3 scripts/run_aws.py --suite conditional18
 # or: python3 scripts/run_aws.py --suite conditional_payoff
+# or: python3 scripts/run_aws.py --suite xgrowth1
 ```
 
 The runner verifies `SHA256SUMS` (every file except `SHA256SUMS`
@@ -142,6 +148,24 @@ no unresolved dimensions, and no Brownian bridge.
 | Growth packet-major hot text | 259 bytes |
 | Hot payload work | 4,352 `vpermd`, 4,608 `vmulps`, 4,608 `vaddps` |
 | Hot payload exclusions | zero FMA, calls, stack operations, spills, gathers, or intermediate payload stores |
+
+## D5 stored-payload x/growth diagnostic
+
+The `xgrowth1` suite runs a standalone correctness gate before timing and
+validates every emitted JSON row, raw 51-sample batch, percentile, denominator,
+incremental median, and reported footprint. The benchmark measures ten explicit
+candidates under warm and competing-32-KiB protocols:
+
+- canonical growth and dual x/growth producers;
+- growth-only and dual affine provider loops;
+- S/Q and S/Q/L recurrence floors;
+- fused provider-plus-recurrence loops;
+- complete producer-plus-consumer routes.
+
+The deciding comparison is `fused_dual_provider_sql` against
+`fused_growth_provider_sq`. The experiment uses only Joe--Kuo D5 and one state
+transition. It does not implement missing dimensions, a complete chronological
+path, payoff, conditioning, or production routing.
 
 ## Host requirements
 
