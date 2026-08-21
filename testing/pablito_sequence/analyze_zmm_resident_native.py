@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 import re
 import subprocess
@@ -11,12 +12,23 @@ from collections import Counter, defaultdict
 from pathlib import Path
 from typing import Any
 
-from audit_zmm_sobol_blocks import DEFAULT_TABLE, ROOT, sha256_file
-
-
+ROOT = Path(__file__).resolve().parents[2]
+_TABLE_CANDIDATES = (
+    ROOT / "direction_numbers" / "joe_kuo_6_21201.bin",
+    ROOT / "asian-aws-publish.lxGUbF" / "direction_numbers" / "joe_kuo_6_21201.bin",
+)
+DEFAULT_TABLE = next((path for path in _TABLE_CANDIDATES if path.exists()), _TABLE_CANDIDATES[0])
 DEFAULT_SCHEDULES = ROOT / "testing/pablito_sequence/native/zmm_resident_templates_schedules.json"
 DEFAULT_OUT = ROOT / "testing/pablito_sequence/results/zmm_resident_native_benchmark_20260821"
 WIN_THRESHOLD = 1.02
+
+
+def sha256_file(path: Path) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as stream:
+        for chunk in iter(lambda: stream.read(1 << 20), b""):
+            digest.update(chunk)
+    return digest.hexdigest()
 
 
 def object_audit(binary: Path, symbols: list[str]) -> dict[str, Any]:

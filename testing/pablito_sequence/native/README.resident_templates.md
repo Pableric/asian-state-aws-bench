@@ -4,12 +4,15 @@ This additive benchmark compares direct Joe--Kuo template loads with exact
 rolling/hybrid resident-ZMM schedules. It does not call or modify a pricing
 engine.
 
-Generate and build:
+Build the checked-in generated kernels:
 
 ```sh
-python3 ../generate_zmm_resident_native_benchmark.py --check
 make -f Makefile.resident_templates -j2 all
 ```
+
+The NumPy-based generator remains an offline research/development tool. It is
+not part of the AWS measurement path; the executable's exact reconstruction
+gate validates the checked-in assembly before timing.
 
 On an AVX-512 host, run the exact gate and randomized-order benchmark:
 
