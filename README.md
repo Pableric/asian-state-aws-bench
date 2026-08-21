@@ -328,6 +328,31 @@ Its GBM coefficients are scaled per fixing: `dt=1/N`,
 prices are checked against an independent float64 chronological reference with
 an absolute `1e-4` gate before timing is accepted.
 
+## Genuine multicore scaling
+
+The additive multicore carrier uses persistent pthread workers over disjoint,
+independently validated 4,096-path Joe-Kuo blocks. Workers receive private
+state and oneMKL streams, physical cores are selected before SMT siblings, and
+oneMKL remains single-threaded inside each worker.
+
+```bash
+mkdir -p results/asian_genuine_multicore
+MKL_THREADING_LAYER=SEQUENTIAL \
+MKL_NUM_THREADS=1 \
+MKL_DYNAMIC=FALSE \
+./bin/asian_genuine_multicore_bench --check-only
+
+MKL_THREADING_LAYER=SEQUENTIAL \
+MKL_NUM_THREADS=1 \
+MKL_DYNAMIC=FALSE \
+./bin/asian_genuine_multicore_bench \
+  --json results/asian_genuine_multicore/aws.json
+```
+
+The result records fenced-TSC and wall-clock samples, paths/second, scaling
+efficiency, topology, NUMA placement, Intel/ours ratios and the empty
+persistent-thread/barrier dispatch floor.
+
 ## Host requirements
 
 - Linux x86-64

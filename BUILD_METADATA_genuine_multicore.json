@@ -1,0 +1,37 @@
+{
+  "schema_version": 1,
+  "suite": "genuine_multicore",
+  "scope": "persistent-pthread scaling of genuine Joe-Kuo complete arithmetic and beta-one geometric-control Asian pricing",
+  "binary": {
+    "path": "bin/asian_genuine_multicore_bench",
+    "sha256": "ea790129f6aeca9f88f653dd09879da7c58e8f1714a7e6e02cbd16e469d27706",
+    "dynamic_dependencies": ["libmkl_rt.so.3", "libm.so.6", "libc.so.6", "libdl.so.2"]
+  },
+  "source_hashes": {
+    "benchmarks/bench_asian_genuine_multicore.c": "621f847f5d5aa509b2395718aaab3bf8f18ff3b11cd22d57ee6c0473f1981b9f",
+    "results/asian_genuine_multicore_object_audit.json": "c72cc5a6c6ee6dba5431ab4feeea8c3d5e44a6719f5443179eaed3dabbee22b7",
+    "results/asian_genuine_multicore_local_status.json": "816ac6f10773b804e52d1190d17f4ce7dbfb0c28456f22a1cdeea77436a451a2"
+  },
+  "correctness": {
+    "status": "PASS",
+    "banner": "asian_genuine_multicore thread_correctness=PASS",
+    "fixing_counts": [16, 32, 64, 128, 256],
+    "paths_per_worker": 4096,
+    "disjoint_genuine_joe_kuo_blocks": true,
+    "per_fixing_gbm_scaling": true,
+    "independent_float64_reference": true,
+    "absolute_price_error_gate": 0.0001
+  },
+  "threading": {
+    "persistent_pthreads": true,
+    "physical_cores_before_smt": true,
+    "private_worker_state": true,
+    "onemkl_threads_per_worker": 1
+  },
+  "timing_protocol": {
+    "warmups": 16,
+    "samples": 51,
+    "clocks": ["fenced TSC", "CLOCK_MONOTONIC_RAW"],
+    "empty_barrier_dispatch_floor": true
+  }
+}
