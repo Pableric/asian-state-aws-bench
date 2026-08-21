@@ -9,7 +9,7 @@ STRIP_OBJS := asian_genuine_price_delta_strip_setup.o \
 .PHONY: all stage1-check stage1-price-check stage1-complete-check \
 	stage1-price-complete-check delta-check delta-complete-check analytic-check \
 	benchmark-check price-audit audit package-audit aws-price-ready \
-	aws-delta-diagnostic-ready aws-ready clean
+	aws-delta-diagnostic-ready aws-ready aws-benchmark-native clean
 
 all: test_asian_genuine_price_delta_strip
 
@@ -84,6 +84,10 @@ bench_asian_genuine_price_delta_strip: \
 benchmark-check: bench_asian_genuine_price_delta_strip
 	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
 		/opt/intel-sde/sde64 -skx -- ./bench_asian_genuine_price_delta_strip --check-only
+
+aws-benchmark-native: bench_asian_genuine_price_delta_strip
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		./bench_asian_genuine_price_delta_strip --check-only
 
 run_asian_genuine_price_delta_strip_symbol: \
 		tests/run_asian_genuine_price_delta_strip_symbol.c $(STRIP_OBJS)
