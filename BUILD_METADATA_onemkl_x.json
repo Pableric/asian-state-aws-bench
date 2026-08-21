@@ -1,57 +1,28 @@
 {
-  "artifact": "bin/onemkl_sobol_x_bench",
-  "artifact_sha256": "ab4f8b1fa123cc9aed4711f8bb68c432c3c48fee7a2574ea1aaaaf028b599054",
-  "artifact_size_bytes": 100880,
-  "benchmark": "minimal_onemkl_sobol_to_x",
-  "build": {
-    "compiler": "gcc 16.2.1 20260810",
-    "compiler_flags": "-std=c11 -O3 -march=skylake-avx512 -ffp-contract=off -Wall -Wextra -Werror",
-    "link_flags": "-L/opt/intel/oneapi/mkl/latest/lib -Wl,-rpath,/opt/intel/oneapi/mkl/latest/lib -lmkl_rt -lpthread -lm -ldl",
-    "linker": "GNU ld 2.47",
-    "oneMKL_headers_and_runtime": "Intel oneAPI MKL 2026.0, product build 20260401",
-    "source_binary_before_strip_sha256": "c102a0e0faf19feefc5b1a4cdfe382fee3507531e4f80e67cbb9241f08a960a5",
-    "stripped": true
+  "new_position_aware_leaf": {
+    "calls": 0,
+    "gathers": 0,
+    "stack_references": 0
   },
-  "carrier_provenance": {
-    "archive": "ordered-d1-x-growth-carrier.tar.gz",
-    "archive_sha256": "0917015479c14ee3c43efdff5dc1d0c3fd20eeb9ba5335544bd3246385478a94",
-    "internal_sha256sums_sha256": "268e0f00e53c4848e335fae0709aefcbcb49e5f2ffed21b2102f1f4e2563eaa7",
-    "setup_source_sha256": "886bcc7bdd71ff7355c4b7b278a7d19b5608c2fbbed7b9983cd98ff1608f7f08",
-    "assembly_source_sha256": "bbc08b0348309e47852b550d53f9008e05c880475f6ce4b1899ab69844aa5b89",
-    "api_header_sha256": "c728a463eca6f18d2622269ac9dd5114c30422212a18de2ce3668073c09f8b81",
-    "coefficient_header_sha256": "d49a5ea81f95dbdca0a1fcedb79cbed51feb97ffe2112c4b8d774b4cc979a395",
-    "coefficient_data_sha256": "248ed6c1dbd87bea29d561669eab726210e1b94970b14e82b5df24745411e07c"
+  "old_affine_leaf": {
+    "calls": 0,
+    "gathers": 0,
+    "loop_branches": 1,
+    "stack_references": 0,
+    "vector_fmas": 2,
+    "vector_loads": 4
   },
-  "correctness": {
-    "carrier_complete_x_max_absolute_error": 1.1920928955078125e-7,
-    "carrier_complete_growth_gate": 3e-7,
-    "local_gate_status": "PASS",
-    "local_native_timing": "NATIVE_UNAVAILABLE",
-    "local_report_sha256": "ce33b6859839e4292712a3906942a6eec593dde94fa012a8d552aef5eb0cdddc",
-    "source_benchmark_sha256": "daf5770f82c455d30d7ac8143d5e130fe8ddf026406c86e4eb22a79c4529e2f7"
-  },
-  "dynamic_requirements": {
-    "glibc_maximum": "GLIBC_2.34",
-    "oneMKL_soname": "libmkl_rt.so.3",
-    "oneMKL_runpath": "/opt/intel/oneapi/mkl/latest/lib"
-  },
-  "scope": {
-    "our_layout": "4096 consecutive canonical D1 points beginning at Sobol index 8192",
-    "oneMKL_layout": "128 points by 32 dimensions in native point-major order",
-    "same_output_count": 4096,
-    "output_adapter": false,
-    "value_by_value_comparison": false,
-    "claim": "native producer throughput comparison only"
-  },
-  "timing_contract": {
-    "frequency_conditioner": "outside timed interval",
-    "output_reset": "outside timed interval",
-    "oneMKL_stream_restore": "outside timed interval",
-    "checksum": "outside timed interval",
-    "timed_our_call": "ordered_d1_x_only_diag(128, context, output)",
-    "timed_oneMKL_call": "vsRngGaussian(ICDF, stream, 4096, output, drift, diffusion)",
-    "warmups": 16,
-    "samples": 51,
-    "threading": "MKL sequential, one thread, dynamic disabled"
+  "scope": "matched materialized Sobol-to-x source production",
+  "status": "PASS",
+  "timed_region": {
+    "excluded": [
+      "context/stream preparation",
+      "stream restore",
+      "output reset/touch",
+      "checksum"
+    ],
+    "new": "one ordered_d1_x_only_diag call",
+    "old": "frozen european_store_ordered_d1_z_4096 plus in-place AVX-512 affine FMA",
+    "oneMKL": "one vsRngGaussian(ICDF) call"
   }
 }

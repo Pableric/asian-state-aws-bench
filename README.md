@@ -46,17 +46,19 @@ disassembled.
    fixing only and is not a complete Asian price.
 8. **Weighted S/Q/L and geometric-control diagnostic** —
    `bin/asian_affine_dual_sql_18diag_bench`. This compares the frozen S/Q
-   path with memory-broadcast, decrementing-weight, explicit-broadcast, and
-   general-loop S/Q/L paths. It also times arithmetic/geometric payoff
-   mechanics and partial producer-plus-consumer compositions. The path has
-   only the 18 certified chronological routes; no result is a complete Asian
-   price and no benchmark winner is embedded.
+   historical path and a structurally matched unrolled S/Q comparator with
+   memory-broadcast, decrementing-weight, explicit-broadcast, and general-loop
+   S/Q/L paths. It separately times the combined geometric-CV payoff. The path
+   has only the 18 certified chronological routes; no result is a complete
+   Asian price and no benchmark winner is embedded.
 9. **oneMKL Sobol-to-x throughput comparison** —
-   `bin/onemkl_sobol_x_bench`. This measures 4,096 materialized float values
-   from the qualified canonical ordered-D1 x producer and oneMKL's native
-   32-dimensional Sobol-plus-Gaussian path. The layouts are intentionally
-   different and no permutation adapter is included, so this is a producer
-   throughput comparison, not a value-by-value sequence comparison.
+   `bin/onemkl_sobol_x_bench`. This strictly compares the frozen corrected-Z
+   then affine-x path with the qualified position-aware ordered-D1 x producer,
+   both over the same 4,096 canonical values. A third row measures oneMKL's
+   dimension-1 Sobol-plus-Gaussian path from the corresponding native skip.
+   oneMKL enters a strict value/ratio comparison only when its untimed raw-word
+   probe proves exact D1 identity; otherwise it remains native-throughput
+   context with no permutation adapter.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -201,9 +203,14 @@ and normalized call/put proxy errors; none of that correctness work is timed.
 ## Weighted S/Q/L and geometric-control diagnostic
 
 The `sql18` suite runs a standalone correctness gate before timing and then
-validates all 18 native candidate/mode records. Its primary kernel keeps two
+validates all 22 native candidate/mode records. Its primary kernel keeps two
 halves each of S, Q, and weighted-log state L live across the complete partial
 chronology. Exact zero-based weights are `(32-k)/32` for `k=0..17`.
+
+Incremental SQL cost is measured against `path_sq_matched_unrolled`, generated
+from the same route macro and packet-loop structure. The frozen S/Q row remains
+historical context only. Warm conditioning is candidate-specific; the pressure
+mode reproduces the historical sequential 32-KiB uint32 read-modify-write scan.
 
 Three otherwise matched weight schedules are measured: EVEX scalar-memory
 broadcast operands, a bit-qualified decrementing vector, and explicit scalar
@@ -219,11 +226,18 @@ selects among weight schedules.
 ## oneMKL Sobol-to-x throughput comparison
 
 The `onemkl_x` suite compares exactly 4,096 materialized float outputs per
-timed call under two nonzero contracts. The qualified ordered-D1 candidate
-produces 4,096 consecutive canonical D1 points beginning at Sobol index 8192.
-oneMKL produces 128 native point-major points across 32 dimensions after the
-corresponding native stream skip. No output permutation or compatibility
-claim is made.
+timed call under two nonzero contracts. The old candidate is the frozen
+corrected ordered-D1 Z producer followed by an audited in-place AVX-512 affine
+FMA. The new candidate produces x directly with the qualified position-aware
+leaf. Both cover the same canonical D1 indices beginning at 8192. oneMKL uses
+a dimension-1 Sobol stream skipped to its native element 8192 and one
+`vsRngGaussian(ICDF)` call.
+
+An untimed cloned oneMKL stream attempts to expose raw Sobol words. Exact words
+enable pointwise compatibility and a strict vendor ratio. If that API is
+unsupported or the words differ, the report records the reason and keeps the
+oneMKL number as native-layout throughput only. Old/new remains the strict
+comparison in every run.
 
 Both candidates run single-threaded. Stream restoration, output reset, cache
 conditioning, status checks, and checksums stay outside the timed region. The

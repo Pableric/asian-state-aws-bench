@@ -162,22 +162,25 @@ XGROWTH1_SOURCE_CANDIDATES = (
 )
 
 SQL18_CANDIDATES = (
-    "path_frozen_sq",
+    "path_frozen_sq_historical",
+    "path_sq_matched_unrolled",
     "path_sql_memory_bcst",
     "path_sql_decrement",
     "path_sql_explicit_bcst",
     "path_sql_general_loop",
     "payoff_arithmetic_only",
     "payoff_geometric_only",
+    "payoff_geometric_cv_combined",
     "partial_complete_arithmetic_diag",
     "partial_complete_geometric_cv_diag",
 )
 
-SQL18_MODES = ("warm", "competing_32KiB")
+SQL18_MODES = ("warm_candidate_specific", "historical_32KiB_rmw_pressure")
 
 ONEMKL_X_CANDIDATES = (
+    "old_corrected_z_then_affine_x",
     "our_canonical_sobol_to_x",
-    "oneMKL_native_sobol_to_x",
+    "oneMKL_d1_sobol_to_x",
 )
 
 ONEMKL_X_MODES = ("warm", "competing_32KiB")
@@ -972,15 +975,15 @@ def parse_sql18_results(stdout: str) -> list[dict[str, object]]:
             f"missing={sorted(expected - seen)} extra={sorted(seen - expected)}"
         )
 
-    increments = payload.get("incremental_vs_frozen_sq")
+    increments = payload.get("incremental_vs_matched_sq")
     if not isinstance(increments, dict):
         fail("sql18 benchmark missing incremental comparison")
     for mode in SQL18_MODES:
         reported = increments.get(mode)
         if not isinstance(reported, dict):
             fail(f"sql18 benchmark missing {mode} incremental comparison")
-        baseline = medians[("path_frozen_sq", mode)]
-        for candidate in SQL18_CANDIDATES[1:]:
+        baseline = medians[("path_sq_matched_unrolled", mode)]
+        for candidate in SQL18_CANDIDATES[2:6]:
             try:
                 delta = int(reported[candidate])
             except (KeyError, TypeError, ValueError) as exc:
@@ -1010,7 +1013,7 @@ def parse_sql18_results(stdout: str) -> list[dict[str, object]]:
             "kind": "sql18_summary",
             "scalar_libm_oracle_excluded": scalar,
             "setup": setup,
-            "incremental_vs_frozen_sq": increments,
+            "incremental_vs_matched_sq": increments,
         }
     )
     return rows
@@ -1031,7 +1034,7 @@ def parse_onemkl_x_results(payload: object) -> list[dict[str, object]]:
     expected_parameters = {
         "values": 4096,
         "sobol_start_point": 8192,
-        "oneMKL_skip_elements": 262112,
+        "oneMKL_skip_elements": 8192,
         "warmups": 16,
         "samples": 51,
     }
@@ -1040,20 +1043,22 @@ def parse_onemkl_x_results(payload: object) -> list[dict[str, object]]:
             fail(f"oneMKL Sobol-to-x parameter mismatch: {key}")
     if parameters.get("our_layout") != "4096 consecutive canonical D1 points":
         fail("oneMKL comparison changed the canonical D1 layout")
-    if parameters.get("oneMKL_layout") != "128 points x 32 dimensions, native point-major":
+    if parameters.get("oneMKL_layout") != "4096 consecutive oneMKL D1 points":
         fail("oneMKL comparison changed the native vendor layout")
     if payload.get("sobol_output_permutation_or_adapter") is not False:
         fail("oneMKL comparison unexpectedly added an output adapter")
     compatibility = payload.get("direction_order_compatibility")
-    if not isinstance(compatibility, dict) or compatibility.get("status") != "different_native_layouts":
-        fail("oneMKL comparison omitted the different-layout scope")
-    if compatibility.get("value_by_value_comparison") is not False:
-        fail("oneMKL comparison made a forbidden value-by-value claim")
-    if payload.get("candidates") != ["old_canonical_sobol_to_x", *ONEMKL_X_CANDIDATES]:
+    allowed_compatibility = {
+        "exact_raw_d1_words": True,
+        "different_raw_d1_words_native_layout": False,
+        "raw_word_probe_unavailable_native_layout": False,
+    }
+    if not isinstance(compatibility, dict) or compatibility.get("status") not in allowed_compatibility:
+        fail("oneMKL comparison omitted the raw-D1 compatibility result")
+    if compatibility.get("value_by_value_comparison") is not allowed_compatibility[compatibility["status"]]:
+        fail("oneMKL comparison compatibility/value-by-value fields disagree")
+    if payload.get("candidates") != list(ONEMKL_X_CANDIDATES):
         fail("oneMKL comparison candidate list changed")
-    old = payload.get("old_canonical_sobol_to_x")
-    if not isinstance(old, dict) or old.get("status") != "unavailable":
-        fail("oneMKL comparison reconstructed the unavailable old x baseline")
     if payload.get("threading") != {"layer": "sequential", "dynamic": False, "threads": 1}:
         fail("oneMKL comparison is not single-threaded sequential")
     if payload.get("candidate_order_shuffle_only") is not True:
@@ -1072,8 +1077,11 @@ def parse_onemkl_x_results(payload: object) -> list[dict[str, object]]:
             fail(f"oneMKL correctness drift mismatch for contract {index}")
         if abs(float(record.get("diffusion", 99.0)) - diffusion) > 1e-7:
             fail(f"oneMKL correctness diffusion mismatch for contract {index}")
+        old = record.get("old")
         ours = record.get("ours")
         mkl = record.get("oneMKL")
+        if not isinstance(old, dict) or old.get("deterministic") is not True:
+            fail(f"old corrected-Z x producer is not deterministic for contract {index}")
         if not isinstance(ours, dict) or ours.get("deterministic") is not True:
             fail(f"our x producer is not deterministic for contract {index}")
         if not isinstance(mkl, dict):
@@ -1108,7 +1116,7 @@ def parse_onemkl_x_results(payload: object) -> list[dict[str, object]]:
             fail(f"unexpected oneMKL Sobol-to-x contract: {contract}")
         if mode not in ONEMKL_X_MODES or candidate not in ONEMKL_X_CANDIDATES:
             fail(f"unexpected oneMKL Sobol-to-x candidate/mode: {candidate}/{mode}")
-        if contract == 2 and candidate == "oneMKL_native_sobol_to_x":
+        if contract == 2 and candidate == "oneMKL_d1_sobol_to_x":
             fail("oneMKL zero-standard-deviation case was timed despite being unsupported")
         if len(raw) != 51:
             fail(f"oneMKL Sobol-to-x {contract}/{candidate}/{mode} has {len(raw)} samples")
@@ -1138,7 +1146,7 @@ def parse_onemkl_x_results(payload: object) -> list[dict[str, object]]:
         for contract in range(len(ONEMKL_X_CONTRACTS))
         for mode in ONEMKL_X_MODES
         for candidate in ONEMKL_X_CANDIDATES
-        if not (contract == 2 and candidate == "oneMKL_native_sobol_to_x")
+        if not (contract == 2 and candidate == "oneMKL_d1_sobol_to_x")
     }
     if seen != expected:
         fail("oneMKL Sobol-to-x coverage mismatch: "
@@ -1160,21 +1168,38 @@ def parse_onemkl_x_results(payload: object) -> list[dict[str, object]]:
         if key in ratio_seen:
             fail(f"duplicate oneMKL Sobol-to-x ratio: {key}")
         ratio_seen.add(key)
-        if item.get("old_over_new") is not None:
-            fail("oneMKL comparison reported a fabricated old/new ratio")
-        reported = item.get("oneMKL_over_new")
+        expected_old = (medians[(contract, mode, "old_corrected_z_then_affine_x")]
+                        / medians[(contract, mode, "our_canonical_sobol_to_x")])
+        try:
+            actual_old = float(item.get("old_over_new"))
+        except (TypeError, ValueError) as exc:
+            fail(f"malformed old/new Sobol-to-x ratio: {item}: {exc}")
+        if abs(actual_old - expected_old) > 0.000000001:
+            fail(f"old/new Sobol-to-x ratio mismatch for {contract}/{mode}")
+
+        native_reported = item.get("oneMKL_native_layout_over_new")
+        strict_reported = item.get("oneMKL_over_new")
         if contract == 2:
-            if reported is not None:
+            if native_reported is not None or strict_reported is not None:
                 fail("oneMKL comparison reported a zero-sigma vendor ratio")
         else:
-            expected_ratio = (medians[(contract, mode, "oneMKL_native_sobol_to_x")]
-                              / medians[(contract, mode, "our_canonical_sobol_to_x")])
+            expected_native = (medians[(contract, mode, "oneMKL_d1_sobol_to_x")]
+                               / medians[(contract, mode, "our_canonical_sobol_to_x")])
             try:
-                actual_ratio = float(reported)
+                actual_native = float(native_reported)
             except (TypeError, ValueError) as exc:
-                fail(f"malformed oneMKL Sobol-to-x ratio: {item}: {exc}")
-            if abs(actual_ratio - expected_ratio) > 0.000000001:
-                fail(f"oneMKL Sobol-to-x ratio mismatch for {contract}/{mode}")
+                fail(f"malformed oneMKL native-layout ratio: {item}: {exc}")
+            if abs(actual_native - expected_native) > 0.000000001:
+                fail(f"oneMKL native-layout ratio mismatch for {contract}/{mode}")
+            if compatibility["status"] == "exact_raw_d1_words":
+                try:
+                    actual_strict = float(strict_reported)
+                except (TypeError, ValueError) as exc:
+                    fail(f"malformed strict oneMKL ratio: {item}: {exc}")
+                if abs(actual_strict - expected_native) > 0.000000001:
+                    fail(f"strict oneMKL ratio mismatch for {contract}/{mode}")
+            elif strict_reported is not None:
+                fail("oneMKL strict ratio reported without exact raw-D1 identity")
     if not isinstance(payload.get("setup_cycles"), dict):
         fail("oneMKL Sobol-to-x report omitted setup timings")
     return rows
@@ -1752,7 +1777,7 @@ def print_sql18_table(rows: list[dict[str, object]] | None) -> None:
 
 
 def print_onemkl_x_table(rows: list[dict[str, object]] | None) -> None:
-    print("oneMKL vs canonical ordered-D1 Sobol-to-x throughput (different native layouts)")
+    print("Matched old/new ordered-D1 x production with oneMKL D1 native context")
     print(f"{'contract':<9} {'candidate':<30} {'mode':<18} {'median':>10} "
           f"{'p10':>10} {'p90':>10} {'cyc/value':>12}")
     if rows is None:
@@ -1767,7 +1792,7 @@ def print_onemkl_x_table(rows: list[dict[str, object]] | None) -> None:
                            and row.get("contract") == contract
                            and row.get("candidate") == candidate
                            and row.get("mode") == mode]
-                if contract == 2 and candidate == "oneMKL_native_sobol_to_x":
+                if contract == 2 and candidate == "oneMKL_d1_sobol_to_x":
                     if matches:
                         fail("oneMKL zero-standard-deviation timing unexpectedly present")
                     continue
@@ -2025,7 +2050,7 @@ def run_onemkl_x_suite(
              "libmkl_rt.so.3 resolves")
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
-    native_path = results_dir / "onemkl_sobol_to_x_native.json"
+    native_path = results_dir / "matched_sobol_to_x_native.json"
     os.environ["MKL_THREADING_LAYER"] = "SEQUENTIAL"
     os.environ["MKL_NUM_THREADS"] = "1"
     os.environ["MKL_DYNAMIC"] = "FALSE"
@@ -2327,7 +2352,7 @@ def main() -> int:
         "onemkl_x": None
         if onemkl_x_rows is None
         else {
-            "scope": "throughput comparison only; different native Sobol layouts; no adapter",
+            "scope": "strict old/new ordered-D1 comparison plus oneMKL D1 native throughput; no adapter",
             "benchmark_measurements": onemkl_x_rows,
             "raw_batches": {
                 f"contract{row.get('contract')}/{row.get('mode')}/{row.get('candidate')}": row["raw_batches"]
