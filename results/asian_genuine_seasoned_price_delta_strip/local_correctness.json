@@ -1,0 +1,38 @@
+{
+  "schema": "asian-genuine-seasoned-local-correctness-v1",
+  "status": "PASS",
+  "decision": "SEASONED_CORRECTNESS_QUALIFIED_AWS_PERFORMANCE_PENDING",
+  "principal_matrix": {
+    "total_fixings": [16, 32, 64, 128, 256],
+    "completed_fixings": ["0", "1", "M/4", "M/2", "M-1"],
+    "histories": ["flat", "increasing", "decreasing", "nonuniform"],
+    "strike_counts": [1, 4, 8, 16, 32],
+    "tiles": [4, 8],
+    "estimators": ["arithmetic", "geometric_cv"],
+    "sides": ["call", "put"]
+  },
+  "runtime_smoke_pairs_c_f": [[0,1],[1,1],[1,2],[2,15],[7,26],[63,64],[128,127],[1,255],[255,1]],
+  "market_smoke": {
+    "rates": [-0.02, 0, 0.03],
+    "sigmas": [0, 0.20]
+  },
+  "price": {
+    "max_abs_complete_error": 2.5400982797e-05,
+    "gate": 0.0001,
+    "c0_bit_identical": true,
+    "tile_outputs_bit_identical": true
+  },
+  "delta": {
+    "max_abs_unadjusted_difference": 0.75,
+    "max_abs_kink_adjusted_residual": 1.49483309943e-07,
+    "max_abs_same_q_g_error": 5.73636498302e-08,
+    "signed_mean_smooth_error": -6.06388448893e-09,
+    "arithmetic_ambiguous_observations": 20489,
+    "geometric_ambiguous_observations": 11,
+    "price_bits_equal_to_stage2": true
+  },
+  "immutability_and_repetition": "PASS",
+  "q_state_contract": "future-only; Q0 remains in immutable payoff context",
+  "complete_kink_log": "complete-kinks.jsonl",
+  "command": "make -f tests/Makefile.asian_genuine_seasoned_strip stage3"
+}

@@ -1,0 +1,101 @@
+CC ?= gcc
+MKLROOT ?= /opt/intel/oneapi/mkl/latest
+CFLAGS := -std=c11 -O3 -march=x86-64-v3 -ffp-contract=off \
+          -Wall -Wextra -Werror -I.
+AVX_CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+              -ffp-contract=off -Wall -Wextra -Werror -I.
+
+.PHONY: stage1 stage2 stage3 qualification route-dynamic-audit structural-audit benchmark-check \
+	aws-benchmark-native clean
+
+stage1: test_asian_genuine_seasoned_prepare
+	./test_asian_genuine_seasoned_prepare
+
+stage2: test_asian_genuine_seasoned_complete
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_seasoned_complete --price-only
+
+stage3: stage2 test_asian_genuine_seasoned_complete
+	mkdir -p results/asian_genuine_seasoned_price_delta_strip
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_seasoned_complete \
+		--kinks results/asian_genuine_seasoned_price_delta_strip/complete-kinks.jsonl
+
+qualification: asian_genuine_seasoned_delta_qualification stage1 stage3
+	mkdir -p results/asian_genuine_seasoned_price_delta_strip
+	./asian_genuine_seasoned_delta_qualification \
+		--json results/asian_genuine_seasoned_price_delta_strip/qualification.json \
+		--markdown results/asian_genuine_seasoned_price_delta_strip/QUALIFICATION.md \
+		--kinks results/asian_genuine_seasoned_price_delta_strip/kinks.jsonl
+
+route-dynamic-audit: run_asian_genuine_seasoned_route_symbol
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-seasoned-route-unseasoned.mix \
+		-- ./run_asian_genuine_seasoned_route_symbol unseasoned
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-seasoned-route-seasoned.mix \
+		-- ./run_asian_genuine_seasoned_route_symbol seasoned
+
+structural-audit: test_asian_genuine_seasoned_complete route-dynamic-audit
+	python3 tests/audit_asian_genuine_seasoned_strip.py
+
+test_asian_genuine_seasoned_prepare: \
+		tests/test_asian_genuine_seasoned_prepare.c \
+		private/asian_genuine_seasoned_strip_setup.c \
+		asian_genuine_price_delta_strip_setup.c \
+		asian_genuine_price_delta_strip_avx512.s \
+		ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+test_asian_genuine_seasoned_complete: \
+		tests/test_asian_genuine_seasoned_complete.c \
+		private/asian_genuine_seasoned_strip_setup.c \
+		asian_genuine_price_delta_strip_setup.c \
+		asian_genuine_price_delta_strip_avx512.s \
+		asian_genuine_permute_setup.c asian_genuine_sql_variable_avx512.s \
+		asian_geometric_cv_payoff_avx512.s \
+		ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c \
+		ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s
+	$(CC) $(AVX_CFLAGS) -Iordered_d1_x_growth_handoff \
+		-Iordered_d1_x_growth_handoff/private $^ -lm -o $@
+
+asian_genuine_seasoned_delta_qualification: \
+		tests/asian_genuine_seasoned_delta_qualification.c \
+		private/asian_genuine_seasoned_strip_setup.c \
+		asian_genuine_price_delta_strip_setup.c \
+		asian_genuine_price_delta_strip_avx512.s \
+		ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c
+	$(CC) $(CFLAGS) -Iordered_d1_x_growth_handoff \
+		-Iordered_d1_x_growth_handoff/private $^ -lm -o $@
+
+bench_asian_genuine_seasoned_price_delta_strip: \
+		benchmarks/bench_asian_genuine_seasoned_price_delta_strip.c \
+		private/asian_genuine_seasoned_strip_setup.c \
+		asian_genuine_price_delta_strip_setup.c \
+		asian_genuine_price_delta_strip_avx512.s \
+		asian_genuine_permute_setup.c asian_genuine_sql_variable_avx512.s \
+		asian_intel_sql_consumers_avx512.s asian_geometric_cv_payoff_avx512.s \
+		ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c \
+		ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s
+	$(CC) $(AVX_CFLAGS) -Iordered_d1_x_growth_handoff \
+		-Iordered_d1_x_growth_handoff/private -I$(MKLROOT)/include $^ \
+		-L$(MKLROOT)/lib -Wl,-rpath,$(MKLROOT)/lib \
+		-lmkl_rt -lpthread -lm -ldl -o $@
+
+run_asian_genuine_seasoned_route_symbol: \
+		tests/run_asian_genuine_seasoned_route_symbol.c \
+		asian_genuine_sql_variable_avx512.s
+	$(CC) $(AVX_CFLAGS) $^ -o $@
+
+benchmark-check: bench_asian_genuine_seasoned_price_delta_strip
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		/opt/intel-sde/sde64 -skx -- \
+		./bench_asian_genuine_seasoned_price_delta_strip --check-only
+
+# AWS is deliberately performance-only: no research generator, Python, MPFR,
+# SDE, coefficient generation, or report-generation dependency is reachable.
+aws-benchmark-native: bench_asian_genuine_seasoned_price_delta_strip
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		./bench_asian_genuine_seasoned_price_delta_strip --check-only
+
+clean:
+	$(RM) test_asian_genuine_seasoned_prepare test_asian_genuine_seasoned_complete
+	$(RM) asian_genuine_seasoned_delta_qualification
+	$(RM) bench_asian_genuine_seasoned_price_delta_strip
+	$(RM) run_asian_genuine_seasoned_route_symbol

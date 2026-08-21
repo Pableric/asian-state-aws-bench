@@ -1,0 +1,243 @@
+{
+  "checks": {
+    "aws_target_performance_only": true,
+    "benchmark_candidate_matrix": true,
+    "benchmark_raw_samples": true,
+    "benchmark_resets_outside_timing": true,
+    "d1_consumes_route_weight": true,
+    "dynamic_route_trace_exact": true,
+    "four_required_permutes": true,
+    "frozen_dependencies": true,
+    "no_new_assembly_symbol": true,
+    "qualification_passed": true,
+    "route_has_no_calls": true,
+    "route_has_no_gathers": true,
+    "route_has_no_intermediate_stores": true,
+    "route_has_no_stack_references": true,
+    "x_only_does_not_read_source_weight_table": true
+  },
+  "decision": "SEASONED_CORRECTNESS_QUALIFIED_AWS_PERFORMANCE_PENDING",
+  "dependency_and_port_model_skylake_x": {
+    "added_critical_dependencies": 0,
+    "critical_chains": [
+      "S: vmulps route-to-route",
+      "Q: new-S then vaddps route-to-route",
+      "L: vfmadd231ps route-to-route"
+    ],
+    "port_notes": {
+      "front_end_and_branch": "32 static instructions and one counted route branch; unchanged",
+      "p0_p1_vector_arithmetic": "two mul, two add, two FMA; unchanged",
+      "p2_p3_load": "six 64-byte vector loads plus scalar/map/weight operands; unchanged",
+      "p5_shuffle": "four vpermd per route; unchanged"
+    },
+    "qualification": "static port model; native timing, not this model, selects performance"
+  },
+  "failures": [],
+  "frozen_hashes": {
+    "asian_genuine_permute_setup.c": "e2e54ebca65f6586cbb2fbfa0621e20a63dbaafec3cbbdb2515f5a9a432a0301",
+    "asian_genuine_price_delta_strip_avx512.s": "42c52432e1c0b49956d5db11305e9b7d6a8f8c86d35c5fa819ea96443f03893e",
+    "asian_genuine_price_delta_strip_setup.c": "907c4a05807de27d8ec3c226382e6b640048a87fcd31f9b97d82c5c37668dced",
+    "asian_genuine_sql_variable_avx512.s": "08f685f29e86a1480269797ff4ee4313088f33c3275af727faa72c12d1957709",
+    "asian_geometric_cv_payoff_avx512.s": "78331e0b544b983d3b32d3fabc33745e858463aebca53928d7b6843f60802ee6",
+    "ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c": "886bcc7bdd71ff7355c4b7b278a7d19b5608c2fbbed7b9983cd98ff1608f7f08",
+    "ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s": "bbc08b0348309e47852b550d53f9008e05c880475f6ce4b1899ab69844aa5b89"
+  },
+  "hot_path_identity": {
+    "d1_fixed_per_block_increment": {
+      "adds": 0,
+      "branches": 0,
+      "calls": 0,
+      "clamps": 0,
+      "comparisons": 0,
+      "dynamic_instructions": 0,
+      "fmas": 0,
+      "gathers": 0,
+      "loads": 0,
+      "multiplies": 0,
+      "reductions": 0,
+      "spills": 0,
+      "stack_references": 0,
+      "stores": 0,
+      "strike_broadcasts": 0,
+      "text_bytes": 0,
+      "vpermd": 0
+    },
+    "ordinary_route_operations": {
+      "gpr_route_pointer_loads": 3,
+      "loop_branches": 1,
+      "map_byte_loads": 4,
+      "stores": 0,
+      "vaddps": 2,
+      "vfmadd231ps": 2,
+      "vmulps": 2,
+      "vpermd": 4,
+      "weight_memory_broadcast_operands": 2,
+      "zmm_loads": 6
+    },
+    "ordinary_route_static_instructions": 32,
+    "reason": "matched-f seasoned and unseasoned candidates call identical source, route, L-to-G, and payoff symbols with identical trip counts",
+    "route_dynamic_instruction_formula": "6 + 128 * (23 + 32*f)",
+    "sde_hot_block_dynamic_instructions": 68480,
+    "sde_route_blocks": [
+      {
+        "executions": 128,
+        "instruction_count": 1536,
+        "offset": 6097
+      },
+      {
+        "executions": 2048,
+        "instruction_count": 65536,
+        "offset": 6182
+      },
+      {
+        "executions": 128,
+        "instruction_count": 1408,
+        "offset": 6360
+      }
+    ],
+    "sde_route_dynamic_instructions_with_entry_exit": 68486,
+    "seasoned_minus_unseasoned": {
+      "adds": 0,
+      "branches": 0,
+      "calls": 0,
+      "clamps": 0,
+      "comparisons": 0,
+      "dynamic_instructions": 0,
+      "fmas": 0,
+      "gathers": 0,
+      "loads": 0,
+      "multiplies": 0,
+      "reductions": 0,
+      "spills": 0,
+      "stack_references": 0,
+      "stores": 0,
+      "strike_broadcasts": 0,
+      "text_bytes": 0,
+      "vpermd": 0
+    }
+  },
+  "payoff_leaf_audit": {
+    "ranked_leaves_changed": false,
+    "seasoning_delta": {
+      "adds": 0,
+      "branches": 0,
+      "calls": 0,
+      "clamps": 0,
+      "comparisons": 0,
+      "dynamic_instructions": 0,
+      "fmas": 0,
+      "gathers": 0,
+      "loads": 0,
+      "multiplies": 0,
+      "reductions": 0,
+      "spills": 0,
+      "stack_references": 0,
+      "stores": 0,
+      "strike_broadcasts": 0,
+      "text_bytes": 0,
+      "vpermd": 0
+    },
+    "source": "results/asian_genuine_price_delta_strip/object_audit.json",
+    "source_sha256": "58becac80b1fcba7039356efbd4a3aafe79d4a7747bf6dedfcd4c175e19e2fea"
+  },
+  "register_allocation": {
+    "gprs": [
+      "rax",
+      "rcx",
+      "rdx",
+      "rsi",
+      "rdi",
+      "r8",
+      "r9",
+      "r10",
+      "r11"
+    ],
+    "masks": [
+      "k1",
+      "k2",
+      "k3",
+      "k5",
+      "k7"
+    ],
+    "persistent_state": {
+      "L": [
+        10,
+        11
+      ],
+      "Q": [
+        6,
+        7
+      ],
+      "S": [
+        4,
+        5
+      ]
+    },
+    "spills": 0,
+    "stack_bytes": 0,
+    "transient_controls": [
+      18,
+      19
+    ],
+    "transient_growth": [
+      12,
+      13
+    ],
+    "transient_sources": [
+      2,
+      3,
+      14,
+      15
+    ],
+    "transient_x": [
+      0,
+      1
+    ],
+    "zmm_architectural_names": [
+      0,
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7,
+      10,
+      11,
+      12,
+      13,
+      14,
+      15,
+      18,
+      19
+    ],
+    "zmm_peak_live": 12
+  },
+  "status": "PASS",
+  "text_sizes_bytes": {
+    "arithmetic_price_1": 245,
+    "arithmetic_price_4": 792,
+    "arithmetic_price_8": 1548,
+    "arithmetic_price_delta_1": 507,
+    "arithmetic_price_delta_4": 1603,
+    "arithmetic_price_delta_8": 3123,
+    "cv_price_1": 319,
+    "cv_price_4": 1033,
+    "cv_price_8": 2021,
+    "cv_price_delta_1": 681,
+    "cv_price_delta_4": 2163,
+    "cv_price_delta_8": 4211,
+    "l_to_g": 347,
+    "shared_control_route": 371
+  },
+  "working_sets_bytes": {
+    "G": 16384,
+    "L": 16384,
+    "Q": 16384,
+    "completed_values_max_cold": 2048,
+    "one_route_table": 8192,
+    "output": 1024,
+    "source_x_and_growth": 65536,
+    "strike_records": 2048
+  }
+}
