@@ -1,9 +1,9 @@
 # AWS bench carrier
 
 This repository benchmarks isolated AVX-512 components. Except for the
-explicit `onemkl_x` producer-throughput suite, it does not include Sobol
-generation or Gaussian inversion. It does not contain a complete pricing
-engine.
+explicit oneMKL suites, it does not include Sobol generation or Gaussian
+inversion. The `genuine_complete` suite is a complete private pricing
+diagnostic, not a production API or SDK.
 
 The tree is a test carrier: stripped x86-64 executables, compile-time
 ELF audits in JSON, and a stdlib Python runner. It is not an SDK and
@@ -65,6 +65,10 @@ disassembled.
    oneMKL stream. D2–D256 deliberately cycle the seventeen certified affine
    maps. These rows are hardware diagnostics only: they are not valid
    multidimensional Asian paths, prices, or discrepancy results.
+10. **Genuine complete D1--D256 comparison** —
+   `bin/asian_genuine_complete_bench`. This compares complete arithmetic and
+   beta-one geometric-control Asian prices from the genuine permutation engine
+   against two complete oneMKL materialized-Gaussian consumers.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -83,6 +87,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py
 # or: python3 scripts/run_aws.py --suite sql18
 # or: python3 scripts/run_aws.py --suite onemkl_x
 # or: python3 scripts/run_aws.py --suite synthetic_all_permute
+# or: python3 scripts/run_aws.py --suite genuine_complete
 ```
 
 The runner verifies `SHA256SUMS` (every file except `SHA256SUMS`
@@ -294,6 +299,28 @@ MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
 
 Build provenance and the source audit hashes are in
 `BUILD_METADATA_synthetic_all_permute.json`.
+
+## Genuine complete D1--D256 comparison
+
+The `genuine_complete` suite measures 4,096 paths at
+N=16/32/64/128/256. Before timing it proves that oneMKL and the permutation
+engine use the same Joe--Kuo direction numbers and Sobol indices 8192--12287.
+It reports component and complete-price rows for arithmetic-only and beta-one
+geometric-control estimators. The Intel side includes both a native
+point-major gather consumer and a tiled dimension-major consumer; all layout
+work remains inside its complete timings.
+
+Run it with:
+
+```sh
+source /opt/intel/oneapi/setvars.sh
+MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+  PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py \
+  --suite genuine_complete
+```
+
+Build provenance and object-audit hashes are in
+`BUILD_METADATA_genuine_complete.json`.
 
 ## Host requirements
 

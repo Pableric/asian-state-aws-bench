@@ -1,0 +1,73 @@
+{
+  "schema_version": 1,
+  "suite": "genuine_complete",
+  "scope": "genuine Joe-Kuo D1-D256 complete arithmetic and beta-one geometric-control Asian benchmark",
+  "binary": {
+    "path": "bin/asian_genuine_complete_bench",
+    "sha256": "a591bc383807b427c828259903f8684ff203abf42dd7c8b1abdb7b4054e757ab",
+    "dynamic_dependencies": [
+      "libmkl_rt.so.3",
+      "libm.so.6",
+      "libc.so.6",
+      "libdl.so.2"
+    ]
+  },
+  "source_hashes": {
+    "benchmarks/bench_asian_genuine_complete.c": "daf036ccae21052b5cca0e5aa3e8e1dec8189ed16ff68a0dd49f89914e2797d8",
+    "asian_intel_sql_consumers_avx512.s": "7c9d56905fabd1ab7d726add2e6eed329f89fd93a3ef4602aa328e599f4387df",
+    "asian_genuine_permute_setup.c": "e2e54ebca65f6586cbb2fbfa0621e20a63dbaafec3cbbdb2515f5a9a432a0301",
+    "asian_genuine_sql_variable_avx512.s": "90a91aa10cf897f22bbf7a4d1ad97b340a5c6e27b7f52bbdff38eeebc94eda00",
+    "private/asian_genuine_permute.h": "076d119c32d4e78b4727dcfdacfcd6a991dbaedeb59c3d55d1c69d2e0d8cff0c"
+  },
+  "correctness": {
+    "status": "PASS",
+    "local_command": "Intel SDE correctness gate",
+    "banner": "asian_genuine_complete correctness=PASS calls_puts N=16,32,64,128,256 raw_mkl_words=PASS",
+    "fixing_counts": [16, 32, 64, 128, 256],
+    "paths": 4096,
+    "sobol_start": 8192,
+    "raw_onemkl_word_identity": true,
+    "calls_and_puts": true
+  },
+  "object_audit": {
+    "status": "PASS",
+    "source_sha256": "5d151e2cb256436d8040c828cc847b0b4ee93da9297034e7c916838d22218854",
+    "genuine_route_leaf": {
+      "calls": 0,
+      "gathers": 0,
+      "stack_references": 0,
+      "static_instructions": 71,
+      "static_vpermd": 4
+    },
+    "intel_dimension_major_leaf": {
+      "calls": 0,
+      "gathers": 0,
+      "stack_references": 0
+    },
+    "intel_point_major_leaf": {
+      "calls": 0,
+      "intentional_gathers_per_fixing": 2,
+      "stack_references": 0
+    }
+  },
+  "local_native_status": {
+    "status": "NATIVE_UNAVAILABLE",
+    "reason": "local CPU lacks AVX-512; correctness used Intel SDE and no SDE timing is reported",
+    "source_sha256": "5a34f9435421e5de8f6b159a1532c663f65902f7ef3f5263b32d6166ad771b77"
+  },
+  "threading": {
+    "layer": "SEQUENTIAL",
+    "threads": 1,
+    "dynamic": false
+  },
+  "timing_protocol": {
+    "warmups": 16,
+    "samples": 51,
+    "modes": [
+      "warm_candidate_specific",
+      "historical_32KiB_rmw"
+    ],
+    "clock": "LFENCE/RDTSC and RDTSCP/LFENCE",
+    "resets_and_stream_restoration_outside_timing": true
+  }
+}

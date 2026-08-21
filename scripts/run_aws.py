@@ -24,6 +24,7 @@ ALLOWLIST = (
     "BUILD_METADATA_sql18.json",
     "BUILD_METADATA_onemkl_x.json",
     "BUILD_METADATA_synthetic_all_permute.json",
+    "BUILD_METADATA_genuine_complete.json",
     "LICENSE",
     "README.md",
     "bin/asian_state_bench",
@@ -38,6 +39,7 @@ ALLOWLIST = (
     "bin/dim_permute_test",
     "bin/onemkl_sobol_x_bench",
     "bin/synthetic_all_permute_scaling_bench",
+    "bin/asian_genuine_complete_bench",
     "direction_numbers/joe_kuo_6_21201.bin",
     "real_block_maps.bin",
     "scripts/run_aws.py",
@@ -206,6 +208,29 @@ SYNTHETIC_ALL_PERMUTE_CANDIDATES = (
 SYNTHETIC_ALL_PERMUTE_MODES = (
     "warm_candidate_specific",
     "historical_32KiB_rmw_pressure",
+)
+
+GENUINE_COMPLETE_NS = (16, 32, 64, 128, 256)
+GENUINE_COMPLETE_CANDIDATES = (
+    "our_source",
+    "our_routed_sql",
+    "our_payoff_arithmetic",
+    "our_payoff_geometric_cv",
+    "our_complete_arithmetic",
+    "our_complete_geometric_cv",
+    "onemkl_gaussian",
+    "intel_point_consumer",
+    "intel_tiled_dimension_consumer",
+    "intel_payoff_arithmetic",
+    "intel_payoff_geometric_cv",
+    "intel_point_complete_arithmetic",
+    "intel_tiled_complete_arithmetic",
+    "intel_point_complete_geometric_cv",
+    "intel_tiled_complete_geometric_cv",
+)
+GENUINE_COMPLETE_MODES = (
+    "warm_candidate_specific",
+    "historical_32KiB_rmw",
 )
 
 
@@ -1645,6 +1670,116 @@ def parse_synthetic_all_permute_results(payload: object) -> list[dict[str, objec
     return rows
 
 
+def parse_genuine_complete_results(payload: object) -> list[dict[str, object]]:
+    """Validate the genuine D1--D256 complete Asian benchmark report."""
+    if not isinstance(payload, dict) or payload.get("status") != "PASS":
+        fail("genuine complete benchmark did not report PASS")
+    if payload.get("warmups") != 16 or payload.get("samples") != 51:
+        fail("genuine complete timing protocol changed")
+    results = payload.get("results")
+    if not isinstance(results, list):
+        fail("genuine complete results must be a list")
+
+    rows: list[dict[str, object]] = []
+    ratios: list[dict[str, object]] = []
+    seen: set[tuple[int, str, str]] = set()
+    medians: dict[tuple[int, str, str], int] = {}
+    for item in results:
+        if not isinstance(item, dict):
+            fail("genuine complete result row must be an object")
+        try:
+            n = int(item["N"])
+            mode = str(item["mode"])
+            candidate = str(item["candidate"])
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"malformed genuine complete row: {item}: {exc}")
+        if n not in GENUINE_COMPLETE_NS or mode not in GENUINE_COMPLETE_MODES:
+            fail(f"unexpected genuine complete N/mode: {n}/{mode}")
+        if candidate == "complete_ratios":
+            ratios.append(item)
+            continue
+        if candidate not in GENUINE_COMPLETE_CANDIDATES:
+            fail(f"unexpected genuine complete candidate: {candidate}")
+        try:
+            p10 = int(item["p10"])
+            median = int(item["median"])
+            p90 = int(item["p90"])
+            ticks_per_path = float(item["ticks_per_path"])
+            ticks_per_path_fixing = float(item["ticks_per_path_fixing"])
+            raw = [int(value) for value in item["raw"]]
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"malformed genuine complete timing: {item}: {exc}")
+        if len(raw) != 51:
+            fail(f"genuine complete {n}/{mode}/{candidate} has {len(raw)} samples")
+        ordered = sorted(raw)
+        if (p10, median, p90) != (ordered[5], ordered[25], ordered[45]):
+            fail(f"genuine complete percentile mismatch: {n}/{mode}/{candidate}")
+        if abs(ticks_per_path - median / 4096.0) > 0.000001:
+            fail(f"genuine complete path denominator mismatch: {n}/{mode}/{candidate}")
+        if abs(ticks_per_path_fixing - median / 4096.0 / n) > 0.000001:
+            fail(f"genuine complete fixing denominator mismatch: {n}/{mode}/{candidate}")
+        key = (n, mode, candidate)
+        if key in seen:
+            fail(f"duplicate genuine complete timing: {key}")
+        seen.add(key)
+        medians[key] = median
+        rows.append(
+            {
+                "kind": "genuine_complete_native",
+                "N": n,
+                "candidate": candidate,
+                "mode": mode,
+                "median": median,
+                "p10": p10,
+                "p90": p90,
+                "ticks_per_path": ticks_per_path,
+                "ticks_per_path_fixing": ticks_per_path_fixing,
+                "raw_batches": raw,
+            }
+        )
+
+    expected = {
+        (n, mode, candidate)
+        for n in GENUINE_COMPLETE_NS
+        for mode in GENUINE_COMPLETE_MODES
+        for candidate in GENUINE_COMPLETE_CANDIDATES
+    }
+    if seen != expected:
+        fail(
+            "genuine complete coverage mismatch: "
+            f"missing={sorted(expected - seen)} extra={sorted(seen - expected)}"
+        )
+    if len(ratios) != len(GENUINE_COMPLETE_NS) * len(GENUINE_COMPLETE_MODES):
+        fail("genuine complete ratio coverage mismatch")
+    ratio_seen: set[tuple[int, str]] = set()
+    for item in ratios:
+        n = int(item["N"])
+        mode = str(item["mode"])
+        key = (n, mode)
+        if key in ratio_seen:
+            fail(f"duplicate genuine complete ratio: {key}")
+        ratio_seen.add(key)
+        ours = medians[(n, mode, "our_complete_geometric_cv")]
+        point = medians[(n, mode, "intel_point_complete_geometric_cv")]
+        tiled = medians[(n, mode, "intel_tiled_complete_geometric_cv")]
+        if abs(float(item["intel_point_over_ours"]) - point / ours) > 0.000000001:
+            fail(f"genuine complete point ratio mismatch: {key}")
+        if abs(float(item["intel_tiled_over_ours"]) - tiled / ours) > 0.000000001:
+            fail(f"genuine complete tiled ratio mismatch: {key}")
+        if abs(float(item["our_price_error"])) > 0.0001:
+            fail(f"our genuine complete price error exceeds gate: {key}")
+        if abs(float(item["intel_price_error"])) > 0.0001:
+            fail(f"Intel genuine complete price error exceeds gate: {key}")
+        if int(item["source_payload_bytes"]) != 32768:
+            fail(f"genuine complete source footprint changed: {key}")
+        if int(item["map_bytes"]) != n * 1600:
+            fail(f"genuine complete map footprint changed: {key}")
+        if int(item["hot_route_bytes"]) != n * 32:
+            fail(f"genuine complete route footprint changed: {key}")
+        rows.append({"kind": "genuine_complete_ratio", **item})
+    return rows
+
+
 def sanitize(name: str) -> str:
     out = []
     for ch in name.lower():
@@ -2036,6 +2171,36 @@ def print_xgrowth1_table(rows: list[dict[str, object]] | None) -> None:
         )
 
 
+def print_genuine_complete_table(rows: list[dict[str, object]] | None) -> None:
+    print("Genuine Joe-Kuo complete Asian benchmark")
+    print(
+        f"{'N':>4} {'candidate':<42} {'mode':<30} {'median':>10} "
+        f"{'p10':>10} {'p90':>10} {'ticks/path-fix':>15}"
+    )
+    if rows is None:
+        print(f"{'n/a':>4} {'n/a':<42} {'n/a':<30} {'n/a':>10} {'n/a':>10} {'n/a':>10} {'n/a':>15}")
+        return
+    for n in GENUINE_COMPLETE_NS:
+        for mode in GENUINE_COMPLETE_MODES:
+            for candidate in GENUINE_COMPLETE_CANDIDATES:
+                matches = [
+                    row
+                    for row in rows
+                    if row.get("kind") == "genuine_complete_native"
+                    and row.get("N") == n
+                    and row.get("candidate") == candidate
+                    and row.get("mode") == mode
+                ]
+                if len(matches) != 1:
+                    fail(f"missing genuine complete result: {n}/{mode}/{candidate}")
+                row = matches[0]
+                print(
+                    f"{n:>4} {candidate:<42} {mode:<30} "
+                    f"{int(row['median']):>10} {int(row['p10']):>10} "
+                    f"{int(row['p90']):>10} {float(row['ticks_per_path_fixing']):>15.9f}"
+                )
+
+
 def run_asian_suite(
     name: str,
     test_bin: Path,
@@ -2310,6 +2475,45 @@ def run_xgrowth1_suite(
     return bench.stdout, rows, parsed["report"]
 
 
+def run_genuine_complete_suite(
+    root: Path,
+) -> tuple[str, dict[str, object], list[dict[str, object]]]:
+    bench_bin = root / "bin" / "asian_genuine_complete_bench"
+    dependencies = ldd(bench_bin)
+    print(f"ldd {bench_bin.name}:")
+    print(dependencies)
+    if "libmkl_rt.so" not in dependencies or "not found" in dependencies:
+        fail("genuine complete benchmark cannot resolve oneMKL")
+    os.environ["MKL_THREADING_LAYER"] = "SEQUENTIAL"
+    os.environ["MKL_NUM_THREADS"] = "1"
+    os.environ["MKL_DYNAMIC"] = "FALSE"
+    check = run_bin(bench_bin, root, ("--check-only",))
+    sys.stderr.write(check.stderr)
+    expected = (
+        "asian_genuine_complete correctness=PASS calls_puts "
+        "N=16,32,64,128,256 raw_mkl_words=PASS"
+    )
+    if check.returncode != 0 or expected not in check.stdout.splitlines():
+        sys.stdout.write(check.stdout)
+        fail("genuine complete native correctness preflight failed")
+    results_dir = root / "results" / "asian_genuine_complete"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    native_path = results_dir / "aws.json"
+    bench = run_bin(bench_bin, root, ("--json", str(native_path)))
+    sys.stderr.write(bench.stderr)
+    if bench.returncode != 0:
+        sys.stdout.write(bench.stdout)
+        fail("genuine complete native benchmark failed")
+    try:
+        payload = json.loads(native_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        fail(f"genuine complete native JSON is unreadable: {exc}")
+    rows = parse_genuine_complete_results(payload)
+    native_rows = [row for row in rows if row.get("kind") == "genuine_complete_native"]
+    print(f"genuine complete bench: validated {len(native_rows)} native records")
+    return check.stdout + bench.stdout, payload, rows
+
+
 def main() -> int:
     os.environ["PYTHONDONTWRITEBYTECODE"] = "1"
     parser = argparse.ArgumentParser(description="Run isolated AWS bench carriers")
@@ -2327,6 +2531,7 @@ def main() -> int:
             "sql18",
             "onemkl_x",
             "synthetic_all_permute",
+            "genuine_complete",
         ),
         default="all",
         help="which component to run (default: all)",
@@ -2346,6 +2551,7 @@ def main() -> int:
     synthetic_all_permute_meta = load_metadata(
         root / "BUILD_METADATA_synthetic_all_permute.json"
     )
+    genuine_complete_meta = load_metadata(root / "BUILD_METADATA_genuine_complete.json")
     model, flags = cpu_info()
     avx = avx512_flags(flags)
     print(f"cpu_model={model}")
@@ -2375,6 +2581,7 @@ def main() -> int:
     want_sql18 = args.suite in {"all", "sql18"}
     want_onemkl_x = args.suite in {"all", "onemkl_x"}
     want_synthetic_all_permute = args.suite in {"all", "synthetic_all_permute"}
+    want_genuine_complete = args.suite in {"all", "genuine_complete"}
 
     asian_rows: list[dict[str, object]] | None = None
     dim_rows: list[dict[str, object]] | None = None
@@ -2401,6 +2608,9 @@ def main() -> int:
     synthetic_all_permute_rows: list[dict[str, object]] | None = None
     synthetic_all_permute_bench = ""
     synthetic_all_permute_report: dict[str, object] | None = None
+    genuine_complete_rows: list[dict[str, object]] | None = None
+    genuine_complete_bench = ""
+    genuine_complete_report: dict[str, object] | None = None
 
     if "avx512f" not in flags:
         print("UNSUPPORTED: CPU lacks avx512f; not launching binaries")
@@ -2424,6 +2634,8 @@ def main() -> int:
             print_onemkl_x_table(None)
         if want_synthetic_all_permute:
             print_synthetic_all_permute_table(None)
+        if want_genuine_complete:
+            print_genuine_complete_table(None)
         print("NO NATIVE DATA COLLECTED — AVX-512F HOST REQUIRED")
         return 2
 
@@ -2457,6 +2669,12 @@ def main() -> int:
             synthetic_all_permute_report,
             synthetic_all_permute_rows,
         ) = run_synthetic_all_permute_suite(root)
+    if want_genuine_complete:
+        (
+            genuine_complete_bench,
+            genuine_complete_report,
+            genuine_complete_rows,
+        ) = run_genuine_complete_suite(root)
 
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
@@ -2479,6 +2697,7 @@ def main() -> int:
         "build_metadata_geometric_cv": geometric_cv_meta,
         "build_metadata_onemkl_x": onemkl_x_meta,
         "build_metadata_synthetic_all_permute": synthetic_all_permute_meta,
+        "build_metadata_genuine_complete": genuine_complete_meta,
         "build_time_static_audit": asian_meta.get("build_time_static_audit"),
         "build_time_static_audit_dim": dim_meta.get("object_audit"),
         "correctness_status": "PASS",
@@ -2605,6 +2824,19 @@ def main() -> int:
             "native_report": synthetic_all_permute_report,
             "bench_stdout": synthetic_all_permute_bench,
         },
+        "genuine_complete": None
+        if genuine_complete_rows is None
+        else {
+            "scope": "genuine Joe-Kuo complete arithmetic and beta-one geometric-control Asian prices",
+            "benchmark_measurements": genuine_complete_rows,
+            "raw_batches": {
+                f"N{row.get('N')}/{row.get('mode')}/{row.get('candidate')}": row["raw_batches"]
+                for row in genuine_complete_rows
+                if isinstance(row.get("raw_batches"), list)
+            },
+            "native_report": genuine_complete_report,
+            "bench_stdout": genuine_complete_bench,
+        },
         "utc_timestamp": stamp,
     }
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -2639,6 +2871,9 @@ def main() -> int:
         print()
     if want_synthetic_all_permute:
         print_synthetic_all_permute_table(synthetic_all_permute_rows)
+        print()
+    if want_genuine_complete:
+        print_genuine_complete_table(genuine_complete_rows)
         print()
     print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
     return 0
