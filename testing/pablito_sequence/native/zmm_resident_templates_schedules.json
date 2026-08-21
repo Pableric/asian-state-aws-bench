@@ -1,0 +1,4273 @@
+{
+  "dimension_counts": [
+    16,
+    32,
+    64,
+    128,
+    256
+  ],
+  "direction_table": {
+    "logical_path": "direction_numbers/joe_kuo_6_21201.bin",
+    "sha256": "fa6418f236d4667b5deb5b62e6d5fcd6385c64dd60ef2cd1f06fed0e8ea74199"
+  },
+  "kernels": [
+    {
+      "candidate": "direct16",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct16_16_d16"
+    },
+    {
+      "candidate": "direct32_two_loads",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct32_two_loads_32_d16"
+    },
+    {
+      "candidate": "direct32_delta",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct32_delta_32_d16"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 12,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 2
+      },
+      "symbol": "zrt_do_resident4_16_d16"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 3,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 11
+      },
+      "symbol": "zrt_do_resident8_16_d16"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 2,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 12
+      },
+      "symbol": "zrt_do_resident10_16_d16"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_do_resident12_16_d16"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_do_resident14_16_d16"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 12,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 2
+      },
+      "symbol": "zrt_do_resident4_32_d16"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 3,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 11
+      },
+      "symbol": "zrt_do_resident8_32_d16"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 2,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 12
+      },
+      "symbol": "zrt_do_resident10_32_d16"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_do_resident12_32_d16"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_do_resident14_32_d16"
+    },
+    {
+      "candidate": "direct16",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct16_16_d32"
+    },
+    {
+      "candidate": "direct32_two_loads",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct32_two_loads_32_d32"
+    },
+    {
+      "candidate": "direct32_delta",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct32_delta_32_d32"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 23,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 7
+      },
+      "symbol": "zrt_do_resident4_16_d32"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 5,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 25
+      },
+      "symbol": "zrt_do_resident8_16_d32"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 4,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 26
+      },
+      "symbol": "zrt_do_resident10_16_d32"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 30
+      },
+      "symbol": "zrt_do_resident12_16_d32"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 30
+      },
+      "symbol": "zrt_do_resident14_16_d32"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 23,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 7
+      },
+      "symbol": "zrt_do_resident4_32_d32"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 5,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 25
+      },
+      "symbol": "zrt_do_resident8_32_d32"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 4,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 26
+      },
+      "symbol": "zrt_do_resident10_32_d32"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 30
+      },
+      "symbol": "zrt_do_resident12_32_d32"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 30
+      },
+      "symbol": "zrt_do_resident14_32_d32"
+    },
+    {
+      "candidate": "direct16",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct16_16_d64"
+    },
+    {
+      "candidate": "direct32_two_loads",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct32_two_loads_32_d64"
+    },
+    {
+      "candidate": "direct32_delta",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct32_delta_32_d64"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 47,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_do_resident4_16_d64"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 18,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 43
+      },
+      "symbol": "zrt_do_resident8_16_d64"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 6,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 55
+      },
+      "symbol": "zrt_do_resident10_16_d64"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 1,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 60
+      },
+      "symbol": "zrt_do_resident12_16_d64"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 61
+      },
+      "symbol": "zrt_do_resident14_16_d64"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 47,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_do_resident4_32_d64"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 18,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 43
+      },
+      "symbol": "zrt_do_resident8_32_d64"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 6,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 55
+      },
+      "symbol": "zrt_do_resident10_32_d64"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 1,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 60
+      },
+      "symbol": "zrt_do_resident12_32_d64"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 61
+      },
+      "symbol": "zrt_do_resident14_32_d64"
+    },
+    {
+      "candidate": "direct16",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct16_16_d128"
+    },
+    {
+      "candidate": "direct32_two_loads",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct32_two_loads_32_d128"
+    },
+    {
+      "candidate": "direct32_delta",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct32_delta_32_d128"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 99,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 26
+      },
+      "symbol": "zrt_do_resident4_16_d128"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 41,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 84
+      },
+      "symbol": "zrt_do_resident8_16_d128"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 15,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 110
+      },
+      "symbol": "zrt_do_resident10_16_d128"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 3,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 122
+      },
+      "symbol": "zrt_do_resident12_16_d128"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 125
+      },
+      "symbol": "zrt_do_resident14_16_d128"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 99,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 26
+      },
+      "symbol": "zrt_do_resident4_32_d128"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 41,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 84
+      },
+      "symbol": "zrt_do_resident8_32_d128"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 15,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 110
+      },
+      "symbol": "zrt_do_resident10_32_d128"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 3,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 122
+      },
+      "symbol": "zrt_do_resident12_32_d128"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 125
+      },
+      "symbol": "zrt_do_resident14_32_d128"
+    },
+    {
+      "candidate": "direct16",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct16_16_d256"
+    },
+    {
+      "candidate": "direct32_two_loads",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct32_two_loads_32_d256"
+    },
+    {
+      "candidate": "direct32_delta",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_do_direct32_delta_32_d256"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 214,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 36
+      },
+      "symbol": "zrt_do_resident4_16_d256"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 104,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 146
+      },
+      "symbol": "zrt_do_resident8_16_d256"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 49,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 201
+      },
+      "symbol": "zrt_do_resident10_16_d256"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 9,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 241
+      },
+      "symbol": "zrt_do_resident12_16_d256"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "dimension_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 250
+      },
+      "symbol": "zrt_do_resident14_16_d256"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 214,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 36
+      },
+      "symbol": "zrt_do_resident4_32_d256"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 104,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 146
+      },
+      "symbol": "zrt_do_resident8_32_d256"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 49,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 201
+      },
+      "symbol": "zrt_do_resident10_32_d256"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 9,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 241
+      },
+      "symbol": "zrt_do_resident12_32_d256"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "dimension_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 250
+      },
+      "symbol": "zrt_do_resident14_32_d256"
+    },
+    {
+      "candidate": "direct16",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct16_16_d16"
+    },
+    {
+      "candidate": "direct32_two_loads",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct32_two_loads_32_d16"
+    },
+    {
+      "candidate": "direct32_delta",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct32_delta_32_d16"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 12,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 2
+      },
+      "symbol": "zrt_bo_resident4_16_d16"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 3,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 11
+      },
+      "symbol": "zrt_bo_resident8_16_d16"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 2,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 12
+      },
+      "symbol": "zrt_bo_resident10_16_d16"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_bo_resident12_16_d16"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 16,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_bo_resident14_16_d16"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 12,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 2
+      },
+      "symbol": "zrt_bo_resident4_32_d16"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 3,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 11
+      },
+      "symbol": "zrt_bo_resident8_32_d16"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 2,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 12
+      },
+      "symbol": "zrt_bo_resident10_32_d16"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_bo_resident12_32_d16"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 16,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_bo_resident14_32_d16"
+    },
+    {
+      "candidate": "direct16",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct16_16_d32"
+    },
+    {
+      "candidate": "direct32_two_loads",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct32_two_loads_32_d32"
+    },
+    {
+      "candidate": "direct32_delta",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct32_delta_32_d32"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 23,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 7
+      },
+      "symbol": "zrt_bo_resident4_16_d32"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 5,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 25
+      },
+      "symbol": "zrt_bo_resident8_16_d32"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 4,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 26
+      },
+      "symbol": "zrt_bo_resident10_16_d32"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 30
+      },
+      "symbol": "zrt_bo_resident12_16_d32"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 32,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 30
+      },
+      "symbol": "zrt_bo_resident14_16_d32"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 23,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 7
+      },
+      "symbol": "zrt_bo_resident4_32_d32"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 5,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 25
+      },
+      "symbol": "zrt_bo_resident8_32_d32"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 4,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 26
+      },
+      "symbol": "zrt_bo_resident10_32_d32"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 30
+      },
+      "symbol": "zrt_bo_resident12_32_d32"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 32,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 1,
+        "vpternlogd": 30
+      },
+      "symbol": "zrt_bo_resident14_32_d32"
+    },
+    {
+      "candidate": "direct16",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct16_16_d64"
+    },
+    {
+      "candidate": "direct32_two_loads",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct32_two_loads_32_d64"
+    },
+    {
+      "candidate": "direct32_delta",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct32_delta_32_d64"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 47,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_bo_resident4_16_d64"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 18,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 43
+      },
+      "symbol": "zrt_bo_resident8_16_d64"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 6,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 55
+      },
+      "symbol": "zrt_bo_resident10_16_d64"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 1,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 60
+      },
+      "symbol": "zrt_bo_resident12_16_d64"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 64,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 61
+      },
+      "symbol": "zrt_bo_resident14_16_d64"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 47,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 14
+      },
+      "symbol": "zrt_bo_resident4_32_d64"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 18,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 43
+      },
+      "symbol": "zrt_bo_resident8_32_d64"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 6,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 55
+      },
+      "symbol": "zrt_bo_resident10_32_d64"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 1,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 60
+      },
+      "symbol": "zrt_bo_resident12_32_d64"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 64,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 61
+      },
+      "symbol": "zrt_bo_resident14_32_d64"
+    },
+    {
+      "candidate": "direct16",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct16_16_d128"
+    },
+    {
+      "candidate": "direct32_two_loads",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct32_two_loads_32_d128"
+    },
+    {
+      "candidate": "direct32_delta",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct32_delta_32_d128"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 99,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 26
+      },
+      "symbol": "zrt_bo_resident4_16_d128"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 41,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 84
+      },
+      "symbol": "zrt_bo_resident8_16_d128"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 15,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 110
+      },
+      "symbol": "zrt_bo_resident10_16_d128"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 3,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 122
+      },
+      "symbol": "zrt_bo_resident12_16_d128"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 128,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 125
+      },
+      "symbol": "zrt_bo_resident14_16_d128"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 99,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 26
+      },
+      "symbol": "zrt_bo_resident4_32_d128"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 41,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 84
+      },
+      "symbol": "zrt_bo_resident8_32_d128"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 15,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 110
+      },
+      "symbol": "zrt_bo_resident10_32_d128"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 3,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 122
+      },
+      "symbol": "zrt_bo_resident12_32_d128"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 128,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 2,
+        "vpternlogd": 125
+      },
+      "symbol": "zrt_bo_resident14_32_d128"
+    },
+    {
+      "candidate": "direct16",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct16_16_d256"
+    },
+    {
+      "candidate": "direct32_two_loads",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct32_two_loads_32_d256"
+    },
+    {
+      "candidate": "direct32_delta",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 0,
+      "resident_masks_hex": [],
+      "resident_representative_dimensions": [],
+      "static_counts_per_invocation_or_block": {},
+      "symbol": "zrt_bo_direct32_delta_32_d256"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 214,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 36
+      },
+      "symbol": "zrt_bo_resident4_16_d256"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 104,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 146
+      },
+      "symbol": "zrt_bo_resident8_16_d256"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 49,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 201
+      },
+      "symbol": "zrt_bo_resident10_16_d256"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 9,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 241
+      },
+      "symbol": "zrt_bo_resident12_16_d256"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 256,
+      "lanes": 16,
+      "layout": "block_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 250
+      },
+      "symbol": "zrt_bo_resident14_16_d256"
+    },
+    {
+      "candidate": "resident4",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 4,
+      "resident_masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 214,
+        "resident_initial_loads_64B": 4,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 36
+      },
+      "symbol": "zrt_bo_resident4_32_d256"
+    },
+    {
+      "candidate": "resident8",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 8,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 104,
+        "resident_initial_loads_64B": 8,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 146
+      },
+      "symbol": "zrt_bo_resident8_32_d256"
+    },
+    {
+      "candidate": "resident10",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 10,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 49,
+        "resident_initial_loads_64B": 10,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 201
+      },
+      "symbol": "zrt_bo_resident10_32_d256"
+    },
+    {
+      "candidate": "resident12",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 12,
+      "resident_masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ],
+      "static_counts_per_invocation_or_block": {
+        "direct_load": 9,
+        "resident_initial_loads_64B": 12,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 241
+      },
+      "symbol": "zrt_bo_resident12_32_d256"
+    },
+    {
+      "candidate": "resident14",
+      "dimensions": 256,
+      "lanes": 32,
+      "layout": "block_outer",
+      "resident_budget": 14,
+      "resident_masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "resident_representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ],
+      "static_counts_per_invocation_or_block": {
+        "resident_initial_loads_64B": 14,
+        "resident_move": 1,
+        "unchanged": 5,
+        "vpternlogd": 250
+      },
+      "symbol": "zrt_bo_resident14_32_d256"
+    }
+  ],
+  "resident_budgets": [
+    4,
+    8,
+    10,
+    12,
+    14
+  ],
+  "resident_sets": {
+    "10": {
+      "masks_hex": [
+        "0x01",
+        "0x04",
+        "0x31",
+        "0x37",
+        "0x46",
+        "0x49",
+        "0x4a",
+        "0x51",
+        "0x6b",
+        "0x76"
+      ],
+      "representative_dimensions": [
+        1,
+        3,
+        30,
+        60,
+        55,
+        45,
+        104,
+        249,
+        37,
+        33
+      ]
+    },
+    "12": {
+      "masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x20",
+        "0x31",
+        "0x34",
+        "0x3d",
+        "0x52",
+        "0x58",
+        "0x7a",
+        "0x7c"
+      ],
+      "representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        6,
+        30,
+        44,
+        56,
+        152,
+        80,
+        162,
+        23
+      ]
+    },
+    "14": {
+      "masks_hex": [
+        "0x01",
+        "0x04",
+        "0x15",
+        "0x1c",
+        "0x26",
+        "0x29",
+        "0x3d",
+        "0x3e",
+        "0x45",
+        "0x51",
+        "0x57",
+        "0x5b",
+        "0x61",
+        "0x6b"
+      ],
+      "representative_dimensions": [
+        1,
+        3,
+        47,
+        137,
+        8,
+        94,
+        56,
+        227,
+        103,
+        249,
+        71,
+        16,
+        96,
+        37
+      ]
+    },
+    "4": {
+      "masks_hex": [
+        "0x01",
+        "0x19",
+        "0x26",
+        "0x57"
+      ],
+      "representative_dimensions": [
+        1,
+        18,
+        8,
+        71
+      ]
+    },
+    "8": {
+      "masks_hex": [
+        "0x01",
+        "0x02",
+        "0x0d",
+        "0x1a",
+        "0x3d",
+        "0x4f",
+        "0x7a",
+        "0x7c"
+      ],
+      "representative_dimensions": [
+        1,
+        2,
+        22,
+        11,
+        56,
+        76,
+        162,
+        23
+      ]
+    }
+  },
+  "schema_version": 1
+}

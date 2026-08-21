@@ -1,0 +1,33 @@
+CC ?= gcc
+CFLAGS ?= -O3 -Wall -Wextra -Werror -std=c11 -mavx512f -mavx512dq
+
+.PHONY: all generated check-generated sde-check native-check native-run clean
+
+TABLE ?= ../../../direction_numbers/joe_kuo_6_21201.bin
+NATIVE_JSON ?= ../results/zmm_resident_native_benchmark_20260821/native.json
+
+all: bench_zmm_resident_templates
+
+generated:
+	python3 ../generate_zmm_resident_native_benchmark.py
+
+check-generated:
+	python3 ../generate_zmm_resident_native_benchmark.py --check
+
+bench_zmm_resident_templates: bench_zmm_resident_templates.c \
+		zmm_resident_templates_generated.S zmm_resident_templates_generated.h
+	$(CC) $(CFLAGS) -o $@ bench_zmm_resident_templates.c zmm_resident_templates_generated.S
+
+native-check: bench_zmm_resident_templates
+	./bench_zmm_resident_templates --check-only --table $(TABLE)
+
+sde-check: bench_zmm_resident_templates
+	/opt/intel-sde/sde64 -skx -- ./bench_zmm_resident_templates --check-only \
+		--table $(TABLE)
+
+native-run: native-check
+	mkdir -p $(dir $(NATIVE_JSON))
+	./bench_zmm_resident_templates --table $(TABLE) --samples 31 --warmups 2 --json $(NATIVE_JSON)
+
+clean:
+	$(RM) bench_zmm_resident_templates
