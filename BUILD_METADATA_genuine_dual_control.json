@@ -1,0 +1,35 @@
+{
+  "schema_version": 1,
+  "suite": "genuine_dual_control",
+  "scope": "matched current versus shared-control dual-payload genuine Asian route benchmark",
+  "binary": {
+    "path": "bin/asian_genuine_dual_control_bench",
+    "sha256": "8bdedc3c322b64ac8cfc81d90fa453ad511c81b7a1abdc67cf83b3ce57a3747f"
+  },
+  "source_hashes": {
+    "asian_genuine_sql_variable_avx512.s": "4bcb598a60dc1c69d4fba4d0e3b4ac7fb4fb8dd88169ad4b9c00c8cde1037c78",
+    "benchmarks/bench_asian_genuine_dual_control.c": "ea5eb1c78242e3b710e5b99ab21e93298c0bcb59489e87ead790eb359985a52c",
+    "results/asian_genuine_dual_control/object_audit.json": "5db8d93db80fc86f25541eea8a667b72ec2dcea61017444f95cc32e316211f62",
+    "results/asian_genuine_dual_control/benchmark_audit.json": "0e3e992e1ae65c09e4b50eb8698a550ee78577176df39ec28ce3cf9edd0495e3",
+    "results/asian_genuine_dual_control/README.md": "10c82230dbc913b1980c9a465bde95c78ca5e036166923b61323c0c5669588cf"
+  },
+  "correctness": {
+    "status": "PASS",
+    "banner": "asian_genuine_dual_control correctness=PASS calls_puts N=16,32,64,128,256 independent_float64_absolute_1e-4=PASS",
+    "bit_identical_x_growth_sql": true,
+    "absolute_price_error_gate": 0.0001
+  },
+  "expected_per_packet_fixing_delta": {
+    "instructions": -10,
+    "selector_loads": -4,
+    "shifts": -4,
+    "control_zmm_loads": -2,
+    "control_load_bytes": -128
+  },
+  "timing_protocol": {
+    "warmups": 16,
+    "samples": 51,
+    "clocks": ["fenced TSC", "CLOCK_MONOTONIC_RAW"],
+    "modes": ["warm_candidate_specific", "historical_32KiB_rmw"]
+  }
+}

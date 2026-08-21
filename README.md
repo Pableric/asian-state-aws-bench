@@ -353,6 +353,23 @@ The result records fenced-TSC and wall-clock samples, paths/second, scaling
 efficiency, topology, NUMA placement, Intel/ours ratios and the empty
 persistent-thread/barrier dispatch floor.
 
+## Genuine dual-control route experiment
+
+This matched single-core experiment compares the current two-fragment x/growth
+route with a dual-payload route that decodes and loads identical permutation
+controls once, then reuses them for both payloads.
+
+```bash
+mkdir -p results/asian_genuine_dual_control
+./bin/asian_genuine_dual_control_bench --check-only
+./bin/asian_genuine_dual_control_bench \
+  --json results/asian_genuine_dual_control/aws.json
+```
+
+It measures routed S/Q/L and complete arithmetic/geometric-control prices for
+N=16/32/64/128/256 using identical prepared inputs and both established cache
+protocols.
+
 ## Host requirements
 
 - Linux x86-64
