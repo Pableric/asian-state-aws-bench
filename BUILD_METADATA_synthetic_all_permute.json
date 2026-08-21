@@ -1,0 +1,60 @@
+{
+  "artifact": "bin/synthetic_all_permute_scaling_bench",
+  "artifact_sha256": "b9f80da360091f3d265472471f57697e8fe13ab13eed5481ebb32c2a61717278",
+  "artifact_size_bytes": 117216,
+  "benchmark": "synthetic_all_permute_scaling",
+  "build": {
+    "compiler": "gcc 16.2.1 20260810",
+    "compiler_flags": "-std=c11 -O3 -march=skylake-avx512 -ffp-contract=off -Wall -Wextra -Werror",
+    "link_flags": "-L/opt/intel/oneapi/mkl/latest/lib -Wl,-rpath,/opt/intel/oneapi/mkl/latest/lib -lmkl_rt -lcrypto -lpthread -lm -ldl",
+    "linker": "GNU ld 2.47",
+    "oneMKL_headers_and_runtime": "Intel oneAPI MKL 2026.0",
+    "source_binary_before_strip_sha256": "6ff0ac0ca6658de314a2a30c5c2e988bcc50ab9ec1cfab1d7d9ef00af036f5db",
+    "stripped": true
+  },
+  "carrier_provenance": {
+    "archive_sha256": "0917015479c14ee3c43efdff5dc1d0c3fd20eeb9ba5335544bd3246385478a94",
+    "internal_sha256sums_sha256": "268e0f00e53c4848e335fae0709aefcbcb49e5f2ffed21b2102f1f4e2563eaa7",
+    "direction_table_sha256": "fa6418f236d4667b5deb5b62e6d5fcd6385c64dd60ef2cd1f06fed0e8ea74199"
+  },
+  "source_hashes": {
+    "benchmark": "9e5061c74cc6418c230026326fa0a822c60fce94519c22ec98ca75c9395aa454",
+    "assembly": "55d524035ac5bf0bfc48a6e585baf75356768a1f8282412a46a49a48b6ec3096",
+    "setup": "926f2e90b02e72e9bd17a97298caed34df744466e2802fab8fd451ab9d41c838",
+    "private_header": "2a28fe776e379f06f82d71677f2afc10e4f525dcdd47df374b4a3bdbd16ce0b5",
+    "object_audit": "d76e133bb0269992fbdc745dfd7c8bdce9b88f5c00f85736ef8904ead68e5b56",
+    "local_status": "ec4eee28143edabc22ede464e763c0ec61e03b3d01861386d92c4f8efe82ba63"
+  },
+  "correctness": {
+    "carrier_and_internal_hashes": "PASS",
+    "oneMKL_custom_direction_proof": "PASS for N=16,32,64,128,256",
+    "sde_complete_trace": "PASS",
+    "object_audit": "PASS",
+    "ordered_d1_regression": "PASS",
+    "local_native_timing": "NATIVE_UNAVAILABLE"
+  },
+  "dynamic_requirements": {
+    "glibc_maximum": "GLIBC_2.34",
+    "oneMKL_soname": "libmkl_rt.so.3",
+    "oneMKL_runpath": "/opt/intel/oneapi/mkl/latest/lib",
+    "openssl_soname": "libcrypto.so.3"
+  },
+  "scope": {
+    "dimensions": [16, 32, 64, 128, 256],
+    "paths": 4096,
+    "sobol_indices_ours": "8192..12287",
+    "sobol_indices_oneMKL_after_scalar_skip": "8193..12288 (oneMKL u1-based recurrence)",
+    "claim": "hardware-scaling ceiling only",
+    "disclaimer": "D2-D256 cyclically reuse certified affine maps; this is not a valid multidimensional Asian simulation, price, or discrepancy test"
+  },
+  "timing_contract": {
+    "measurement": "LFENCE/RDTSC and RDTSCP/LFENCE hardware TSC deltas",
+    "frequency_conditioner": "outside timed interval",
+    "stream_restore_and_state_reset": "outside timed interval",
+    "checksum": "outside timed interval",
+    "warmups": 16,
+    "samples": 51,
+    "threading": "MKL sequential, one thread, dynamic disabled",
+    "cache_modes": ["warm_candidate_specific", "historical_32KiB_rmw_pressure"]
+  }
+}

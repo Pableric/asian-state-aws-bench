@@ -23,6 +23,7 @@ ALLOWLIST = (
     "BUILD_METADATA_geometric_cv.json",
     "BUILD_METADATA_sql18.json",
     "BUILD_METADATA_onemkl_x.json",
+    "BUILD_METADATA_synthetic_all_permute.json",
     "LICENSE",
     "README.md",
     "bin/asian_state_bench",
@@ -36,6 +37,7 @@ ALLOWLIST = (
     "bin/dim_permute_bench",
     "bin/dim_permute_test",
     "bin/onemkl_sobol_x_bench",
+    "bin/synthetic_all_permute_scaling_bench",
     "direction_numbers/joe_kuo_6_21201.bin",
     "real_block_maps.bin",
     "scripts/run_aws.py",
@@ -189,6 +191,21 @@ ONEMKL_X_CONTRACTS = (
     (0.03, 0.20),
     (-0.07, 0.10),
     (-0.25, 0.00),
+)
+
+SYNTHETIC_ALL_PERMUTE_NS = (16, 32, 64, 128, 256)
+SYNTHETIC_ALL_PERMUTE_CANDIDATES = (
+    "synthetic_all_permute_materialized_x",
+    "synthetic_all_permute_fused_sql",
+    "onemkl_native_nd_x",
+    "canonical_x_source",
+    "canonical_dual_source",
+    "materialized_x_routes_only",
+    "fused_sql_routes_only",
+)
+SYNTHETIC_ALL_PERMUTE_MODES = (
+    "warm_candidate_specific",
+    "historical_32KiB_rmw_pressure",
 )
 
 
@@ -1504,6 +1521,130 @@ def parse_xgrowth1_results(stdout: str) -> dict[str, object]:
     return {"report": report, "rows": rows}
 
 
+def parse_synthetic_all_permute_results(payload: object) -> list[dict[str, object]]:
+    """Validate the bounded synthetic scaling report without upgrading its claim."""
+    if not isinstance(payload, dict) or payload.get("status") != "PASS":
+        fail("synthetic all-permute benchmark did not report PASS")
+    expected_scope = (
+        "synthetic_all_permute hardware scaling only; repeated certified maps "
+        "are not valid D2-D256 Asian simulation"
+    )
+    if payload.get("scope") != expected_scope:
+        fail("synthetic all-permute scope/disclaimer changed")
+    if payload.get("direction_table_sha256") != (
+        "fa6418f236d4667b5deb5b62e6d5fcd6385c64dd60ef2cd1f06fed0e8ea74199"
+    ):
+        fail("synthetic all-permute direction table changed")
+    if payload.get("oneMKL_skip_scalar_components") != "8192*N":
+        fail("synthetic all-permute oneMKL skip contract changed")
+    if payload.get("oneMKL_reference_gray_indices_after_skip") != (
+        "8193..12288 (oneMKL u1-based recurrence)"
+    ):
+        fail("synthetic all-permute oneMKL index convention changed")
+    if payload.get("warmups") != 16 or payload.get("samples") != 51:
+        fail("synthetic all-permute timing protocol changed")
+    dimension_hashes = payload.get("dimension_word_sha256")
+    if not isinstance(dimension_hashes, list) or len(dimension_hashes) != 256:
+        fail("synthetic all-permute dimension hash coverage mismatch")
+    if any(
+        not isinstance(value, str)
+        or len(value) != 64
+        or any(ch not in "0123456789abcdef" for ch in value)
+        for value in dimension_hashes
+    ):
+        fail("synthetic all-permute dimension hash is malformed")
+
+    cases = payload.get("cases")
+    if not isinstance(cases, list) or len(cases) != len(SYNTHETIC_ALL_PERMUTE_NS):
+        fail("synthetic all-permute case coverage mismatch")
+    for n, case in zip(SYNTHETIC_ALL_PERMUTE_NS, cases):
+        if not isinstance(case, dict) or case.get("N") != n:
+            fail(f"synthetic all-permute malformed case N={n}")
+        if case.get("label") != "synthetic_all_permute":
+            fail(f"synthetic all-permute disclaimer missing for N={n}")
+        if case.get("mkl_available") is not True or case.get("mkl_proof") not in {
+            "raw_uniformbits",
+            "float_confirmed_x_over_2pow32",
+        }:
+            fail(f"synthetic all-permute oneMKL proof failed for N={n}")
+        expected_bytes = {
+            "output_bytes": n * 16384,
+            "hot_schedule_bytes": (n - 1) * 16,
+            "cold_context_bytes": (n - 1) * 448,
+        }
+        for key, expected in expected_bytes.items():
+            if case.get(key) != expected:
+                fail(f"synthetic all-permute {key} mismatch for N={n}")
+
+    records = payload.get("results")
+    if not isinstance(records, list):
+        fail("synthetic all-permute results must be a list")
+    rows: list[dict[str, object]] = []
+    seen: set[tuple[int, str, str]] = set()
+    for item in records:
+        if not isinstance(item, dict):
+            fail("synthetic all-permute result is malformed")
+        try:
+            n = int(item["N"])
+            candidate = str(item["candidate"])
+            mode = str(item["mode"])
+            median = int(item["median"])
+            p10 = int(item["p10"])
+            p90 = int(item["p90"])
+            cycles_per_path_fixing = float(item["cycles_per_path_fixing"])
+            raw = [int(value) for value in item["raw"]]
+        except (KeyError, TypeError, ValueError) as exc:
+            fail(f"malformed synthetic all-permute result: {item}: {exc}")
+        if n not in SYNTHETIC_ALL_PERMUTE_NS:
+            fail(f"unexpected synthetic all-permute N={n}")
+        if candidate not in SYNTHETIC_ALL_PERMUTE_CANDIDATES:
+            fail(f"unexpected synthetic all-permute candidate: {candidate}")
+        if mode not in SYNTHETIC_ALL_PERMUTE_MODES:
+            fail(f"unexpected synthetic all-permute mode: {mode}")
+        key = (n, mode, candidate)
+        if key in seen:
+            fail(f"duplicate synthetic all-permute result: {key}")
+        seen.add(key)
+        if len(raw) != 51:
+            fail(f"synthetic all-permute {key} has {len(raw)} samples")
+        ordered = sorted(raw)
+        if (p10, median, p90) != (ordered[5], ordered[25], ordered[45]):
+            fail(f"synthetic all-permute percentile mismatch: {key}")
+        expected_rate = median / (4096.0 * n)
+        if abs(cycles_per_path_fixing - expected_rate) > 0.000000001:
+            fail(f"synthetic all-permute denominator mismatch: {key}")
+        if abs(float(item.get("cycles_per_x", -1.0)) - expected_rate) > 0.000000001:
+            fail(f"synthetic all-permute cycles-per-x mismatch: {key}")
+        rows.append(
+            {
+                "kind": "synthetic_all_permute_native",
+                "N": n,
+                "candidate": candidate,
+                "mode": mode,
+                "median": median,
+                "p10": p10,
+                "p90": p90,
+                "cycles_per_path_fixing": cycles_per_path_fixing,
+                "raw_batches": raw,
+            }
+        )
+    expected = {
+        (n, mode, candidate)
+        for n in SYNTHETIC_ALL_PERMUTE_NS
+        for mode in SYNTHETIC_ALL_PERMUTE_MODES
+        for candidate in SYNTHETIC_ALL_PERMUTE_CANDIDATES
+    }
+    if seen != expected:
+        fail(
+            "synthetic all-permute coverage mismatch: "
+            f"missing={sorted(expected - seen)} extra={sorted(seen - expected)}"
+        )
+    fit = payload.get("descriptive_warm_fit")
+    if not isinstance(fit, dict) or fit.get("raw_medians_authoritative") is not True:
+        fail("synthetic all-permute fit displaced authoritative raw medians")
+    return rows
+
+
 def sanitize(name: str) -> str:
     out = []
     for ch in name.lower():
@@ -1804,6 +1945,39 @@ def print_onemkl_x_table(rows: list[dict[str, object]] | None) -> None:
                       f"{int(row['p90']):>10} {float(row['cycles_per_value']):>12.6f}")
 
 
+def print_synthetic_all_permute_table(rows: list[dict[str, object]] | None) -> None:
+    print("Synthetic all-permute scaling ceiling — NOT a valid multidimensional Asian simulation")
+    print(
+        f"{'N':>4} {'candidate':<42} {'mode':<32} {'median':>10} "
+        f"{'p10':>10} {'p90':>10} {'TSC/path-fix':>14}"
+    )
+    if rows is None:
+        print(
+            f"{'n/a':>4} {'n/a':<42} {'n/a':<32} {'n/a':>10} "
+            f"{'n/a':>10} {'n/a':>10} {'n/a':>14}"
+        )
+        return
+    for n in SYNTHETIC_ALL_PERMUTE_NS:
+        for mode in SYNTHETIC_ALL_PERMUTE_MODES:
+            for candidate in SYNTHETIC_ALL_PERMUTE_CANDIDATES:
+                matches = [
+                    row
+                    for row in rows
+                    if row.get("N") == n
+                    and row.get("candidate") == candidate
+                    and row.get("mode") == mode
+                ]
+                if len(matches) != 1:
+                    fail(f"missing synthetic all-permute result: {n}/{mode}/{candidate}")
+                row = matches[0]
+                print(
+                    f"{n:>4} {candidate:<42} {mode:<32} "
+                    f"{int(row['median']):>10} {int(row['p10']):>10} "
+                    f"{int(row['p90']):>10} "
+                    f"{float(row['cycles_per_path_fixing']):>14.9f}"
+                )
+
+
 def print_xgrowth1_table(rows: list[dict[str, object]] | None) -> None:
     print("XGROWTH1 D5 stored-payload x/growth and S/Q/L diagnostic")
     print(
@@ -2072,6 +2246,42 @@ def run_onemkl_x_suite(
     return bench.stdout, payload, rows
 
 
+def run_synthetic_all_permute_suite(
+    root: Path,
+) -> tuple[str, dict[str, object], list[dict[str, object]]]:
+    bench_bin = root / "bin" / "synthetic_all_permute_scaling_bench"
+    dependencies = ldd(bench_bin)
+    print(f"ldd {bench_bin.name}:")
+    print(dependencies)
+    if "libmkl_rt.so" not in dependencies or "not found" in dependencies:
+        fail("synthetic all-permute benchmark cannot resolve oneMKL")
+    if "libcrypto.so.3" not in dependencies:
+        fail("synthetic all-permute benchmark cannot resolve libcrypto.so.3")
+    os.environ["MKL_THREADING_LAYER"] = "SEQUENTIAL"
+    os.environ["MKL_NUM_THREADS"] = "1"
+    os.environ["MKL_DYNAMIC"] = "FALSE"
+    check = run_bin(bench_bin, root, ("--check-only",))
+    sys.stderr.write(check.stderr)
+    if check.returncode != 0 or "synthetic_all_permute_benchmark_correctness=PASS" not in check.stdout:
+        sys.stdout.write(check.stdout)
+        fail("synthetic all-permute native correctness preflight failed")
+    results_dir = root / "results" / "synthetic_all_permute_scaling"
+    results_dir.mkdir(parents=True, exist_ok=True)
+    native_path = results_dir / "native_spr.json"
+    bench = run_bin(bench_bin, root, ("--json", str(native_path)))
+    sys.stderr.write(bench.stderr)
+    if bench.returncode != 0 or "synthetic_all_permute_scaling PASS" not in bench.stdout:
+        sys.stdout.write(bench.stdout)
+        fail("synthetic all-permute native benchmark failed")
+    try:
+        payload = json.loads(native_path.read_text(encoding="utf-8"))
+    except (OSError, json.JSONDecodeError) as exc:
+        fail(f"synthetic all-permute native JSON is unreadable: {exc}")
+    rows = parse_synthetic_all_permute_results(payload)
+    print(f"synthetic all-permute bench: validated {len(rows)} native records (table below)")
+    return check.stdout + bench.stdout, payload, rows
+
+
 def run_xgrowth1_suite(
     root: Path,
 ) -> tuple[str, list[dict[str, object]], dict[str, object]]:
@@ -2116,6 +2326,7 @@ def main() -> int:
             "xgrowth1",
             "sql18",
             "onemkl_x",
+            "synthetic_all_permute",
         ),
         default="all",
         help="which component to run (default: all)",
@@ -2132,6 +2343,9 @@ def main() -> int:
     sql18_meta = load_metadata(root / "BUILD_METADATA_sql18.json")
     geometric_cv_meta = load_metadata(root / "BUILD_METADATA_geometric_cv.json")
     onemkl_x_meta = load_metadata(root / "BUILD_METADATA_onemkl_x.json")
+    synthetic_all_permute_meta = load_metadata(
+        root / "BUILD_METADATA_synthetic_all_permute.json"
+    )
     model, flags = cpu_info()
     avx = avx512_flags(flags)
     print(f"cpu_model={model}")
@@ -2160,6 +2374,7 @@ def main() -> int:
     want_xgrowth1 = args.suite in {"all", "xgrowth1"}
     want_sql18 = args.suite in {"all", "sql18"}
     want_onemkl_x = args.suite in {"all", "onemkl_x"}
+    want_synthetic_all_permute = args.suite in {"all", "synthetic_all_permute"}
 
     asian_rows: list[dict[str, object]] | None = None
     dim_rows: list[dict[str, object]] | None = None
@@ -2183,6 +2398,9 @@ def main() -> int:
     onemkl_x_rows: list[dict[str, object]] | None = None
     onemkl_x_bench = ""
     onemkl_x_report: dict[str, object] | None = None
+    synthetic_all_permute_rows: list[dict[str, object]] | None = None
+    synthetic_all_permute_bench = ""
+    synthetic_all_permute_report: dict[str, object] | None = None
 
     if "avx512f" not in flags:
         print("UNSUPPORTED: CPU lacks avx512f; not launching binaries")
@@ -2204,6 +2422,8 @@ def main() -> int:
             print_sql18_table(None)
         if want_onemkl_x:
             print_onemkl_x_table(None)
+        if want_synthetic_all_permute:
+            print_synthetic_all_permute_table(None)
         print("NO NATIVE DATA COLLECTED — AVX-512F HOST REQUIRED")
         return 2
 
@@ -2231,6 +2451,12 @@ def main() -> int:
         sql18_bench, sql18_rows = run_sql18_suite(root)
     if want_onemkl_x:
         onemkl_x_bench, onemkl_x_report, onemkl_x_rows = run_onemkl_x_suite(root)
+    if want_synthetic_all_permute:
+        (
+            synthetic_all_permute_bench,
+            synthetic_all_permute_report,
+            synthetic_all_permute_rows,
+        ) = run_synthetic_all_permute_suite(root)
 
     results_dir = root / "results"
     results_dir.mkdir(exist_ok=True)
@@ -2252,6 +2478,7 @@ def main() -> int:
         "build_metadata_sql18": sql18_meta,
         "build_metadata_geometric_cv": geometric_cv_meta,
         "build_metadata_onemkl_x": onemkl_x_meta,
+        "build_metadata_synthetic_all_permute": synthetic_all_permute_meta,
         "build_time_static_audit": asian_meta.get("build_time_static_audit"),
         "build_time_static_audit_dim": dim_meta.get("object_audit"),
         "correctness_status": "PASS",
@@ -2362,6 +2589,22 @@ def main() -> int:
             "native_report": onemkl_x_report,
             "bench_stdout": onemkl_x_bench,
         },
+        "synthetic_all_permute": None
+        if synthetic_all_permute_rows is None
+        else {
+            "scope": (
+                "synthetic hardware-scaling ceiling only; repeated certified maps "
+                "are not a valid multidimensional Asian simulation or price"
+            ),
+            "benchmark_measurements": synthetic_all_permute_rows,
+            "raw_batches": {
+                f"N{row.get('N')}/{row.get('mode')}/{row.get('candidate')}": row["raw_batches"]
+                for row in synthetic_all_permute_rows
+                if isinstance(row.get("raw_batches"), list)
+            },
+            "native_report": synthetic_all_permute_report,
+            "bench_stdout": synthetic_all_permute_bench,
+        },
         "utc_timestamp": stamp,
     }
     out_path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
@@ -2393,6 +2636,9 @@ def main() -> int:
         print()
     if want_onemkl_x:
         print_onemkl_x_table(onemkl_x_rows)
+        print()
+    if want_synthetic_all_permute:
+        print_synthetic_all_permute_table(synthetic_all_permute_rows)
         print()
     print("NATIVE DATA COLLECTED — PRODUCTION SELECTION REQUIRES REVIEW")
     return 0

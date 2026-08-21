@@ -59,6 +59,12 @@ disassembled.
    oneMKL enters a strict value/ratio comparison only when its untimed raw-word
    probe proves exact D1 identity; otherwise it remains native-throughput
    context with no permutation adapter.
+10. **Synthetic all-permute scaling ceiling** —
+   `bin/synthetic_all_permute_scaling_bench`. This compares N=16/32/64/128/256
+   scaling for materialized x, fused S/Q/L, and a proven custom-direction
+   oneMKL stream. D2–D256 deliberately cycle the seventeen certified affine
+   maps. These rows are hardware diagnostics only: they are not valid
+   multidimensional Asian paths, prices, or discrepancy results.
 
 `scripts/run_aws.py` hashes every listed file, including both metadata
 files, and merges audits with native measurements.
@@ -76,6 +82,7 @@ PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py
 # or: python3 scripts/run_aws.py --suite xgrowth1
 # or: python3 scripts/run_aws.py --suite sql18
 # or: python3 scripts/run_aws.py --suite onemkl_x
+# or: python3 scripts/run_aws.py --suite synthetic_all_permute
 ```
 
 The runner verifies `SHA256SUMS` (every file except `SHA256SUMS`
@@ -256,6 +263,38 @@ MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
 Build provenance and the frozen carrier hashes are in
 `BUILD_METADATA_onemkl_x.json`.
 
+## Synthetic all-permute scaling ceiling
+
+The `synthetic_all_permute` suite measures 4,096 paths at
+N=16/32/64/128/256. It reports complete and component timings for canonical
+x/growth production, materialized affine routing, fused S/Q/L routing, and a
+native point-major oneMKL Sobol-to-x call using the exact Joe–Kuo direction
+table.
+
+Before timing each N, the executable proves oneMKL's custom stream by comparing
+all `4096*N` underlying integer Sobol components with an independent Gray-code
+reference. Stream initialization success alone is not accepted. The stream
+skips `8192*N` scalar components, so oneMKL's u1-based recurrence returns
+indices 8193–12288; this convention is recorded in the native JSON.
+
+The reused affine routes are intentionally synthetic. The suite answers only
+how the certified permutation mechanism scales when reused; it cannot support
+any multidimensional correctness, pricing, convergence, or variance claim.
+Native timing uses fenced TSC deltas with 16 warmups and 51 shuffled samples;
+the reported values are hardware TSC ticks, not SDE estimates.
+
+Run it with:
+
+```sh
+source /opt/intel/oneapi/setvars.sh
+MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+  PYTHONDONTWRITEBYTECODE=1 python3 scripts/run_aws.py \
+  --suite synthetic_all_permute
+```
+
+Build provenance and the source audit hashes are in
+`BUILD_METADATA_synthetic_all_permute.json`.
+
 ## Host requirements
 
 - Linux x86-64
@@ -264,6 +303,7 @@ Build provenance and the frozen carrier hashes are in
   also need `GLIBC_2.29` (`exp`) and `GLIBC_2.27` (`expf`)
 - Python 3 with the standard library only
 - Intel oneAPI MKL runtime providing `libmkl_rt.so.3` for `--suite onemkl_x`
+  and `--suite synthetic_all_permute`
 
 ## Asian S/Q state
 
