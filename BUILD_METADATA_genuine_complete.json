@@ -4,7 +4,7 @@
   "scope": "genuine Joe-Kuo D1-D256 complete arithmetic and beta-one geometric-control Asian benchmark",
   "binary": {
     "path": "bin/asian_genuine_complete_bench",
-    "sha256": "a591bc383807b427c828259903f8684ff203abf42dd7c8b1abdb7b4054e757ab",
+    "sha256": "2c71b7b2061f13116dad3c7d8e989e41d0c12d4f43370d34657318970213992f",
     "dynamic_dependencies": [
       "libmkl_rt.so.3",
       "libm.so.6",
@@ -13,7 +13,7 @@
     ]
   },
   "source_hashes": {
-    "benchmarks/bench_asian_genuine_complete.c": "daf036ccae21052b5cca0e5aa3e8e1dec8189ed16ff68a0dd49f89914e2797d8",
+    "benchmarks/bench_asian_genuine_complete.c": "4123c2c0f661cb5c431c8256908872e6d311b7194c5fb27b555832035006dc30",
     "asian_intel_sql_consumers_avx512.s": "7c9d56905fabd1ab7d726add2e6eed329f89fd93a3ef4602aa328e599f4387df",
     "asian_genuine_permute_setup.c": "e2e54ebca65f6586cbb2fbfa0621e20a63dbaafec3cbbdb2515f5a9a432a0301",
     "asian_genuine_sql_variable_avx512.s": "90a91aa10cf897f22bbf7a4d1ad97b340a5c6e27b7f52bbdff38eeebc94eda00",
@@ -27,7 +27,11 @@
     "paths": 4096,
     "sobol_start": 8192,
     "raw_onemkl_word_identity": true,
-    "calls_and_puts": true
+    "calls_and_puts": true,
+    "per_fixing_gbm_scaling": true,
+    "independent_float64_chronological_reference": true,
+    "absolute_price_error_gate": 0.0001,
+    "source_path": "qualified carrier x followed by qualified range-reduced vector exponential"
   },
   "object_audit": {
     "status": "PASS",

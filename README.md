@@ -322,6 +322,12 @@ MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
 Build provenance and object-audit hashes are in
 `BUILD_METADATA_genuine_complete.json`.
 
+Its GBM coefficients are scaled per fixing: `dt=1/N`,
+`step_drift=(r-q-0.5*sigma^2)*dt`, and
+`step_diffusion=sigma*sqrt(dt)`. Complete arithmetic and geometric-control
+prices are checked against an independent float64 chronological reference with
+an absolute `1e-4` gate before timing is accepted.
+
 ## Host requirements
 
 - Linux x86-64
