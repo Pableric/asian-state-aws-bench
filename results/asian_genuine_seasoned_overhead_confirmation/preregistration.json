@@ -1,0 +1,78 @@
+{
+  "schema": "asian-genuine-seasoned-overhead-preregistration-v1",
+  "frozen_commit": "d31ed2eafdaeb892fbbbf49f55765600548ab46d",
+  "scope": "performance_measurement_protocol_only",
+  "frozen_candidate": {
+    "tile": 8,
+    "output": "price_delta",
+    "selection_from_confirmation_results": false
+  },
+  "candidates": {
+    "A": "matched_f_unseasoned",
+    "B": "seasoned"
+  },
+  "cases": [
+    {"M": 16, "c": 0, "f": 16, "negative_control": true},
+    {"M": 128, "c": 32, "f": 96, "negative_control": false},
+    {"M": 256, "c": 0, "f": 256, "negative_control": true},
+    {"M": 256, "c": 1, "f": 255, "negative_control": false},
+    {"M": 256, "c": 64, "f": 192, "negative_control": false},
+    {"M": 256, "c": 128, "f": 128, "negative_control": false},
+    {"M": 256, "c": 255, "f": 1, "negative_control": false}
+  ],
+  "estimators": ["arithmetic", "geometric_cv"],
+  "cache_modes": ["candidate_specific_warm", "historical_32KiB_rmw"],
+  "protocol": {
+    "physical_cores": 1,
+    "threads": 1,
+    "paths": 4096,
+    "warmup_quartets_per_cell": 16,
+    "measured_quartets_per_cell": 201,
+    "orders": ["ABBA", "BAAB"],
+    "quartet_order_seed": "0x534541534f4e4142",
+    "order_schedule": "within each phase, seeded PRNG chooses the first pattern of every two-quartet pair and the second quartet uses the opposite pattern",
+    "paired_ratio": "(B1+B2)/(A1+A2)",
+    "clocks": ["fenced_tsc", "CLOCK_MONOTONIC_RAW"],
+    "resets_and_checksums": "outside_timing",
+    "active_state_source_route_context_output_addresses": "identical_for_A_and_B",
+    "candidate_specific_warm_before_each_timed_invocation": true,
+    "pressure_mode_before_each_invocation": "8192_uint32_RMW_exactly_32768_bytes"
+  },
+  "bootstrap": {
+    "method": "stratified_resample_of_201_paired_quartets_within_each_cell",
+    "replicates": 10000,
+    "seed": "0x534541534f564552",
+    "percentile_rule": "nearest_rank",
+    "primary_upper_probability": 0.95,
+    "diagnostic_cell_interval": [0.025, 0.975]
+  },
+  "gates": {
+    "tsc_global_geometric_mean_ratio_max": 1.005,
+    "wall_global_geometric_mean_ratio_max": 1.005,
+    "tsc_global_bootstrap_95_upper_max": 1.01,
+    "wall_global_bootstrap_95_upper_max": 1.01,
+    "every_tsc_cell_median_ratio_max": 1.02,
+    "every_wall_cell_median_ratio_max": 1.02,
+    "negative_control_method_validity": "for both clocks, the stratified two-sided 95% bootstrap interval of the eight c=0 cell medians' geometric mean contains 1.0",
+    "individual_cell_confidence_intervals": "diagnostic_only"
+  },
+  "prerequisites": {
+    "seasoned_correctness": "SEASONED_CORRECTNESS_QUALIFIED_AWS_PERFORMANCE_PENDING",
+    "matched_f_route_dynamic_instruction_delta": 0,
+    "c0_route_and_context_bytes": "identical",
+    "assembly_or_abi_changes": false,
+    "runtime_frozen_file_sha256_preflight": true,
+    "preserved_previous_status": "AWS_PERFORMANCE_GATE_FAILED"
+  },
+  "forbidden_aws_dependencies": [
+    "NumPy",
+    "MPFR",
+    "coefficient_generation",
+    "Intel_SDE",
+    "research_audit",
+    "oneMKL",
+    "tile_4",
+    "setup_timing",
+    "unrelated_candidates"
+  ]
+}

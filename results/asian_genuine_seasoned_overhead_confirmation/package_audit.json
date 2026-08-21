@@ -1,0 +1,45 @@
+{
+  "additive_manifest": [
+    "benchmarks/bench_asian_genuine_seasoned_overhead_confirmation.c",
+    "results/asian_genuine_seasoned_overhead_confirmation/README.md",
+    "results/asian_genuine_seasoned_overhead_confirmation/package_audit.json",
+    "results/asian_genuine_seasoned_overhead_confirmation/preregistration.json",
+    "tests/Makefile.asian_genuine_seasoned_overhead_confirmation",
+    "tests/analyze_asian_genuine_seasoned_overhead_confirmation.py",
+    "tests/audit_asian_genuine_seasoned_overhead_confirmation.py"
+  ],
+  "aws_measurement_pending": true,
+  "benchmark_binary_hash_source": "self-hashed AWS executable recorded in raw_aws.json",
+  "checks": {
+    "aws_target_performance_only": true,
+    "benchmark_built": true,
+    "benchmark_scope_bounded": true,
+    "committed_correctness_prerequisite": true,
+    "frozen_files_unchanged": true,
+    "only_additive_paths": true,
+    "preregistered_matrix": true
+  },
+  "failures": [],
+  "frozen_commit": "d31ed2eafdaeb892fbbbf49f55765600548ab46d",
+  "frozen_sha256": {
+    "asian_genuine_permute_setup.c": "e2e54ebca65f6586cbb2fbfa0621e20a63dbaafec3cbbdb2515f5a9a432a0301",
+    "asian_genuine_price_delta_strip_avx512.s": "42c52432e1c0b49956d5db11305e9b7d6a8f8c86d35c5fa819ea96443f03893e",
+    "asian_genuine_price_delta_strip_setup.c": "907c4a05807de27d8ec3c226382e6b640048a87fcd31f9b97d82c5c37668dced",
+    "asian_genuine_sql_variable_avx512.s": "08f685f29e86a1480269797ff4ee4313088f33c3275af727faa72c12d1957709",
+    "asian_geometric_cv_payoff_avx512.s": "78331e0b544b983d3b32d3fabc33745e858463aebca53928d7b6843f60802ee6",
+    "benchmarks/bench_asian_genuine_seasoned_price_delta_strip.c": "1ce7d5b6f84c59756f00c9480ff3a6553b9ae1b760b8159e3887aa96d1e0ecc9",
+    "direction_numbers/joe_kuo_6_21201.bin": "fa6418f236d4667b5deb5b62e6d5fcd6385c64dd60ef2cd1f06fed0e8ea74199",
+    "ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c": "886bcc7bdd71ff7355c4b7b278a7d19b5608c2fbbed7b9983cd98ff1608f7f08",
+    "ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s": "bbc08b0348309e47852b550d53f9008e05c880475f6ce4b1899ab69844aa5b89",
+    "private/asian_genuine_permute.h": "1270223b14a73c79818711f9b407e448acdcd6cdc1002c851f9ddb6b454d54bf",
+    "private/asian_genuine_price_delta_strip_diag.h": "e187cb32872c6240cafa808d6b8b46e25ea121d30124bea2900eaf4640d37b21",
+    "private/asian_genuine_seasoned_strip_diag.h": "1a0a884d3db55d485997db63b033126c4d1a3efade533cbda577e7a0a043a554",
+    "private/asian_genuine_seasoned_strip_setup.c": "281b5842e4f43d41b0917e49c25559bda4eafc636d746bd3d62292ff065c8656",
+    "results/asian_genuine_seasoned_price_delta_strip/local_correctness.json": "9f7e552281534e42e03970618ff846b398625c5fc7f56386bb5669cb1b8b0dd8",
+    "results/asian_genuine_seasoned_price_delta_strip/qualification.json": "f8cec432808a7f2daa10587a2eeb0c5e13e7b72a23d9720bd26eaa0a36bce442",
+    "results/asian_genuine_seasoned_price_delta_strip/structural_audit.json": "89275cf0c2e4c61bdb3edec87ec69e2ca32b1cb7f17ffdf40bddd0469a6352f8",
+    "tests/Makefile.asian_genuine_seasoned_strip": "f17c5a933403aff0608c2b7765b788a3de51abcee987c7c953f886e6cf954ba4"
+  },
+  "schema": "asian-genuine-seasoned-overhead-package-audit-v1",
+  "status": "PASS"
+}

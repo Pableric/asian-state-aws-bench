@@ -1,0 +1,33 @@
+CC ?= gcc
+AVX_CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-ffp-contract=off -Wall -Wextra -Werror -I. \
+	-Iordered_d1_x_growth_handoff \
+	-Iordered_d1_x_growth_handoff/private
+
+.PHONY: benchmark-check aws-overhead-confirmation-native clean
+
+bench_asian_genuine_seasoned_overhead_confirmation: \
+		benchmarks/bench_asian_genuine_seasoned_overhead_confirmation.c \
+		private/asian_genuine_seasoned_strip_setup.c \
+		asian_genuine_price_delta_strip_setup.c \
+		asian_genuine_price_delta_strip_avx512.s \
+		asian_genuine_permute_setup.c asian_genuine_sql_variable_avx512.s \
+		asian_geometric_cv_payoff_avx512.s \
+		ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c \
+		ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s
+	$(CC) $(AVX_CFLAGS) $^ -lm -o $@
+
+# Local x86 hosts without AVX-512 may use this correctness-only SDE target.
+# It is intentionally not reachable from the AWS target below.
+benchmark-check: bench_asian_genuine_seasoned_overhead_confirmation
+	/opt/intel-sde/sde64 -skx -- \
+		./bench_asian_genuine_seasoned_overhead_confirmation --check-only
+
+# Performance-only AWS entry point: build the one standalone binary and run
+# only its built-in native correctness/prerequisite preflight.  No Python,
+# NumPy, MPFR, coefficient generation, SDE, oneMKL, or research audit.
+aws-overhead-confirmation-native: bench_asian_genuine_seasoned_overhead_confirmation
+	./bench_asian_genuine_seasoned_overhead_confirmation --check-only
+
+clean:
+	$(RM) bench_asian_genuine_seasoned_overhead_confirmation
