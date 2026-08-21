@@ -1,0 +1,19 @@
+{
+  "status": "PASS",
+  "source_checkout": "/home/pablo/Projects/asian-option-engine",
+  "head": "1b199076ae9fa6db2258172587b59fef400e11ff",
+  "head_abbrev": "1b19907",
+  "missing_commit_396a8a0_used": false,
+  "equivalence_to_missing_commit_claimed": false,
+  "source_status_file": "source_snapshot_status.txt",
+  "source_status_sha256": "af73b7286c3e52b9be4dcd88b88520ca752ab9adb688a7587cf5a3e15109fab9",
+  "imported_file_count": 14,
+  "copy_verification": "all source/carrier pairs byte-identical and SOURCE_SHA256SUMS passed",
+  "qualified_preconditions": {
+    "genuine_permute_prepare": "PASS",
+    "genuine_sql_shared_control": "PASS",
+    "corrected_x_then_vector_exp_complete_preflight": "PASS"
+  },
+  "production_files_modified": false,
+  "original_checkout_cleaned_reset_reverted_or_checked_out": false
+}

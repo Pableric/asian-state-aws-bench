@@ -1,0 +1,102 @@
+CC ?= gcc
+MKLROOT ?= /opt/intel/oneapi/mkl/latest
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-ffp-contract=off -fno-fast-math -Wall -Wextra -Werror -I.
+
+CORE_OBJS := asian_genuine_discrete_barrier_setup.o \
+	asian_genuine_discrete_barrier_avx512.o \
+	barrier_carrier_permute_setup.o barrier_carrier_sql.o \
+	barrier_carrier_ordered_setup.o barrier_carrier_ordered_avx512.o \
+	barrier_carrier_exp.o
+
+.PHONY: all prepare-check correctness-check audit analysis-test package-audit benchmark-check \
+	aws-benchmark-native clean
+
+all: test_asian_genuine_discrete_barrier
+
+asian_genuine_discrete_barrier_setup.o: asian_genuine_discrete_barrier_setup.c \
+		private/asian_genuine_discrete_barrier_diag.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+asian_genuine_discrete_barrier_avx512.o: asian_genuine_discrete_barrier_avx512.s \
+		private/asian_genuine_discrete_barrier_diag.h \
+		asian_genuine_discrete_barrier_carrier/tools/fragment_service/public_harness/dim_from_d1_frags.inc
+	$(CC) $(CFLAGS) -c $< -o $@
+
+asian_genuine_discrete_barrier_onemkl_avx512.o: \
+		asian_genuine_discrete_barrier_onemkl_avx512.s \
+		asian_genuine_discrete_barrier_carrier/private/asian_exp_p8_18diag.inc
+	$(CC) $(CFLAGS) -c $< -o $@
+
+barrier_carrier_permute_setup.o: \
+		asian_genuine_discrete_barrier_carrier/asian_genuine_permute_setup.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+barrier_carrier_sql.o: \
+		asian_genuine_discrete_barrier_carrier/asian_genuine_sql_variable_avx512.s
+	cd asian_genuine_discrete_barrier_carrier && \
+		$(CC) $(CFLAGS) -c asian_genuine_sql_variable_avx512.s -o ../$@
+
+barrier_carrier_ordered_setup.o: \
+		asian_genuine_discrete_barrier_carrier/ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c
+	$(CC) $(CFLAGS) -c $< -o $@
+
+barrier_carrier_ordered_avx512.o: \
+		asian_genuine_discrete_barrier_carrier/ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s
+	cd asian_genuine_discrete_barrier_carrier/ordered_d1_x_growth_handoff && \
+		$(CC) $(CFLAGS) -c sobol_ordered_d1_x_growth_diag_avx512.s -o ../../$@
+
+barrier_carrier_exp.o: \
+		asian_genuine_discrete_barrier_carrier/asian_geometric_cv_payoff_avx512.s
+	cd asian_genuine_discrete_barrier_carrier && \
+		$(CC) $(CFLAGS) -c asian_geometric_cv_payoff_avx512.s -o ../$@
+
+test_asian_genuine_discrete_barrier: \
+		tests/test_asian_genuine_discrete_barrier.c $(CORE_OBJS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+prepare-check: test_asian_genuine_discrete_barrier
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_discrete_barrier --prepare-only
+
+correctness-check: test_asian_genuine_discrete_barrier
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_discrete_barrier
+
+audit: bench_asian_genuine_discrete_barrier
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		/opt/intel-sde/sde64 -skx -omix /tmp/asian-barrier-vanilla.mix -- \
+		./bench_asian_genuine_discrete_barrier --audit-symbol vanilla
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		/opt/intel-sde/sde64 -skx -omix /tmp/asian-barrier-self.mix -- \
+		./bench_asian_genuine_discrete_barrier --audit-symbol self
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		/opt/intel-sde/sde64 -skx -omix /tmp/asian-barrier-explicit.mix -- \
+		./bench_asian_genuine_discrete_barrier --audit-symbol explicit
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		/opt/intel-sde/sde64 -skx -omix /tmp/asian-barrier-table.mix -- \
+		./bench_asian_genuine_discrete_barrier --audit-symbol table
+	python3 tests/audit_asian_genuine_discrete_barrier.py
+
+analysis-test:
+	python3 tests/test_analyze_asian_genuine_discrete_barrier.py
+
+package-audit: bench_asian_genuine_discrete_barrier
+	python3 tests/audit_asian_genuine_discrete_barrier_package.py
+
+bench_asian_genuine_discrete_barrier: \
+		benchmarks/bench_asian_genuine_discrete_barrier.c $(CORE_OBJS) \
+		asian_genuine_discrete_barrier_onemkl_avx512.o
+	$(CC) $(CFLAGS) -I$(MKLROOT)/include $^ -L$(MKLROOT)/lib \
+		-Wl,-rpath,$(MKLROOT)/lib -lmkl_rt -lpthread -lm -ldl -o $@
+
+benchmark-check: bench_asian_genuine_discrete_barrier
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		/opt/intel-sde/sde64 -skx -- ./bench_asian_genuine_discrete_barrier --check-only
+
+# AWS is intentionally performance-only: build plus the binary's native preflight.
+aws-benchmark-native: bench_asian_genuine_discrete_barrier
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		./bench_asian_genuine_discrete_barrier --check-only
+
+clean:
+	$(RM) $(CORE_OBJS) asian_genuine_discrete_barrier_onemkl_avx512.o \
+		test_asian_genuine_discrete_barrier bench_asian_genuine_discrete_barrier

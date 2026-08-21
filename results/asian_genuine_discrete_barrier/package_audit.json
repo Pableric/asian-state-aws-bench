@@ -1,0 +1,111 @@
+{
+  "aws_target": "aws-benchmark-native: bench_asian_genuine_discrete_barrier\n\tMKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \\\n\t\t./bench_asian_genuine_discrete_barrier --check-only",
+  "checks": {
+    "abba_and_baab": true,
+    "all_import_hashes_match": true,
+    "aws_target_builds_native_benchmark": true,
+    "aws_target_exists": true,
+    "aws_target_has_no_forbidden_dependency": true,
+    "aws_target_runs_only_builtin_preflight": true,
+    "exclusive_json_creation": true,
+    "fenced_tsc": true,
+    "historical_32k_rmw": true,
+    "monotonic_raw": true,
+    "quartets_201": true,
+    "raw_four_invocations": true,
+    "reset_before_condition": true,
+    "source_corrected_x_then_exp": true,
+    "warmups_16": true
+  },
+  "imported_files": [
+    {
+      "actual": "fa6418f236d4667b5deb5b62e6d5fcd6385c64dd60ef2cd1f06fed0e8ea74199",
+      "expected": "fa6418f236d4667b5deb5b62e6d5fcd6385c64dd60ef2cd1f06fed0e8ea74199",
+      "pass": true,
+      "path": "direction_numbers/joe_kuo_6_21201.bin"
+    },
+    {
+      "actual": "886bcc7bdd71ff7355c4b7b278a7d19b5608c2fbbed7b9983cd98ff1608f7f08",
+      "expected": "886bcc7bdd71ff7355c4b7b278a7d19b5608c2fbbed7b9983cd98ff1608f7f08",
+      "pass": true,
+      "path": "ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c"
+    },
+    {
+      "actual": "c728a463eca6f18d2622269ac9dd5114c30422212a18de2ce3668073c09f8b81",
+      "expected": "c728a463eca6f18d2622269ac9dd5114c30422212a18de2ce3668073c09f8b81",
+      "pass": true,
+      "path": "ordered_d1_x_growth_handoff/private/ordered_d1_x_growth_diag.h"
+    },
+    {
+      "actual": "d49a5ea81f95dbdca0a1fcedb79cbed51feb97ffe2112c4b8d774b4cc979a395",
+      "expected": "d49a5ea81f95dbdca0a1fcedb79cbed51feb97ffe2112c4b8d774b4cc979a395",
+      "pass": true,
+      "path": "ordered_d1_x_growth_handoff/private/ordered_d1_x_growth_diag_coeffs.h"
+    },
+    {
+      "actual": "248ed6c1dbd87bea29d561669eab726210e1b94970b14e82b5df24745411e07c",
+      "expected": "248ed6c1dbd87bea29d561669eab726210e1b94970b14e82b5df24745411e07c",
+      "pass": true,
+      "path": "ordered_d1_x_growth_handoff/private/ordered_d1_x_growth_diag_data.inc"
+    },
+    {
+      "actual": "bbc08b0348309e47852b550d53f9008e05c880475f6ce4b1899ab69844aa5b89",
+      "expected": "bbc08b0348309e47852b550d53f9008e05c880475f6ce4b1899ab69844aa5b89",
+      "pass": true,
+      "path": "ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s"
+    },
+    {
+      "actual": "e2e54ebca65f6586cbb2fbfa0621e20a63dbaafec3cbbdb2515f5a9a432a0301",
+      "expected": "e2e54ebca65f6586cbb2fbfa0621e20a63dbaafec3cbbdb2515f5a9a432a0301",
+      "pass": true,
+      "path": "asian_genuine_permute_setup.c"
+    },
+    {
+      "actual": "1270223b14a73c79818711f9b407e448acdcd6cdc1002c851f9ddb6b454d54bf",
+      "expected": "1270223b14a73c79818711f9b407e448acdcd6cdc1002c851f9ddb6b454d54bf",
+      "pass": true,
+      "path": "private/asian_genuine_permute.h"
+    },
+    {
+      "actual": "4a3b289a232ca02680cb721dc07ca7c5183f5d443e1fe9f345a7c68f31e16176",
+      "expected": "4a3b289a232ca02680cb721dc07ca7c5183f5d443e1fe9f345a7c68f31e16176",
+      "pass": true,
+      "path": "tools/fragment_service/public_harness/fragment_map.h"
+    },
+    {
+      "actual": "e7c6290ab4e124a79fb5b3b1f6eff6f11a731936460fe4951231efb75fada141",
+      "expected": "e7c6290ab4e124a79fb5b3b1f6eff6f11a731936460fe4951231efb75fada141",
+      "pass": true,
+      "path": "tools/fragment_service/public_harness/dim_from_d1_frags.inc"
+    },
+    {
+      "actual": "08f685f29e86a1480269797ff4ee4313088f33c3275af727faa72c12d1957709",
+      "expected": "08f685f29e86a1480269797ff4ee4313088f33c3275af727faa72c12d1957709",
+      "pass": true,
+      "path": "asian_genuine_sql_variable_avx512.s"
+    },
+    {
+      "actual": "78331e0b544b983d3b32d3fabc33745e858463aebca53928d7b6843f60802ee6",
+      "expected": "78331e0b544b983d3b32d3fabc33745e858463aebca53928d7b6843f60802ee6",
+      "pass": true,
+      "path": "asian_geometric_cv_payoff_avx512.s"
+    },
+    {
+      "actual": "3309305a0db639ca49a93dd37f375df389ee59a8234b174d2c094c1b7da74b85",
+      "expected": "3309305a0db639ca49a93dd37f375df389ee59a8234b174d2c094c1b7da74b85",
+      "pass": true,
+      "path": "private/asian_exp_p8_18diag.inc"
+    },
+    {
+      "actual": "ac72bbfb41caf53aa97ebd7253812a1465e5ad2059a05eb3120f1383822e5a40",
+      "expected": "ac72bbfb41caf53aa97ebd7253812a1465e5ad2059a05eb3120f1383822e5a40",
+      "pass": true,
+      "path": "private/asian_geometric_cv_diag.h"
+    }
+  ],
+  "notes": [
+    "The AWS target performs compilation and the binary's native preflight only.",
+    "Local SDE correctness, object audit and deterministic analysis are separate targets and committed prerequisites."
+  ],
+  "status": "PASS"
+}
