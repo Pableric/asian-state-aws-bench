@@ -1,0 +1,27 @@
+{
+  "changed_production_kernels": [],
+  "checks": {
+    "aggregate_grid_complete": true,
+    "all_32_shifts_reported": true,
+    "canonical_kink_reported": true,
+    "contract_grid_exact": true,
+    "decision_matches_gates": true,
+    "failed_gate_manifest_exact": true,
+    "inverse_normal_residual_reported": true,
+    "markdown_report_present": true,
+    "native_runner_has_no_sde": true,
+    "production_kernels_unchanged": true,
+    "production_verification_present": true,
+    "raw_report_present": true,
+    "separate_estimators_and_sides": true,
+    "worst_cases_reported": true
+  },
+  "decision": "DELTA_QUALIFIED",
+  "included_reports": [
+    "results/asian_genuine_delta_qualification/replication_raw.json",
+    "results/asian_genuine_delta_qualification/production_verify.json",
+    "results/asian_genuine_delta_qualification/qualification.json",
+    "results/asian_genuine_delta_qualification/qualification.md"
+  ],
+  "status": "PASS"
+}

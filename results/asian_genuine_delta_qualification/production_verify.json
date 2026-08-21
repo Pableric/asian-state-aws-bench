@@ -1,0 +1,17 @@
+{
+"schema":1,
+"fixtures":160,
+"observations":39040,
+"price_bit_mismatches":0,
+"tile_delta_mismatches":0,
+"model_price_bit_mismatches":0,
+"model_delta_bit_mismatches":0,
+"max_same_state_error":8.1505277194082737e-08,
+"signed_mean_same_state_error":6.9027665860691001e-11,
+"max_smooth_residual":1.1345272188378885e-07,
+"signed_mean_smooth_residual":-1.0362964559489258e-08,
+"smooth_positive":3328,
+"smooth_negative":12876,
+"worst_smooth":{"N":32,"replication":28,"strike_count":4,"strike_position":2,"estimator":"arithmetic","side":"call","unadjusted":-1.1345272188378885e-07,"indicator_flip":0,"smooth_residual":-1.1345272188378885e-07},
+"gates":{"price_and_tile_bits":true,"same_state":true,"smooth_residual":true}
+}

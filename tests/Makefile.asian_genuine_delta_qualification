@@ -1,0 +1,91 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+          -ffp-contract=off -Wall -Wextra -Werror -I.
+REFERENCE_CFLAGS := -std=c11 -O3 -march=x86-64-v3 -ffp-contract=off \
+                    -Wall -Wextra -Werror -I.
+
+STRIP_OBJS := asian_genuine_price_delta_strip_setup.o \
+              asian_genuine_price_delta_strip_avx512.o
+SOURCE_OBJS := asian_genuine_sql_variable_avx512.o \
+               ordered_d1_x_growth_carrier_setup.o \
+               ordered_d1_x_growth_carrier_avx512.o \
+               asian_geometric_cv_setup.o asian_geometric_cv_payoff_avx512.o
+
+.PHONY: all qualification-native qualification-local-sde clean
+
+all: asian_genuine_delta_qualification
+
+asian_genuine_price_delta_strip_setup.o: asian_genuine_price_delta_strip_setup.c \
+		private/asian_genuine_price_delta_strip_diag.h
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+asian_genuine_price_delta_strip_setup_reference.o: asian_genuine_price_delta_strip_setup.c \
+		private/asian_genuine_price_delta_strip_diag.h
+	$(CC) $(REFERENCE_CFLAGS) -fPIC -c $< -o $@
+
+asian_genuine_price_delta_strip_avx512.o: asian_genuine_price_delta_strip_avx512.s \
+		private/asian_exp_p8_18diag.inc
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+asian_genuine_sql_variable_avx512.o: asian_genuine_sql_variable_avx512.s \
+		tools/fragment_service/public_harness/dim_from_d1_frags.inc
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+ordered_d1_x_growth_carrier_setup.o: ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c
+	$(CC) $(CFLAGS) -Iordered_d1_x_growth_handoff \
+		-Iordered_d1_x_growth_handoff/private -fPIC -c $< -o $@
+
+ordered_d1_x_growth_carrier_avx512.o: ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s
+	$(CC) $(CFLAGS) -Iordered_d1_x_growth_handoff -fPIC -c $< -o $@
+
+asian_geometric_cv_setup.o: asian_geometric_cv_setup.c
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+asian_geometric_cv_payoff_avx512.o: asian_geometric_cv_payoff_avx512.s \
+		private/asian_exp_p8_18diag.inc
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+asian_genuine_delta_qualification: tests/asian_genuine_delta_qualification.c \
+		asian_genuine_price_delta_strip_setup_reference.o \
+		asian_genuine_price_delta_strip_avx512.o
+	$(CC) $(REFERENCE_CFLAGS) $^ -lm -o $@
+
+asian_genuine_delta_production_verify: tests/asian_genuine_delta_production_verify.c \
+		$(STRIP_OBJS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+test_asian_genuine_price_delta_strip: tests/test_asian_genuine_price_delta_strip.c $(STRIP_OBJS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+test_asian_genuine_price_delta_strip_analytic: \
+		tests/test_asian_genuine_price_delta_strip_analytic.c $(STRIP_OBJS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+test_asian_genuine_price_delta_strip_complete: \
+		tests/test_asian_genuine_price_delta_strip_complete.c $(STRIP_OBJS) \
+		asian_genuine_permute_setup.c $(SOURCE_OBJS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+test_ordered_d1_kernel:
+	$(MAKE) test_ordered_d1_kernel
+
+qualification-native: asian_genuine_delta_qualification asian_genuine_delta_production_verify \
+		test_asian_genuine_price_delta_strip \
+		test_asian_genuine_price_delta_strip_analytic \
+		test_asian_genuine_price_delta_strip_complete test_ordered_d1_kernel
+	python3 tests/run_asian_genuine_delta_qualification.py
+
+qualification-local-sde: asian_genuine_delta_qualification asian_genuine_delta_production_verify \
+		test_asian_genuine_price_delta_strip \
+		test_asian_genuine_price_delta_strip_analytic \
+		test_asian_genuine_price_delta_strip_complete test_ordered_d1_kernel
+	python3 tests/run_asian_genuine_delta_qualification.py --local-sde
+
+clean:
+	$(RM) asian_genuine_delta_qualification \
+		asian_genuine_delta_production_verify \
+		asian_genuine_price_delta_strip_setup_reference.o \
+		test_asian_genuine_price_delta_strip \
+		test_asian_genuine_price_delta_strip_analytic \
+		test_asian_genuine_price_delta_strip_complete test_ordered_d1_kernel \
+		$(STRIP_OBJS) $(SOURCE_OBJS)
