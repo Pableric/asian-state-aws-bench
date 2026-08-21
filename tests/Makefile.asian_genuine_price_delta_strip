@@ -1,0 +1,136 @@
+CC ?= gcc
+MKLROOT ?= /opt/intel/oneapi/mkl/latest
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+          -ffp-contract=off -Wall -Wextra -Werror -I.
+
+STRIP_OBJS := asian_genuine_price_delta_strip_setup.o \
+              asian_genuine_price_delta_strip_avx512.o
+
+.PHONY: all stage1-check stage1-price-check stage1-complete-check \
+	stage1-price-complete-check delta-check delta-complete-check analytic-check \
+	benchmark-check price-audit audit package-audit aws-price-ready \
+	aws-delta-diagnostic-ready aws-ready clean
+
+all: test_asian_genuine_price_delta_strip
+
+asian_genuine_price_delta_strip_setup.o: asian_genuine_price_delta_strip_setup.c \
+		private/asian_genuine_price_delta_strip_diag.h
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+asian_genuine_price_delta_strip_avx512.o: asian_genuine_price_delta_strip_avx512.s \
+		private/asian_exp_p8_18diag.inc private/asian_genuine_price_delta_strip_diag.h
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+test_asian_genuine_price_delta_strip: tests/test_asian_genuine_price_delta_strip.c $(STRIP_OBJS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+test_asian_genuine_price_delta_strip_analytic: \
+		tests/test_asian_genuine_price_delta_strip_analytic.c $(STRIP_OBJS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+ordered_d1_x_growth_carrier_setup.o: ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c
+	$(CC) $(CFLAGS) -Iordered_d1_x_growth_handoff -Iordered_d1_x_growth_handoff/private -fPIC -c $< -o $@
+
+ordered_d1_x_growth_carrier_avx512.o: ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s
+	$(CC) $(CFLAGS) -Iordered_d1_x_growth_handoff -fPIC -c $< -o $@
+
+asian_genuine_sql_variable_avx512.o: asian_genuine_sql_variable_avx512.s
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+asian_intel_sql_consumers_avx512.o: asian_intel_sql_consumers_avx512.s
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+asian_geometric_cv_setup.o: asian_geometric_cv_setup.c
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+asian_geometric_cv_payoff_avx512.o: asian_geometric_cv_payoff_avx512.s
+	$(CC) $(CFLAGS) -fPIC -c $< -o $@
+
+test_asian_genuine_price_delta_strip_complete: \
+		tests/test_asian_genuine_price_delta_strip_complete.c $(STRIP_OBJS) \
+		asian_genuine_permute_setup.c asian_genuine_sql_variable_avx512.o \
+		ordered_d1_x_growth_carrier_setup.o ordered_d1_x_growth_carrier_avx512.o \
+		asian_geometric_cv_setup.o asian_geometric_cv_payoff_avx512.o
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+stage1-price-check: test_asian_genuine_price_delta_strip
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_price_delta_strip --price-only
+
+stage1-check: stage1-price-check
+
+delta-check: test_asian_genuine_price_delta_strip
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_price_delta_strip
+
+stage1-price-complete-check: test_asian_genuine_price_delta_strip_complete
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_price_delta_strip_complete --price-only
+
+stage1-complete-check: stage1-price-complete-check
+
+delta-complete-check: test_asian_genuine_price_delta_strip_complete
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_price_delta_strip_complete
+
+analytic-check: test_asian_genuine_price_delta_strip_analytic
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_price_delta_strip_analytic
+
+bench_asian_genuine_price_delta_strip: \
+		benchmarks/bench_asian_genuine_price_delta_strip.c $(STRIP_OBJS) \
+		asian_genuine_permute_setup.c asian_genuine_sql_variable_avx512.o \
+		asian_intel_sql_consumers_avx512.o ordered_d1_x_growth_carrier_setup.o \
+		ordered_d1_x_growth_carrier_avx512.o asian_geometric_cv_setup.o \
+		asian_geometric_cv_payoff_avx512.o
+	$(CC) $(CFLAGS) -I$(MKLROOT)/include $^ -L$(MKLROOT)/lib \
+		-Wl,-rpath,$(MKLROOT)/lib -lmkl_rt -lpthread -lm -ldl -o $@
+
+benchmark-check: bench_asian_genuine_price_delta_strip
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		/opt/intel-sde/sde64 -skx -- ./bench_asian_genuine_price_delta_strip --check-only
+
+run_asian_genuine_price_delta_strip_symbol: \
+		tests/run_asian_genuine_price_delta_strip_symbol.c $(STRIP_OBJS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+price-audit: run_asian_genuine_price_delta_strip_symbol
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-l_to_g.mix -- ./run_asian_genuine_price_delta_strip_symbol l_to_g
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-ar_price_1.mix -- ./run_asian_genuine_price_delta_strip_symbol ar_price_1
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-ar_price_4.mix -- ./run_asian_genuine_price_delta_strip_symbol ar_price_4
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-ar_price_8.mix -- ./run_asian_genuine_price_delta_strip_symbol ar_price_8
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-cv_price_1.mix -- ./run_asian_genuine_price_delta_strip_symbol cv_price_1
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-cv_price_4.mix -- ./run_asian_genuine_price_delta_strip_symbol cv_price_4
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-cv_price_8.mix -- ./run_asian_genuine_price_delta_strip_symbol cv_price_8
+	python3 tests/audit_asian_genuine_price_delta_strip.py --price-only
+
+audit: run_asian_genuine_price_delta_strip_symbol
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-l_to_g.mix -- ./run_asian_genuine_price_delta_strip_symbol l_to_g
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-ar_price_1.mix -- ./run_asian_genuine_price_delta_strip_symbol ar_price_1
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-ar_price_4.mix -- ./run_asian_genuine_price_delta_strip_symbol ar_price_4
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-ar_price_8.mix -- ./run_asian_genuine_price_delta_strip_symbol ar_price_8
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-cv_price_1.mix -- ./run_asian_genuine_price_delta_strip_symbol cv_price_1
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-cv_price_4.mix -- ./run_asian_genuine_price_delta_strip_symbol cv_price_4
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-cv_price_8.mix -- ./run_asian_genuine_price_delta_strip_symbol cv_price_8
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-ar_delta_1.mix -- ./run_asian_genuine_price_delta_strip_symbol ar_delta_1
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-ar_delta_4.mix -- ./run_asian_genuine_price_delta_strip_symbol ar_delta_4
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-ar_delta_8.mix -- ./run_asian_genuine_price_delta_strip_symbol ar_delta_8
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-cv_delta_1.mix -- ./run_asian_genuine_price_delta_strip_symbol cv_delta_1
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-cv_delta_4.mix -- ./run_asian_genuine_price_delta_strip_symbol cv_delta_4
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-strip-cv_delta_8.mix -- ./run_asian_genuine_price_delta_strip_symbol cv_delta_8
+	python3 tests/audit_asian_genuine_price_delta_strip.py
+
+package-audit: bench_asian_genuine_price_delta_strip
+	python3 tests/audit_asian_genuine_price_delta_strip_benchmark.py
+
+aws-price-ready: stage1-price-check stage1-price-complete-check price-audit \
+		package-audit bench_asian_genuine_price_delta_strip
+	@echo "asian_genuine_price_delta_strip aws-price-ready=PASS price=QUALIFIED"
+
+aws-delta-diagnostic-ready: delta-check delta-complete-check analytic-check audit
+	@echo "asian_genuine_price_delta_strip aws-delta-diagnostic-ready=PASS delta=KINK_AMBIGUITY_REPORTED_DIAGNOSTIC"
+
+aws-ready: aws-price-ready aws-delta-diagnostic-ready
+	@echo "asian_genuine_price_delta_strip aws-ready=PASS price=QUALIFIED delta=KINK_AMBIGUITY_REPORTED_DIAGNOSTIC"
+
+clean:
+	$(RM) $(STRIP_OBJS) test_asian_genuine_price_delta_strip \
+		test_asian_genuine_price_delta_strip_complete \
+		test_asian_genuine_price_delta_strip_analytic \
+		bench_asian_genuine_price_delta_strip \
+		run_asian_genuine_price_delta_strip_symbol
