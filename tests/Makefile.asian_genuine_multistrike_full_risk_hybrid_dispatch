@@ -4,6 +4,7 @@ CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
 	-ffp-contract=off -fno-fast-math -Wall -Wextra -Werror -I. \
 	-Iordered_d1_x_growth_handoff \
 	-Iordered_d1_x_growth_handoff/private
+OBJDIR := .asian_genuine_msfr_hybrid_dispatch_objects
 
 QUALIFIED_SOURCES := \
 	asian_genuine_multistrike_full_risk_setup.c \
@@ -19,39 +20,58 @@ QUALIFIED_SOURCES := \
 	asian_genuine_price_delta_strip_setup.c \
 	asian_genuine_price_delta_strip_avx512.s
 
+COMMON_SOURCES := \
+	asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
+	$(QUALIFIED_SOURCES)
+COMMON_OBJECTS := $(addprefix $(OBJDIR)/,$(COMMON_SOURCES))
+COMMON_OBJECTS := $(COMMON_OBJECTS:.c=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.s=.o)
+
 VECTOR_SOURCES := \
 	tests/test_asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
 	tests/asian_genuine_multistrike_full_risk_reference.c \
-	asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
-	asian_genuine_aad_phase1_generic.c \
-	$(QUALIFIED_SOURCES)
+	asian_genuine_aad_phase1_generic.c
+VECTOR_OBJECTS := $(addprefix $(OBJDIR)/,$(VECTOR_SOURCES))
+VECTOR_OBJECTS := $(VECTOR_OBJECTS:.c=.o) $(COMMON_OBJECTS)
 
-BENCHMARK_SOURCES := \
-	benchmarks/bench_asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
-	asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
-	$(QUALIFIED_SOURCES)
+BENCHMARK_SOURCE := \
+	benchmarks/bench_asian_genuine_multistrike_full_risk_hybrid_dispatch.c
+BENCHMARK_OBJECT := $(OBJDIR)/$(BENCHMARK_SOURCE:.c=.o)
+BENCHMARK_OBJECTS := $(BENCHMARK_OBJECT) $(COMMON_OBJECTS)
 
 .PHONY: all vector-check structural-audit aws-benchmark-native clean
 
 all: test_asian_genuine_multistrike_full_risk_hybrid_dispatch
 
-test_asian_genuine_multistrike_full_risk_hybrid_dispatch: $(VECTOR_SOURCES) \
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BENCHMARK_OBJECT): $(BENCHMARK_SOURCE)
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -DMSFR_GIT_COMMIT=\"$(shell git rev-parse HEAD)\" \
+		-I$(MKLROOT)/include -c $< -o $@
+
+test_asian_genuine_multistrike_full_risk_hybrid_dispatch: $(VECTOR_OBJECTS) \
 		private/asian_genuine_multistrike_full_risk_hybrid_dispatch_diag.h
-	$(CC) $(CFLAGS) $(VECTOR_SOURCES) -lm -o $@
+	$(CC) $(CFLAGS) $(VECTOR_OBJECTS) -lm -o $@
 
 vector-check: test_asian_genuine_multistrike_full_risk_hybrid_dispatch
 	/opt/intel-sde/sde64 -skx -- \
 		./test_asian_genuine_multistrike_full_risk_hybrid_dispatch
 
+bench_asian_genuine_multistrike_full_risk_hybrid_dispatch: \
+		$(BENCHMARK_OBJECTS) \
+		private/asian_genuine_multistrike_full_risk_hybrid_dispatch_diag.h
+	$(CC) $(CFLAGS) $(BENCHMARK_OBJECTS) -L$(MKLROOT)/lib \
+		-Wl,-rpath,$(MKLROOT)/lib -lmkl_rt -lpthread -lm -ldl -o $@
+
 structural-audit: bench_asian_genuine_multistrike_full_risk_hybrid_dispatch
 	python3 tests/audit_asian_genuine_multistrike_full_risk_hybrid_dispatch.py
-
-bench_asian_genuine_multistrike_full_risk_hybrid_dispatch: \
-		$(BENCHMARK_SOURCES) \
-		private/asian_genuine_multistrike_full_risk_hybrid_dispatch_diag.h
-	$(CC) $(CFLAGS) -DMSFR_GIT_COMMIT=\"$(shell git rev-parse HEAD)\" \
-		-I$(MKLROOT)/include $(BENCHMARK_SOURCES) -L$(MKLROOT)/lib \
-		-Wl,-rpath,$(MKLROOT)/lib -lmkl_rt -lpthread -lm -ldl -o $@
 
 aws-benchmark-native: bench_asian_genuine_multistrike_full_risk_hybrid_dispatch
 	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
@@ -59,5 +79,6 @@ aws-benchmark-native: bench_asian_genuine_multistrike_full_risk_hybrid_dispatch
 		--check-only
 
 clean:
-	$(RM) test_asian_genuine_multistrike_full_risk_hybrid_dispatch \
+	$(RM) -r $(OBJDIR) \
+		test_asian_genuine_multistrike_full_risk_hybrid_dispatch \
 		bench_asian_genuine_multistrike_full_risk_hybrid_dispatch
