@@ -89,7 +89,8 @@ bench_asian_genuine_aad_phase1: \
 		asian_geometric_cv_payoff_avx512_aad.o asian_geometric_cv_setup.c \
 		asian_genuine_price_delta_strip_setup_aad.o \
 		asian_genuine_price_delta_strip_avx512_aad.o
-	$(CC) $(CFLAGS) -I$(MKLROOT)/include $^ -L$(MKLROOT)/lib \
+	$(CC) $(CFLAGS) -DPHASE1_GIT_COMMIT=\"$(shell git rev-parse HEAD)\" \
+		-I$(MKLROOT)/include $^ -L$(MKLROOT)/lib \
 		-Wl,-rpath,$(MKLROOT)/lib -lmkl_rt -lpthread -lm -ldl -o $@
 
 aws-benchmark-native: bench_asian_genuine_aad_phase1
