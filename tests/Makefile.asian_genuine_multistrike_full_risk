@@ -1,0 +1,129 @@
+CC ?= gcc
+MKLROOT ?= /opt/intel/oneapi/mkl/latest
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-ffp-contract=off -fno-fast-math -Wall -Wextra -Werror -I.
+MATH_CFLAGS := -std=c11 -O3 -march=native -fno-tree-vectorize \
+	-ffp-contract=off -fno-fast-math -Wall -Wextra -Werror -I.
+
+.PHONY: all math-check assembly-check vector-check preflight \
+	aws-benchmark-native clean
+
+all: test_asian_genuine_multistrike_full_risk_math
+
+asian_genuine_multistrike_full_risk_avx512.o: \
+		asian_genuine_multistrike_full_risk_avx512.s \
+		private/asian_exp_p8_18diag.inc
+	$(CC) $(CFLAGS) -c $< -o $@
+
+asian_genuine_multistrike_full_risk_setup.o: \
+		asian_genuine_multistrike_full_risk_setup.c \
+		private/asian_genuine_multistrike_full_risk_diag.h
+	$(CC) $(MATH_CFLAGS) -c $< -o $@
+
+asian_genuine_aad_phase1_avx512_msfr.o: asian_genuine_aad_phase1_avx512.s \
+		private/asian_exp_p8_18diag.inc
+	$(CC) $(CFLAGS) -c $< -o $@
+
+asian_genuine_aad_phase1_setup_msfr.o: asian_genuine_aad_phase1_setup.c \
+		private/asian_genuine_aad_phase1_diag.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+ordered_d1_x_growth_carrier_setup_msfr.o: \
+		ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c
+	$(CC) $(CFLAGS) -Iordered_d1_x_growth_handoff \
+		-Iordered_d1_x_growth_handoff/private -c $< -o $@
+
+ordered_d1_x_growth_carrier_avx512_msfr.o: \
+		ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s
+	$(CC) $(CFLAGS) -Iordered_d1_x_growth_handoff -c $< -o $@
+
+asian_genuine_price_delta_strip_setup_msfr.o: \
+		asian_genuine_price_delta_strip_setup.c \
+		private/asian_genuine_price_delta_strip_diag.h
+	$(CC) $(CFLAGS) -c $< -o $@
+
+asian_genuine_price_delta_strip_avx512_msfr.o: \
+		asian_genuine_price_delta_strip_avx512.s
+	$(CC) $(CFLAGS) -c $< -o $@
+
+asian_geometric_cv_payoff_avx512_msfr.o: asian_geometric_cv_payoff_avx512.s
+	$(CC) $(CFLAGS) -c $< -o $@
+
+asian_genuine_sql_variable_avx512_msfr.o: asian_genuine_sql_variable_avx512.s
+	$(CC) $(CFLAGS) -c $< -o $@
+
+asian_intel_sql_consumers_avx512_msfr.o: asian_intel_sql_consumers_avx512.s
+	$(CC) $(CFLAGS) -c $< -o $@
+
+test_asian_genuine_multistrike_full_risk_math: \
+		tests/test_asian_genuine_multistrike_full_risk_math.c \
+		tests/asian_genuine_multistrike_full_risk_reference.c \
+		asian_genuine_multistrike_full_risk_setup.o \
+		asian_genuine_multistrike_full_risk_avx512.o
+	$(CC) $(MATH_CFLAGS) $^ -lm -o $@
+
+test_asian_genuine_multistrike_full_risk_vector: \
+		tests/test_asian_genuine_multistrike_full_risk_vector.c \
+		tests/asian_genuine_multistrike_full_risk_reference.c \
+		asian_genuine_aad_phase1_generic.c \
+		asian_genuine_multistrike_full_risk_setup.o \
+		asian_genuine_multistrike_full_risk_avx512.o \
+		asian_genuine_aad_phase1_setup_msfr.o \
+		asian_genuine_aad_phase1_avx512_msfr.o \
+		asian_genuine_permute_setup.c \
+		ordered_d1_x_growth_carrier_setup_msfr.o \
+		ordered_d1_x_growth_carrier_avx512_msfr.o \
+		asian_geometric_cv_payoff_avx512_msfr.o \
+		asian_genuine_price_delta_strip_setup_msfr.o \
+		asian_genuine_price_delta_strip_avx512_msfr.o
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+math-check: test_asian_genuine_multistrike_full_risk_math
+	./test_asian_genuine_multistrike_full_risk_math
+
+assembly-check: asian_genuine_multistrike_full_risk_avx512.o
+	@true
+
+vector-check: test_asian_genuine_multistrike_full_risk_vector
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_multistrike_full_risk_vector
+
+preflight: math-check assembly-check vector-check
+	@echo "asian_genuine_multistrike_full_risk preflight=PASS"
+
+bench_asian_genuine_multistrike_full_risk: \
+		benchmarks/bench_asian_genuine_multistrike_full_risk.c \
+		asian_genuine_multistrike_full_risk_setup.o \
+		asian_genuine_multistrike_full_risk_avx512.o \
+		asian_genuine_aad_phase1_setup_msfr.o \
+		asian_genuine_aad_phase1_avx512_msfr.o \
+		asian_genuine_permute_setup.c \
+		ordered_d1_x_growth_carrier_setup_msfr.o \
+		ordered_d1_x_growth_carrier_avx512_msfr.o \
+		asian_geometric_cv_payoff_avx512_msfr.o \
+		asian_genuine_sql_variable_avx512_msfr.o \
+		asian_intel_sql_consumers_avx512_msfr.o \
+		asian_genuine_price_delta_strip_setup_msfr.o \
+		asian_genuine_price_delta_strip_avx512_msfr.o
+	$(CC) $(CFLAGS) -DMSFR_GIT_COMMIT=\"$(shell git rev-parse HEAD)\" \
+		-I$(MKLROOT)/include $^ -L$(MKLROOT)/lib \
+		-Wl,-rpath,$(MKLROOT)/lib -lmkl_rt -lpthread -lm -ldl -o $@
+
+aws-benchmark-native: bench_asian_genuine_multistrike_full_risk
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		./bench_asian_genuine_multistrike_full_risk --check-only
+
+clean:
+	$(RM) asian_genuine_multistrike_full_risk_setup.o \
+		asian_genuine_multistrike_full_risk_avx512.o \
+		asian_genuine_aad_phase1_setup_msfr.o \
+		asian_genuine_aad_phase1_avx512_msfr.o \
+		ordered_d1_x_growth_carrier_setup_msfr.o \
+		ordered_d1_x_growth_carrier_avx512_msfr.o \
+		asian_geometric_cv_payoff_avx512_msfr.o \
+		asian_genuine_sql_variable_avx512_msfr.o \
+		asian_intel_sql_consumers_avx512_msfr.o \
+		asian_genuine_price_delta_strip_setup_msfr.o \
+		asian_genuine_price_delta_strip_avx512_msfr.o \
+		test_asian_genuine_multistrike_full_risk_math \
+		test_asian_genuine_multistrike_full_risk_vector \
+		bench_asian_genuine_multistrike_full_risk

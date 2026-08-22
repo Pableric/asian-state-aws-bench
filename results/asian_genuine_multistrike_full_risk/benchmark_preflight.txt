@@ -1,0 +1,19 @@
+preflight N=2 K=1 estimator=arithmetic tile=0 repeat=0 source_once=0 price_delta=2.98023e-08 crn=0.0042801 mkl_crn=0.0042801 mkl_forward=3.8147e-06
+preflight N=2 K=1 estimator=geometric_cv tile=0 repeat=0 source_once=0 price_delta=9.31323e-10 crn=0.00434869 mkl_crn=0.00559046 mkl_forward=2.38419e-07
+preflight N=2 K=4 estimator=arithmetic tile=0 repeat=0 source_once=0 price_delta=2.98023e-08 crn=0.0204797 mkl_crn=0.0205542 mkl_forward=3.8147e-06
+preflight N=2 K=4 estimator=geometric_cv tile=0 repeat=0 source_once=0 price_delta=1.11759e-08 crn=0.00930974 mkl_crn=0.0092073 mkl_forward=2.38419e-07
+preflight N=2 K=32 estimator=arithmetic tile=0 repeat=0 source_once=0 price_delta=8.9407e-08 crn=0.0219784 mkl_crn=0.0214376 mkl_forward=3.8147e-06
+preflight N=2 K=32 estimator=geometric_cv tile=0 repeat=0 source_once=0 price_delta=1.49012e-08 crn=0.0332044 mkl_crn=0.0331357 mkl_forward=2.38419e-07
+preflight N=16 K=1 estimator=arithmetic tile=0 repeat=0 source_once=0 price_delta=1.11022e-16 crn=0.00275803 mkl_crn=0.00240963 mkl_forward=1.90735e-06
+preflight N=16 K=1 estimator=geometric_cv tile=0 repeat=0 source_once=0 price_delta=1.49012e-08 crn=0.00558429 mkl_crn=0.00310076 mkl_forward=1.49012e-08
+preflight N=16 K=4 estimator=arithmetic tile=0 repeat=0 source_once=0 price_delta=7.45058e-09 crn=0.0148525 mkl_crn=0.0148525 mkl_forward=1.90735e-06
+preflight N=16 K=4 estimator=geometric_cv tile=0 repeat=0 source_once=0 price_delta=1.49012e-08 crn=0.0200426 mkl_crn=0.0199774 mkl_forward=5.96046e-08
+preflight N=16 K=32 estimator=arithmetic tile=0 repeat=0 source_once=0 price_delta=5.96046e-08 crn=0.0180607 mkl_crn=0.0179862 mkl_forward=1.90735e-06
+preflight N=16 K=32 estimator=geometric_cv tile=0 repeat=0 source_once=0 price_delta=1.49012e-08 crn=0.0200426 mkl_crn=0.0199774 mkl_forward=2.38419e-07
+preflight N=256 K=1 estimator=arithmetic tile=0 repeat=0 source_once=0 price_delta=2.98023e-08 crn=0.0144196 mkl_crn=0.0382614 mkl_forward=3.8147e-06
+preflight N=256 K=1 estimator=geometric_cv tile=0 repeat=0 source_once=0 price_delta=1.49012e-08 crn=0.0251097 mkl_crn=0.0320636 mkl_forward=4.61936e-07
+preflight N=256 K=4 estimator=arithmetic tile=0 repeat=0 source_once=0 price_delta=2.98023e-08 crn=0.0144196 mkl_crn=0.0435518 mkl_forward=7.62939e-06
+preflight N=256 K=4 estimator=geometric_cv tile=0 repeat=0 source_once=0 price_delta=1.49012e-08 crn=0.0251097 mkl_crn=0.0320636 mkl_forward=4.91738e-07
+preflight N=256 K=32 estimator=arithmetic tile=0 repeat=0 source_once=0 price_delta=5.96046e-08 crn=0.0199375 mkl_crn=0.0435518 mkl_forward=7.62939e-06
+preflight N=256 K=32 estimator=geometric_cv tile=0 repeat=0 source_once=0 price_delta=1.49012e-08 crn=0.0325169 mkl_crn=0.0395949 mkl_forward=5.51343e-07
+asian_genuine_multistrike_full_risk benchmark_preflight=PASS N=2,16,256 K=1,4,32 estimators=2 tiles=2,4 onemkl_words=exact

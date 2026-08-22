@@ -1,0 +1,1 @@
+asian_genuine_multistrike_full_risk_math=PASS max_control_error=7.10542736e-15 max_parity_error=0 domain_N=2..256

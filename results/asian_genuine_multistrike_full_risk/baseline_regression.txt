@@ -1,0 +1,10 @@
+make test-ordered-d1-sde
+status=PASS
+ordered_d1_kernel_reference=PASS
+ordered_d1_api=PASS
+all_ordered_d1_mix_gates=PASS
+baseline_static_instructions=5175
+ordered_static_instructions=4206
+ordered_fmas=546
+ordered_gathers=1
+ordered_text_bytes=3731

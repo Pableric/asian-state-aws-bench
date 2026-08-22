@@ -1,0 +1,1 @@
+domain_sweep=PASS N_min=2 N_max=256 counts_checked=255 basis_fields=8 paths_per_count=4096 deterministic=yes digest=cb0399b90b48aafb

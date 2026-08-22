@@ -1,0 +1,11 @@
+status=PASS
+scope=final_linked_executable_ranked_symbols
+ranked_static_instruction_total=2159
+ranked_linked_text_bytes=13546
+basis static_instructions=206 dynamic_instructions_N16=91786 text_bytes=1150 peak_zmm_families=22 calls=0 stack=0 gathers=0 scatters=0
+arithmetic_tile2 static_instructions=282 dynamic_instructions_per_invocation=16786 text_bytes=1792 peak_zmm_families=13 calls=0 stack=0 gathers=0 scatters=0
+arithmetic_tile4 static_instructions=529 dynamic_instructions_per_invocation=30234 text_bytes=3352 peak_zmm_families=19 calls=0 stack=0 gathers=0 scatters=0
+cv_tile2 static_instructions=405 dynamic_instructions_per_invocation=30354 text_bytes=2546 peak_zmm_families=14 calls=0 stack=0 gathers=0 scatters=0
+cv_tile4 static_instructions=737 dynamic_instructions_per_invocation=55578 text_bytes=4706 peak_zmm_families=20 calls=0 stack=0 gathers=0 scatters=0
+tile_selection=native_paired_TSC_and_wall_required
+l1i_residency_claim=none

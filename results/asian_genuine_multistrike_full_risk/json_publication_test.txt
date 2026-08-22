@@ -1,0 +1,12 @@
+status=PASS
+existing_success_sha256_before=5946179367473f33b1eb75c2e1391ff3c1e45b165c974d403cf3c804b1525d25
+existing_success_sha256_after=5946179367473f33b1eb75c2e1391ff3c1e45b165c974d403cf3c804b1525d25
+first_attempt_exit=2
+second_attempt_exit=2
+first_failure_artifact=msfr-existing-success.failure.json
+collision_failure_artifact=msfr-existing-success.failure.abbfd87d27c5.1787369116.17268.1.json
+success_json_valid=yes
+failure_json_valid=yes
+collision_failure_json_valid=yes
+success_overwritten=no
+failure_overwritten=no
