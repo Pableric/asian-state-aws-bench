@@ -1,0 +1,52 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-ffp-contract=off -fno-fast-math -Wall -Wextra -Werror -I. \
+	-Iordered_d1_x_growth_handoff -Iordered_d1_x_growth_handoff/private
+OBJDIR := .asian_genuine_fixed_block_e2e_objects
+
+QUALIFIED_SOURCES := \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_multistrike_full_risk_avx512.s \
+	asian_genuine_permute_setup.c \
+	ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c \
+	ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s \
+	asian_geometric_cv_payoff_avx512.s \
+	asian_genuine_sql_variable_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_fixed_block_source_setup.c \
+	asian_genuine_fixed_block_source_avx512.s
+
+OBJECTS := $(addprefix $(OBJDIR)/,$(QUALIFIED_SOURCES))
+OBJECTS := $(OBJECTS:.c=.o)
+OBJECTS := $(OBJECTS:.s=.o)
+BENCH_OBJECT := $(OBJDIR)/benchmarks/bench_asian_genuine_fixed_block_e2e.o
+
+.PHONY: all aws-benchmark-native local-audit clean
+
+all: bench_asian_genuine_fixed_block_e2e
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BENCH_OBJECT): benchmarks/bench_asian_genuine_fixed_block_e2e.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -DFIXED_E2E_GIT_COMMIT=\"$(shell git rev-parse HEAD)\" \
+		-c $< -o $@
+
+bench_asian_genuine_fixed_block_e2e: $(BENCH_OBJECT) $(OBJECTS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+aws-benchmark-native: bench_asian_genuine_fixed_block_e2e
+	./bench_asian_genuine_fixed_block_e2e --check-only
+
+local-audit: bench_asian_genuine_fixed_block_e2e
+	python3 tests/audit_asian_genuine_fixed_block_e2e.py
+
+clean:
+	$(RM) -r $(OBJDIR) bench_asian_genuine_fixed_block_e2e

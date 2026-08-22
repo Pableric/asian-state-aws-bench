@@ -1,0 +1,12 @@
+mode=bounded_nonqualifying_json_self_check
+parsed_as_json=PASS
+status_field=PASS
+qualification_eligible=false
+cells=2
+raw_observations_per_cell=1
+missing_historical_reference=ONEMKL_REFERENCE_UNAVAILABLE
+second_invocation_exit=2
+success_sha256_before=37473b4c7d456e98e383e43084d9e3146b5c4149649393b1ef9c13eab6d3adb1
+success_sha256_after=37473b4c7d456e98e383e43084d9e3146b5c4149649393b1ef9c13eab6d3adb1
+separate_failure_json=PASS
+status=PASS

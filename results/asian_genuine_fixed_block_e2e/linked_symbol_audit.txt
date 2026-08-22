@@ -1,0 +1,9 @@
+status=PASS
+binary_sha256=e28c0470d23bcccffd431bf8fe7d2458d803f430a7f104e1c02effe877041157
+onemkl_link_matches=0
+source_call_sites={'x3': 1, 'fixed_block': 1, 'exact_lookup': 1}
+source_leaf_call_sites={'x3': 1, 'fixed_block': 1, 'exact_lookup': 1}
+common_call_sites={'post_source_from_complete': 3, 'vector_exp_wrapper': 1, 'route_evolution_wrapper': 1, 'consumer_wrapper': 1, 'vector_exp_leaf_sites': 2, 'sql_dual_control_site': 1, 'basis_forward_site': 1, 'l_to_g_site': 1, 'strip_price_site': 1, 'strip_price_delta_site': 1, 'accumulator_init_site': 1, 'consume_block_site': 1, 'finalize_site': 1}
+candidate_common_linked_hashes_identical=yes
+complete_invocations=source:1 vector_exp:2 route_evolution:1 consumer_api:1
+full_risk_tile4_leaves=K1:1 K4:1 K8:2 K16:4 K32:8

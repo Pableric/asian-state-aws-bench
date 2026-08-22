@@ -1,0 +1,17 @@
+fixed_e2e_preflight N=16 workload=single_strike_price estimator=arithmetic fixed_raw=0 exact_raw=0 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=0 status=PASS
+fixed_e2e_preflight N=16 workload=single_strike_price estimator=geometric_cv fixed_raw=5.96046448e-08 exact_raw=5.96046448e-08 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=0 status=PASS
+fixed_e2e_preflight N=16 workload=single_strike_price_delta estimator=arithmetic fixed_raw=0 exact_raw=0 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=0 status=PASS
+fixed_e2e_preflight N=16 workload=single_strike_price_delta estimator=geometric_cv fixed_raw=5.96046448e-08 exact_raw=5.96046448e-08 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=0 status=PASS
+fixed_e2e_preflight N=16 workload=single_strike_full_risk estimator=arithmetic fixed_raw=1.90734863e-06 exact_raw=1.90734863e-06 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=1 status=PASS
+fixed_e2e_preflight N=16 workload=single_strike_full_risk estimator=geometric_cv fixed_raw=5.96046448e-08 exact_raw=5.96046448e-08 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=1 status=PASS
+fixed_e2e_preflight N=16 workload=multi_strike_full_risk_K32 estimator=arithmetic fixed_raw=1.90734863e-06 exact_raw=1.90734863e-06 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=8 status=PASS
+fixed_e2e_preflight N=16 workload=multi_strike_full_risk_K32 estimator=geometric_cv fixed_raw=3.57627869e-07 exact_raw=3.57627869e-07 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=8 status=PASS
+fixed_e2e_preflight N=256 workload=single_strike_price estimator=arithmetic fixed_raw=4.76837158e-07 exact_raw=4.76837158e-07 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=0 status=PASS
+fixed_e2e_preflight N=256 workload=single_strike_price estimator=geometric_cv fixed_raw=1.1920929e-07 exact_raw=1.1920929e-07 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=0 status=PASS
+fixed_e2e_preflight N=256 workload=single_strike_price_delta estimator=arithmetic fixed_raw=4.76837158e-07 exact_raw=4.76837158e-07 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=0 status=PASS
+fixed_e2e_preflight N=256 workload=single_strike_price_delta estimator=geometric_cv fixed_raw=1.1920929e-07 exact_raw=1.1920929e-07 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=0 status=PASS
+fixed_e2e_preflight N=256 workload=single_strike_full_risk estimator=arithmetic fixed_raw=4.76837158e-07 exact_raw=4.76837158e-07 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=1 status=PASS
+fixed_e2e_preflight N=256 workload=single_strike_full_risk estimator=geometric_cv fixed_raw=1.34110451e-07 exact_raw=1.34110451e-07 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=1 status=PASS
+fixed_e2e_preflight N=256 workload=multi_strike_full_risk_K32 estimator=arithmetic fixed_raw=1.90734863e-06 exact_raw=1.90734863e-06 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=8 status=PASS
+fixed_e2e_preflight N=256 workload=multi_strike_full_risk_K32 estimator=geometric_cv fixed_raw=4.76837158e-07 exact_raw=4.76837158e-07 source=1 exp=2 evolution=1 consumer=1 tile4_leaves=8 status=PASS
+asian_genuine_fixed_block_e2e benchmark_preflight=PASS sources=3 N=16,256 price_price_delta_full_risk=yes arithmetic_cv=yes one_source_per_valuation=yes

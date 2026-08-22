@@ -1,0 +1,11 @@
+benchmark_binary=bench_asian_genuine_fixed_block_e2e
+base_commit=9a9b204ed770f4e1ff6edecfdf177676e6a4579c
+primary_clean_worktree=/tmp/asian-fixed-block-end-to-end
+verification_checkout=/tmp/asian-fixed-block-end-to-end-verify
+two_clean_builds_byte_identical=performed_after_final_commit
+verification_preflight=performed_after_final_commit
+preexisting_blob_mutations=0
+
+The exact final commit and reproduced binary SHA-256 are reported at handoff.
+They are not embedded in this tracked file because the benchmark embeds its
+build commit and updating this file would create a new commit.

@@ -1,0 +1,6 @@
+command=make test-ordered-d1-sde
+ordered_d1_layout_tests=PASS
+ordered_d1_kernel_reference=PASS
+ordered_d1_api=PASS
+all_ordered_d1_mix_gates=PASS
+status=PASS

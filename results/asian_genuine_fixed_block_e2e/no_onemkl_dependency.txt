@@ -1,0 +1,9 @@
+standalone_makefile_onemkl_objects=0
+standalone_makefile_onemkl_headers=0
+standalone_makefile_onemkl_libraries=0
+standalone_makefile_onemkl_commands=0
+linked_onemkl_dependencies=0
+undefined_onemkl_symbols=0
+frozen_reference_access=optional_read_only_json
+new_onemkl_measurements=0
+status=PASS
