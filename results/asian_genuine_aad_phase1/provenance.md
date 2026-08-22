@@ -1,0 +1,35 @@
+# Phase-1 provenance
+
+- Exact base commit: `ec44e2335d2738d491c0d12f02c4504da0202606`
+- Branch: `research/asian-aad-phase1`
+- Clean Phase-1 worktree: `/tmp/asian-aad-phase1.obafyK`
+- Original source checkout: `/home/pablo/Projects/asian-option-engine`
+- Original source status: [source_checkout_status_before.txt](source_checkout_status_before.txt)
+- Direction table SHA-256: `fa6418f236d4667b5deb5b62e6d5fcd6385c64dd60ef2cd1f06fed0e8ea74199`
+
+The worktree was created directly at the exact base. No clean, reset, checkout,
+build, or edit was performed in the original dirty checkout. The existing
+qualified files below are consumed unchanged.
+
+| Qualified input | SHA-256 |
+|---|---|
+| `direction_numbers/joe_kuo_6_21201.bin` | `fa6418f236d4667b5deb5b62e6d5fcd6385c64dd60ef2cd1f06fed0e8ea74199` |
+| `ordered_d1_x_growth_handoff/private/ordered_d1_x_growth_diag.h` | `c728a463eca6f18d2622269ac9dd5114c30422212a18de2ce3668073c09f8b81` |
+| `ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c` | `886bcc7bdd71ff7355c4b7b278a7d19b5608c2fbbed7b9983cd98ff1608f7f08` |
+| `ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s` | `bbc08b0348309e47852b550d53f9008e05c880475f6ce4b1899ab69844aa5b89` |
+| `private/asian_genuine_permute.h` | `1270223b14a73c79818711f9b407e448acdcd6cdc1002c851f9ddb6b454d54bf` |
+| `asian_genuine_permute_setup.c` | `e2e54ebca65f6586cbb2fbfa0621e20a63dbaafec3cbbdb2515f5a9a432a0301` |
+| `asian_genuine_sql_variable_avx512.s` | `08f685f29e86a1480269797ff4ee4313088f33c3275af727faa72c12d1957709` |
+| `private/asian_exp_p8_18diag.inc` | `3309305a0db639ca49a93dd37f375df389ee59a8234b174d2c094c1b7da74b85` |
+| `private/asian_geometric_cv_diag.h` | `ac72bbfb41caf53aa97ebd7253812a1465e5ad2059a05eb3120f1383822e5a40` |
+| `asian_geometric_cv_setup.c` | `e74419de9c11da4481a3c452040b89b67bf8a555947f5ba2d686c66bc1a6786f` |
+| `asian_geometric_cv_payoff_avx512.s` | `78331e0b544b983d3b32d3fabc33745e858463aebca53928d7b6843f60802ee6` |
+| `private/asian_genuine_price_delta_strip_diag.h` | `e187cb32872c6240cafa808d6b8b46e25ea121d30124bea2900eaf4640d37b21` |
+| `asian_genuine_price_delta_strip_setup.c` | `907c4a05807de27d8ec3c226382e6b640048a87fcd31f9b97d82c5c37668dced` |
+| `asian_genuine_price_delta_strip_avx512.s` | `42c52432e1c0b49956d5db11305e9b7d6a8f8c86d35c5fa819ea96443f03893e` |
+| `asian_intel_sql_consumers_avx512.s` | `7c9d56905fabd1ab7d726add2e6eed329f89fd93a3ef4602aa328e599f4387df` |
+
+Frozen-carrier verification is both hash-based and behavioral: exact Sobol
+words, source identities, routed x/growth, and S/Q/L order are checked by the
+linked vector test. The baseline `make test-ordered-d1-sde` passed in this
+worktree before Phase-1 edits.

@@ -1,0 +1,8 @@
+benchmark_binary=bench_asian_genuine_aad_phase1
+initial_clean_build_sha256=c7ac265668e87e08ff5e71e9c8128bf1bc329bbf642a061df765dff9ef26e2d6
+repeated_clean_build_sha256=c7ac265668e87e08ff5e71e9c8128bf1bc329bbf642a061df765dff9ef26e2d6
+status=PASS
+
+The second-clean-checkout hash is verified during final handoff and reported
+with the exact committed revision; it is not embedded here because doing so
+would change that revision.
