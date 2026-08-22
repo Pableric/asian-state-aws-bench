@@ -1,0 +1,63 @@
+CC ?= gcc
+MKLROOT ?= /opt/intel/oneapi/mkl/latest
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-ffp-contract=off -fno-fast-math -Wall -Wextra -Werror -I. \
+	-Iordered_d1_x_growth_handoff \
+	-Iordered_d1_x_growth_handoff/private
+
+QUALIFIED_SOURCES := \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_multistrike_full_risk_avx512.s \
+	asian_genuine_aad_phase1_setup.c \
+	asian_genuine_aad_phase1_avx512.s \
+	asian_genuine_permute_setup.c \
+	ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c \
+	ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s \
+	asian_geometric_cv_payoff_avx512.s \
+	asian_genuine_sql_variable_avx512.s \
+	asian_intel_sql_consumers_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s
+
+VECTOR_SOURCES := \
+	tests/test_asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
+	tests/asian_genuine_multistrike_full_risk_reference.c \
+	asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
+	asian_genuine_aad_phase1_generic.c \
+	$(QUALIFIED_SOURCES)
+
+BENCHMARK_SOURCES := \
+	benchmarks/bench_asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
+	asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
+	$(QUALIFIED_SOURCES)
+
+.PHONY: all vector-check structural-audit aws-benchmark-native clean
+
+all: test_asian_genuine_multistrike_full_risk_hybrid_dispatch
+
+test_asian_genuine_multistrike_full_risk_hybrid_dispatch: $(VECTOR_SOURCES) \
+		private/asian_genuine_multistrike_full_risk_hybrid_dispatch_diag.h
+	$(CC) $(CFLAGS) $(VECTOR_SOURCES) -lm -o $@
+
+vector-check: test_asian_genuine_multistrike_full_risk_hybrid_dispatch
+	/opt/intel-sde/sde64 -skx -- \
+		./test_asian_genuine_multistrike_full_risk_hybrid_dispatch
+
+structural-audit: bench_asian_genuine_multistrike_full_risk_hybrid_dispatch
+	python3 tests/audit_asian_genuine_multistrike_full_risk_hybrid_dispatch.py
+
+bench_asian_genuine_multistrike_full_risk_hybrid_dispatch: \
+		$(BENCHMARK_SOURCES) \
+		private/asian_genuine_multistrike_full_risk_hybrid_dispatch_diag.h
+	$(CC) $(CFLAGS) -DMSFR_GIT_COMMIT=\"$(shell git rev-parse HEAD)\" \
+		-I$(MKLROOT)/include $(BENCHMARK_SOURCES) -L$(MKLROOT)/lib \
+		-Wl,-rpath,$(MKLROOT)/lib -lmkl_rt -lpthread -lm -ldl -o $@
+
+aws-benchmark-native: bench_asian_genuine_multistrike_full_risk_hybrid_dispatch
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		./bench_asian_genuine_multistrike_full_risk_hybrid_dispatch \
+		--check-only
+
+clean:
+	$(RM) test_asian_genuine_multistrike_full_risk_hybrid_dispatch \
+		bench_asian_genuine_multistrike_full_risk_hybrid_dispatch
