@@ -771,11 +771,11 @@ int main(int argc, char **argv)
     if (selected_n != 0u)
         return selected_n >= 2u && selected_n <= 256u &&
                run_n(selected_n) == 0 ? 0 : 1;
-    const uint32_t ns[] = {2, 16, 256};
+    const uint32_t ns[] = {2, 16, 32, 64, 128, 256};
     for (uint32_t i = 0; i < sizeof(ns) / sizeof(ns[0]); ++i)
         if (run_n(ns[i]) != 0) return 1;
     if (validate_edge_contracts() != 0) return 1;
     puts("asian_genuine_multistrike_full_risk_vector=PASS "
-         "check_N=2,16,256 arbitrary_K=1..32 tiles=2,4");
+         "check_N=2,16,32,64,128,256 arbitrary_K=1..32 tiles=2,4");
     return 0;
 }
