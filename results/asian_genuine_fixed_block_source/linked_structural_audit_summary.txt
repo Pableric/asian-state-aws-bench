@@ -1,0 +1,5 @@
+status=PASS scope=final_linked_executable
+ordered_d1_x_only_diag static=126 dynamic_per_call=14060 text_bytes=664 true_peak_zmm=10 calls=0 stack=0 gathers=0 scatters=0
+asian_genuine_fixed_block_signed_z_one_fma_source_diag static=16 dynamic_per_call=2566 text_bytes=81 true_peak_zmm=4 calls=0 stack=0 gathers=0 scatters=0
+asian_genuine_fixed_block_prepared_exact_x_lookup_diag static=12 dynamic_per_call=2052 text_bytes=55 true_peak_zmm=2 calls=0 stack=0 gathers=0 scatters=0
+removed_instructions_vs_x3=11494 removed_vector_fmas_vs_x3=1024 removed_scalar_hard_tail_fmas_vs_x3=424

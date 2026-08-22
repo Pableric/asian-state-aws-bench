@@ -1,0 +1,16 @@
+benchmark_binary=bench_asian_genuine_fixed_block_source
+base_commit=9c6146bb4e38d0aa5ebcf2ca0b026734e772804a
+primary_clean_worktree=/tmp/asian-fixed-block-source
+verification_checkout=/tmp/asian-fixed-block-source-final-verify
+table_sha256=ecf3bb854e98bedcf724d0743438457ccf8b600e1264cb537741ce0b9d90d98d
+two_clean_builds_byte_identical=PASS
+verification_preflight=PASS
+deterministic_local_reports=PASS
+preexisting_blob_mutations=0
+status=PASS
+
+The final packaging revision is rebuilt in both clean worktrees during handoff
+and its exact commit and benchmark hash are reported there. That
+self-referential commit/hash pair is not embedded here because the benchmark
+records its build commit in JSON and changing this file would create another
+revision.

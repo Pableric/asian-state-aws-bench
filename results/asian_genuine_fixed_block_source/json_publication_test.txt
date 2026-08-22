@@ -1,0 +1,10 @@
+requested_success_path=/tmp/asian-fixed-block-success.json
+sentinel_sha256_before=5946179367473f33b1eb75c2e1391ff3c1e45b165c974d403cf3c804b1525d25
+sentinel_sha256_after=5946179367473f33b1eb75c2e1391ff3c1e45b165c974d403cf3c804b1525d25
+process_status=REFUSED
+failure_stage=success_output_exists
+failure_artifact=/tmp/asian-fixed-block-success.failure.json
+failure_artifact_valid_json=yes
+failure_artifact_sha256=c1df400ef85980fa9d083b8f5d91a43aac669f252207366ef4a844d43b35438a
+existing_success_preserved=yes
+status=PASS

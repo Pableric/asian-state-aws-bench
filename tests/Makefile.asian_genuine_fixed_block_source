@@ -1,0 +1,111 @@
+CC ?= gcc
+MKLROOT ?= /opt/intel/oneapi/mkl/latest
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-ffp-contract=off -fno-fast-math -Wall -Wextra -Werror -I. \
+	-Iordered_d1_x_growth_handoff -Iordered_d1_x_growth_handoff/private
+OBJDIR := .asian_genuine_fixed_block_source_objects
+
+QUALIFIED_SOURCES := \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_multistrike_full_risk_avx512.s \
+	asian_genuine_aad_phase1_setup.c \
+	asian_genuine_aad_phase1_avx512.s \
+	asian_genuine_permute_setup.c \
+	ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c \
+	ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s \
+	asian_geometric_cv_payoff_avx512.s \
+	asian_genuine_sql_variable_avx512.s \
+	asian_intel_sql_consumers_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s
+
+NEW_SOURCES := \
+	asian_genuine_fixed_block_source_setup.c \
+	asian_genuine_fixed_block_source_avx512.s
+
+COMMON_OBJECTS := $(addprefix $(OBJDIR)/,$(QUALIFIED_SOURCES) $(NEW_SOURCES))
+COMMON_OBJECTS := $(COMMON_OBJECTS:.c=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.s=.o)
+
+SOURCE_TEST_OBJECT := $(OBJDIR)/tests/test_asian_genuine_fixed_block_source.o
+DOWNSTREAM_OBJECTS := \
+	$(OBJDIR)/tests/test_asian_genuine_fixed_block_source_downstream.o \
+	$(OBJDIR)/tests/asian_genuine_multistrike_full_risk_reference.o \
+	$(OBJDIR)/asian_genuine_aad_phase1_generic.o
+BENCHMARK_OBJECT := $(OBJDIR)/benchmarks/bench_asian_genuine_fixed_block_source.o
+
+.PHONY: all table-verify source-check downstream-check vector-check \
+	structural-audit qualification aws-benchmark-native clean
+
+all: test_asian_genuine_fixed_block_source \
+	test_asian_genuine_fixed_block_source_downstream
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BENCHMARK_OBJECT): benchmarks/bench_asian_genuine_fixed_block_source.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -DMSFR_GIT_COMMIT=\"$(shell git rev-parse HEAD)\" \
+		-I$(MKLROOT)/include -c $< -o $@
+
+test_asian_genuine_fixed_block_source: $(SOURCE_TEST_OBJECT) $(COMMON_OBJECTS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+test_asian_genuine_fixed_block_source_downstream: \
+		$(DOWNSTREAM_OBJECTS) $(COMMON_OBJECTS)
+	$(CC) $(CFLAGS) $^ -lm -o $@
+
+bench_asian_genuine_fixed_block_source: $(BENCHMARK_OBJECT) $(COMMON_OBJECTS)
+	$(CC) $(CFLAGS) $^ -L$(MKLROOT)/lib -Wl,-rpath,$(MKLROOT)/lib \
+		-lmkl_rt -lpthread -lm -ldl -o $@
+
+/tmp/generate_asian_genuine_fixed_block_signed_z: \
+		tests/generate_asian_genuine_fixed_block_signed_z.c
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror $< -lmpfr -lgmp -lm -o $@
+
+/tmp/verify_asian_genuine_fixed_block_signed_z: \
+		tests/verify_asian_genuine_fixed_block_signed_z.c
+	$(CC) -std=c11 -O2 -Wall -Wextra -Werror $< -lmpfr -lgmp -lm -o $@
+
+table-verify: /tmp/generate_asian_genuine_fixed_block_signed_z \
+		/tmp/verify_asian_genuine_fixed_block_signed_z
+	/tmp/generate_asian_genuine_fixed_block_signed_z \
+		direction_numbers/joe_kuo_6_21201.bin /tmp/fixed-z.bin \
+		/tmp/fixed-z.csv
+	cmp private/asian_genuine_fixed_block_signed_z.bin /tmp/fixed-z.bin
+	cmp results/asian_genuine_fixed_block_source/signed_z_provenance.csv \
+		/tmp/fixed-z.csv
+	/tmp/verify_asian_genuine_fixed_block_signed_z \
+		direction_numbers/joe_kuo_6_21201.bin \
+		private/asian_genuine_fixed_block_signed_z.bin \
+		results/asian_genuine_fixed_block_source/independent_x_matrix.csv
+
+source-check: test_asian_genuine_fixed_block_source
+	/opt/intel-sde/sde64 -skx -- ./test_asian_genuine_fixed_block_source \
+		--report results/asian_genuine_fixed_block_source/source_matrix.csv
+
+downstream-check: test_asian_genuine_fixed_block_source_downstream
+	/opt/intel-sde/sde64 -skx -- \
+		./test_asian_genuine_fixed_block_source_downstream \
+		--report results/asian_genuine_fixed_block_source/downstream_validation.txt
+
+vector-check: source-check downstream-check
+
+structural-audit: bench_asian_genuine_fixed_block_source
+	python3 tests/audit_asian_genuine_fixed_block_source.py
+
+qualification: table-verify vector-check structural-audit
+
+aws-benchmark-native: bench_asian_genuine_fixed_block_source
+	MKL_THREADING_LAYER=SEQUENTIAL MKL_NUM_THREADS=1 MKL_DYNAMIC=FALSE \
+		./bench_asian_genuine_fixed_block_source --check-only
+
+clean:
+	$(RM) -r $(OBJDIR) test_asian_genuine_fixed_block_source \
+		test_asian_genuine_fixed_block_source_downstream \
+		bench_asian_genuine_fixed_block_source

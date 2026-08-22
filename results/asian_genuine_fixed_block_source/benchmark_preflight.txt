@@ -1,0 +1,16 @@
+execution=intel_sde_skx
+N=2 K=1 estimator=arithmetic status=PASS full_raw=1.90735e-06 price_delta_raw=4.76837e-07 phase1_raw=1.90735e-06
+N=2 K=1 estimator=geometric_cv status=PASS full_raw=1.19209e-07 price_delta_raw=2.23517e-08 phase1_raw=1.19209e-07
+N=2 K=32 estimator=arithmetic status=PASS full_raw=3.8147e-06 price_delta_raw=4.76837e-07 phase1_raw=0
+N=2 K=32 estimator=geometric_cv status=PASS full_raw=2.38419e-07 price_delta_raw=6.70552e-08 phase1_raw=0
+N=16 K=1 estimator=arithmetic status=PASS full_raw=1.90735e-06 price_delta_raw=0 phase1_raw=1.90735e-06
+N=16 K=1 estimator=geometric_cv status=PASS full_raw=5.96046e-08 price_delta_raw=5.96046e-08 phase1_raw=5.96046e-08
+N=16 K=32 estimator=arithmetic status=PASS full_raw=1.90735e-06 price_delta_raw=4.76837e-07 phase1_raw=0
+N=16 K=32 estimator=geometric_cv status=PASS full_raw=3.57628e-07 price_delta_raw=8.9407e-08 phase1_raw=0
+N=256 K=1 estimator=arithmetic status=PASS full_raw=4.76837e-07 price_delta_raw=4.76837e-07 phase1_raw=4.76837e-07
+N=256 K=1 estimator=geometric_cv status=PASS full_raw=1.3411e-07 price_delta_raw=1.19209e-07 phase1_raw=1.3411e-07
+N=256 K=32 estimator=arithmetic status=PASS full_raw=1.90735e-06 price_delta_raw=4.76837e-07 phase1_raw=0
+N=256 K=32 estimator=geometric_cv status=PASS full_raw=4.76837e-07 price_delta_raw=2.68221e-07 phase1_raw=0
+table_hash=PASS
+exact_x_bits=PASS
+overall_status=PASS

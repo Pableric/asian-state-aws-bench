@@ -1,0 +1,15 @@
+command=make test-ordered-d1-sde
+execution=intel_sde_skx_with_required_ptrace_permission
+ordered_d1_kernel_reference=PASS
+ordered_d1_api=PASS
+layout_unittests=PASS tests=4
+instructions_baseline=5175
+instructions_ordered=4206
+fmas_ordered=546
+boundary_fmas=8736
+permutes=0
+gathers=1
+boundary_gathers=16
+text_bytes=3731
+all_ordered_d1_mix_gates=PASS
+status=PASS
