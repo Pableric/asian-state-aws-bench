@@ -1,0 +1,12 @@
+benchmark_binary=bench_asian_genuine_multistrike_full_risk
+implementation_commit=383f325dd232a40a5c6920e120251e473f8d2935
+primary_clean_build_sha256=263c8fd093315b44aa980be2bbf2f60d72f5ccab2a6b70a3783684079f0887f6
+second_clean_checkout=/tmp/asian-msfr-verify.3a1RxI
+second_clean_build_sha256=263c8fd093315b44aa980be2bbf2f60d72f5ccab2a6b70a3783684079f0887f6
+second_clean_preflight=PASS
+preexisting_blob_mutations=0
+status=PASS
+
+The final packaging revision is rebuilt in both clean worktrees during final
+handoff and reported with its exact binary hash. It is not embedded here
+because doing so would change that revision and the compiled provenance string.
