@@ -1,1 +1,1 @@
-asian_genuine_aad_phase1 mathematical_identities=PASS sigma_zero_reference=PASS crn_convergence=PASS
+asian_genuine_aad_phase1 mathematical_identities=PASS runtime_N_2_256=PASS preparation_domain=PASS sigma_zero_reference=PASS crn_convergence=PASS

@@ -33,3 +33,7 @@ Frozen-carrier verification is both hash-based and behavioral: exact Sobol
 words, source identities, routed x/growth, and S/Q/L order are checked by the
 linked vector test. The baseline `make test-ordered-d1-sde` passed in this
 worktree before Phase-1 edits.
+
+The Phase-1 supported fixing-count domain is N=2..256. Nonprincipal supported
+counts retain the qualified producer adapter; native ranking is restricted to
+N=16/32/64/128/256.

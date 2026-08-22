@@ -45,6 +45,7 @@ enum {
     ASIAN_GENUINE_AAD_PHASE1_PATHS = 4096,
     ASIAN_GENUINE_AAD_PHASE1_PACKETS = 128,
     ASIAN_GENUINE_AAD_PHASE1_PACKET_PATHS = 32,
+    ASIAN_GENUINE_AAD_PHASE1_MIN_FIXINGS = 2,
     ASIAN_GENUINE_AAD_PHASE1_MAX_FIXINGS = 256,
     ASIAN_GENUINE_AAD_PHASE1_TAPE_FLOATS = 32 * 256,
     ASIAN_GENUINE_AAD_PHASE1_TAPE_BYTES = 32 * 256 * 4,
@@ -56,6 +57,7 @@ enum asian_genuine_aad_phase1_status {
     ASIAN_GENUINE_AAD_PHASE1_SIGMA_ZERO_UNSUPPORTED = -2,
     ASIAN_GENUINE_AAD_PHASE1_PRODUCER_DOMAIN = -3,
     ASIAN_GENUINE_AAD_PHASE1_EXP_DOMAIN = -4,
+    ASIAN_GENUINE_AAD_PHASE1_FIXING_COUNT_UNSUPPORTED = -5,
 };
 
 enum asian_genuine_aad_phase1_side {
@@ -110,7 +112,8 @@ _Static_assert(sizeof(asian_genuine_aad_phase1_controls_t) == 1152,
                "cold controls size");
 
 /* Exactly one cache line.  routes, tape, maps and controls are separately
- * allocated.  routes[0] is the direct D1 identity route. */
+ * allocated.  Every supported kernel consumes routes[0] as direct D1, then
+ * at least one routed fixing from routes[1..N-1]. */
 typedef struct __attribute__((aligned(64))) {
     const asian_genuine_route_t *routes;
     float *s_tape;
@@ -154,7 +157,7 @@ int asian_genuine_aad_phase1_prepare_context(
     double s0, double strike, double rate, double dividend_yield,
     double sigma, double maturity, uint32_t fixing_count);
 
-/* Ranked N>1 leaves. */
+/* Ranked N=2..256 leaves. */
 #define ASIAN_AAD_DECLARE_RANKED(mode, estimator, side) \
 void asian_genuine_aad_phase1_##mode##_##estimator##_##side##_diag( \
     const asian_genuine_aad_phase1_context_t *, \
@@ -168,12 +171,6 @@ ASIAN_AAD_DECLARE_RANKED(suffix, arithmetic, call);
 ASIAN_AAD_DECLARE_RANKED(suffix, arithmetic, put);
 ASIAN_AAD_DECLARE_RANKED(suffix, cv, call);
 ASIAN_AAD_DECLARE_RANKED(suffix, cv, put);
-
-/* Dedicated direct-D1-only N=1 leaves, shared by mode dispatch. */
-ASIAN_AAD_DECLARE_RANKED(direct1, arithmetic, call);
-ASIAN_AAD_DECLARE_RANKED(direct1, arithmetic, put);
-ASIAN_AAD_DECLARE_RANKED(direct1, cv, call);
-ASIAN_AAD_DECLARE_RANKED(direct1, cv, put);
 
 #undef ASIAN_AAD_DECLARE_RANKED
 

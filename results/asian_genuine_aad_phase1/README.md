@@ -32,8 +32,14 @@ result. `aws.json` is intentionally absent until the native command is run.
 - [changed_file_manifest.txt](changed_file_manifest.txt)
 
 The unranked generic reverse is one basis kernel with one shared payoff
-consumer; it is not cloned by side or estimator. N=1 dispatch is outside the
-ranked route loop and uses direct-D1-only symbols.
+consumer; it is not cloned by side or estimator. The supported runtime domain
+is N=2..256. Every ranked leaf consumes direct D1 and then at least one routed
+fixing; N<2 is rejected during preparation.
+
+Benchmark preparation reports the failing stage and underlying status before
+returning. Native JSON is written to an adjacent temporary file, flushed and
+atomically renamed only after all rows complete; a failed preparation or
+measurement removes the temporary file and preserves any prior result.
 
 Ranked contracts require positive sigma inside the established producer
 envelope. Sigma-zero mathematics is tested, but production sigma-zero Vega is

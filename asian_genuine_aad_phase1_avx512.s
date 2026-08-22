@@ -489,65 +489,6 @@
 .size \name,.-\name
 .endm
 
-.macro AAD_DIRECT1_FUNCTION name, put, cv
-.p2align 6
-.globl \name
-.type \name,@function
-\name:
-    kmovq %rsi, %k0
-    kmovq %rdi, %k6
-    movq AAD_CTX_ROUTES(%rdi), %r8
-    kmovq %r8, %k2
-    movq AAD_CTX_CONTROLS(%rdi), %r8
-    kmovq %r8, %k4
-    AAD_ZERO_OUTPUT_ACCUMULATORS
-    xorq %rax, %rax
-.Lpacket_\@:
-    kmovq %k6, %rdi
-    kmovq %k2, %r9
-    movq AAD_ROUTE_X(%r9), %r8
-    movq AAD_ROUTE_GROWTH(%r9), %r10
-    vmovaps 0(%r8,%rax), %zmm0
-    vmovaps 64(%r8,%rax), %zmm1
-    vmovaps 0(%r10,%rax), %zmm12
-    vmovaps 64(%r10,%rax), %zmm13
-    vmulps AAD_CTX_S0(%rdi){1to16}, %zmm12, %zmm6
-    vmulps AAD_CTX_S0(%rdi){1to16}, %zmm13, %zmm7
-    vmulps AAD_CTX_DT_OVER_N(%rdi){1to16}, %zmm6, %zmm16
-    vmulps AAD_CTX_DT_OVER_N(%rdi){1to16}, %zmm7, %zmm17
-    vxorps %zmm28, %zmm28, %zmm28
-    vxorps %zmm29, %zmm29, %zmm29
-    vfmadd231ps %zmm6, %zmm0, %zmm28
-    vfmadd231ps %zmm7, %zmm1, %zmm29
-    vfnmadd231ps AAD_CTX_C(%rdi){1to16}, %zmm16, %zmm28
-    vfnmadd231ps AAD_CTX_C(%rdi){1to16}, %zmm17, %zmm29
-    vmulps AAD_CTX_INV_SIGMA(%rdi){1to16}, %zmm28, %zmm28
-    vmulps AAD_CTX_INV_SIGMA(%rdi){1to16}, %zmm29, %zmm29
-    .if \cv
-        kmovq %k4, %r8
-        vaddps AAD_CTRL_LOG_S0(%r8){1to16}, %zmm0, %zmm14
-        vaddps AAD_CTRL_LOG_S0(%r8){1to16}, %zmm1, %zmm15
-        AAD_EXP 14,12,8,10
-        AAD_EXP 15,13,9,11
-        vbroadcastss AAD_CTX_C(%rdi), %zmm14
-        vmulps AAD_CTRL_B(%r8){1to16}, %zmm14, %zmm14
-        vsubps %zmm14, %zmm0, %zmm10
-        vsubps %zmm14, %zmm1, %zmm11
-        vmulps AAD_CTX_INV_SIGMA(%rdi){1to16}, %zmm10, %zmm10
-        vmulps AAD_CTX_INV_SIGMA(%rdi){1to16}, %zmm11, %zmm11
-        vmulps %zmm12, %zmm10, %zmm10
-        vmulps %zmm13, %zmm11, %zmm11
-    .endif
-    kmovq %k4, %r8
-    AAD_PAY_HALF 6,16,28,12,10,20,22,24,26,\put,\cv
-    AAD_PAY_HALF 7,17,29,13,11,21,23,25,27,\put,\cv
-    addq $128, %rax
-    cmpq $AAD_PATH_BYTES, %rax
-    jb .Lpacket_\@
-    AAD_FINISH \put,\cv
-.size \name,.-\name
-.endm
-
 AAD_FORWARD_FUNCTION asian_genuine_aad_phase1_forward_arithmetic_call_diag,0,0
 AAD_FORWARD_FUNCTION asian_genuine_aad_phase1_forward_arithmetic_put_diag,1,0
 AAD_FORWARD_FUNCTION asian_genuine_aad_phase1_forward_cv_call_diag,0,1
@@ -557,10 +498,5 @@ AAD_SUFFIX_FUNCTION asian_genuine_aad_phase1_suffix_arithmetic_call_diag,0,0
 AAD_SUFFIX_FUNCTION asian_genuine_aad_phase1_suffix_arithmetic_put_diag,1,0
 AAD_SUFFIX_FUNCTION asian_genuine_aad_phase1_suffix_cv_call_diag,0,1
 AAD_SUFFIX_FUNCTION asian_genuine_aad_phase1_suffix_cv_put_diag,1,1
-
-AAD_DIRECT1_FUNCTION asian_genuine_aad_phase1_direct1_arithmetic_call_diag,0,0
-AAD_DIRECT1_FUNCTION asian_genuine_aad_phase1_direct1_arithmetic_put_diag,1,0
-AAD_DIRECT1_FUNCTION asian_genuine_aad_phase1_direct1_cv_call_diag,0,1
-AAD_DIRECT1_FUNCTION asian_genuine_aad_phase1_direct1_cv_put_diag,1,1
 
 .section .note.GNU-stack,"",@progbits

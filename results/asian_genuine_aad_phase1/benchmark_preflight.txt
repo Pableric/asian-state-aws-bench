@@ -1,1 +1,4 @@
-asian_genuine_aad_phase1 benchmark_preflight=PASS forward_suffix=0,0,0,-1.19209e-07 ours_sources=5 ours_evolutions=7 onemkl_gaussian_matrices=1 onemkl_evolutions=7
+asian_genuine_aad_phase1 benchmark_preflight N=2 PASS forward_suffix=0,0,0,1.19209e-07
+asian_genuine_aad_phase1 benchmark_preflight N=16 PASS forward_suffix=0,0,1.19209e-07,0
+asian_genuine_aad_phase1 benchmark_preflight N=256 PASS forward_suffix=0,0,4.76837e-07,1.19209e-07
+asian_genuine_aad_phase1 benchmark_preflight=PASS checked_N=2,16,256 contract=S0:100,K:100,r:.03,q:0,sigma:.20,T:1 crn_epsilon=.001 bumps=spot:.1,rate:.00003,sigma:.0002 ours_sources=5 ours_evolutions=7 onemkl_gaussian_matrices=1 onemkl_evolutions=7

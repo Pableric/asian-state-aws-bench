@@ -3,7 +3,7 @@ import argparse,json,re,subprocess
 from pathlib import Path
 
 RANKED=[f"asian_genuine_aad_phase1_{mode}_{est}_{side}_diag"
- for mode in ("forward","suffix","direct1")
+ for mode in ("forward","suffix")
  for est in ("arithmetic","cv") for side in ("call","put")]
 
 def command(*args):
@@ -49,7 +49,6 @@ def main():
     p.add_argument("--source",default="asian_genuine_aad_phase1_avx512.s")
     p.add_argument("--forward-mix",default="/tmp/asian-aad-forward.mix")
     p.add_argument("--suffix-mix",default="/tmp/asian-aad-suffix.mix")
-    p.add_argument("--direct1-mix",default="/tmp/asian-aad-direct1.mix")
     p.add_argument("--out",required=True)
     a=p.parse_args();bodies=disassembly(a.exe)
     nm=command("nm","-S","--size-sort",a.exe)
@@ -78,8 +77,7 @@ def main():
     xroute=re.search(r"\.macro AAD_X_ROUTE(.*?)\.endm",source,re.S).group(1)
     mixes={
       "forward_N256_cv_call":mix_function(a.forward_mix,"asian_genuine_aad_phase1_forward_cv_call_diag"),
-      "suffix_N256_cv_call":mix_function(a.suffix_mix,"asian_genuine_aad_phase1_suffix_cv_call_diag"),
-      "direct1_N1_cv_call":mix_function(a.direct1_mix,"asian_genuine_aad_phase1_direct1_cv_call_diag")}
+      "suffix_N256_cv_call":mix_function(a.suffix_mix,"asian_genuine_aad_phase1_suffix_cv_call_diag")}
     size_sections=command("size","-A",a.exe)
     text_size=next((int(m.group(1)) for m in [re.search(r"(?m)^\.text\s+(\d+)",size_sections)] if m),None)
     report={"status":"PASS" if all_pass else "FAIL",
@@ -97,7 +95,7 @@ def main():
               len(re.findall(r"\bvpermd\b",xroute))==2 and
               not re.search(r"GROWTH|growth",xroute)},
       "backward_liveness":{"forward_peak_zmm_families":31,
-       "suffix_peak_zmm_families":25,"direct1_peak_zmm_families":25,
+       "suffix_peak_zmm_families":25,
        "physical_limit":32,"vector_spills":0,
        "evidence":"results/asian_genuine_aad_phase1/register_lifetimes.md"},
       "dependency_chains":{"forward":["S growth recurrence","Q addition","cumulative_x addition","x_weighted FMA"],
@@ -106,7 +104,7 @@ def main():
        "shuffle_pressure":"shared selectors feed four vpermd forward and exactly two vpermd in x-only reverse; expected port-5 pressure",
        "fp_pressure":"two independent path halves expose FMA/multiply work to the two main vector FP pipes; S and suffix remain serial per half",
        "store_pressure":"suffix writes exactly 128 bytes per fixing per packet; no x/growth/adjoint tape stores",
-       "front_end":"unroll one; bottom-tested routed loops only in N>1 leaves; N=1 has separate direct symbol"},
+       "front_end":"unroll one; supported N=2..256 always executes direct D1 then at least one routed fixing"},
       "working_sets":{"hot_context_bytes":64,"packet_S_tape_bytes":32768,
        "source_x_growth_bytes":65536,"route_entry_bytes":32,"map_each_bytes":1600,
        "l1d_note":"32-KiB tape residency is not assumed; native traffic/counters decide affordability",

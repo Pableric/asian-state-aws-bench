@@ -31,8 +31,7 @@ typedef void (*leaf_fn)(const asian_genuine_aad_phase1_context_t *,
                         asian_genuine_aad_phase1_value_t *);
 
 static leaf_fn select_leaf(int suffix_mode,
-                           enum asian_genuine_aad_phase1_side side, int cv,
-                           uint32_t n);
+                           enum asian_genuine_aad_phase1_side side, int cv);
 
 static void *a64(size_t bytes)
 {
@@ -97,6 +96,8 @@ static void release_fixture(fixture_t *f)
 
 static int prepare_fixture(fixture_t *f, uint32_t n)
 {
+    if(n<ASIAN_GENUINE_AAD_PHASE1_MIN_FIXINGS||
+       n>ASIAN_GENUINE_AAD_PHASE1_MAX_FIXINGS)return-1;
     const double s0=100.0, strike=103.0, rate=0.03, q=0.01;
     const double sigma=0.15, maturity=1.25;
     memset(f, 0, sizeof(*f)); f->n=n;
@@ -144,6 +145,7 @@ static int prepare_fixture(fixture_t *f, uint32_t n)
         asian_genuine_aad_phase1_prepare_context(f->context,f->routes,f->tape,
           f->controls,s0,strike,rate,q,sigma,maturity,n) !=
           ASIAN_GENUINE_AAD_PHASE1_OK) return -1;
+    if(f->context->route_count!=n-1u||f->context->route_count==0u)return-1;
     f->immutable_hash=fixture_hash(f);
     return 0;
 }
@@ -294,7 +296,7 @@ static int independent_validation(const fixture_t *f)
                 independent[field]+=ds[field];flip[field]+=hybrid[field]-ds[field];}
         }
         asian_genuine_aad_phase1_value_t got;
-        select_leaf(1,(enum asian_genuine_aad_phase1_side)side,cv,f->n)(f->context,&got);
+        select_leaf(1,(enum asian_genuine_aad_phase1_side)side,cv)(f->context,&got);
         double *gv=(double *)&got;
         const asian_genuine_aad_phase1_value_t *exact=side?
           &f->controls->geometric_put:&f->controls->geometric_call;
@@ -390,8 +392,8 @@ static int crn_validation(const fixture_t *f)
         }
     }
     asian_genuine_aad_phase1_value_t forward,suffix;
-    select_leaf(0,ASIAN_GENUINE_AAD_PHASE1_CALL,0,f->n)(f->context,&forward);
-    select_leaf(1,ASIAN_GENUINE_AAD_PHASE1_CALL,0,f->n)(f->context,&suffix);
+    select_leaf(0,ASIAN_GENUINE_AAD_PHASE1_CALL,0)(f->context,&forward);
+    select_leaf(1,ASIAN_GENUINE_AAD_PHASE1_CALL,0)(f->context,&suffix);
     printf("crn_summary N=%u smallest_bump_abs_errors=%.9g,%.9g,%.9g "
       "forward_suffix_delta=%.9g forward_suffix_vega=%.9g forward_suffix_rho=%.9g\n",
       f->n,last_error[0],last_error[1],last_error[2],
@@ -489,17 +491,8 @@ static int same_bits(const asian_genuine_aad_phase1_value_t *a,
 }
 
 static leaf_fn select_leaf(int suffix_mode,
-                           enum asian_genuine_aad_phase1_side side, int cv,
-                           uint32_t n)
+                           enum asian_genuine_aad_phase1_side side, int cv)
 {
-    if(n==1u){
-        if(cv) return side==ASIAN_GENUINE_AAD_PHASE1_CALL?
-          asian_genuine_aad_phase1_direct1_cv_call_diag:
-          asian_genuine_aad_phase1_direct1_cv_put_diag;
-        return side==ASIAN_GENUINE_AAD_PHASE1_CALL?
-          asian_genuine_aad_phase1_direct1_arithmetic_call_diag:
-          asian_genuine_aad_phase1_direct1_arithmetic_put_diag;
-    }
     if(suffix_mode){if(cv)return side==ASIAN_GENUINE_AAD_PHASE1_CALL?
       asian_genuine_aad_phase1_suffix_cv_call_diag:
       asian_genuine_aad_phase1_suffix_cv_put_diag;
@@ -521,7 +514,7 @@ static int check_n(uint32_t n)
     for(int mode=0;mode<2;++mode)for(int side=0;side<2;++side)for(int cv=0;cv<2;++cv){
         asian_genuine_aad_phase1_value_t expected,got,got2;
         same_float_oracle(&f,mode,(enum asian_genuine_aad_phase1_side)side,cv,&expected);
-        leaf_fn leaf=select_leaf(mode,(enum asian_genuine_aad_phase1_side)side,cv,n);
+        leaf_fn leaf=select_leaf(mode,(enum asian_genuine_aad_phase1_side)side,cv);
         leaf(f.context,&got); leaf(f.context,&got2);
         if(!same_bits(&expected,&got)||!same_bits(&got,&got2)){
             fprintf(stderr,"bits N=%u mode=%d side=%d cv=%d expected="
@@ -553,8 +546,8 @@ static int check_n(uint32_t n)
     asian_genuine_sql_dual_control_diag(f.routes,n,state);
     for(int side=0;side<2;++side){
         asian_genuine_aad_phase1_value_t ar,cv;
-        select_leaf(0,(enum asian_genuine_aad_phase1_side)side,0,n)(f.context,&ar);
-        select_leaf(0,(enum asian_genuine_aad_phase1_side)side,1,n)(f.context,&cv);
+        select_leaf(0,(enum asian_genuine_aad_phase1_side)side,0)(f.context,&ar);
+        select_leaf(0,(enum asian_genuine_aad_phase1_side)side,1)(f.context,&cv);
         if(asian_geometric_cv_prepare(old,100.0,103.0,0.03,0.01,0.15,1.25,n,
              0,0,0,side?ASIAN_GEOMETRIC_PUT:ASIAN_GEOMETRIC_CALL)!=0){
             free(old);free(state);release_fixture(&f);return 1;}
@@ -592,7 +585,7 @@ static int check_n(uint32_t n)
         asian_genuine_aad_phase1_generic_basis_diag(f.context,basis);
         asian_genuine_aad_phase1_consume_basis_diag(f.context,
           (const float (*)[PATHS])basis,ASIAN_GENUINE_AAD_PHASE1_CALL,0,&generic);
-        select_leaf(1,ASIAN_GENUINE_AAD_PHASE1_CALL,0,n)(f.context,&suffix_value);
+        select_leaf(1,ASIAN_GENUINE_AAD_PHASE1_CALL,0)(f.context,&suffix_value);
         printf("generic_reverse N=%u price_difference=%.9g delta_difference=%.9g "
           "vega_difference=%.9g rho_difference=%.9g\n",n,
           generic.price-suffix_value.price,generic.delta-suffix_value.delta,
@@ -613,13 +606,15 @@ static int check_n(uint32_t n)
 
 int main(int argc,char **argv)
 {
-    static const uint32_t defaults[]={1,2,16,17,64,256};
     if(argc==3&&strcmp(argv[1],"--N")==0){
         const unsigned long n=strtoul(argv[2],NULL,10);
-        return n>=1&&n<=256?check_n((uint32_t)n):2;
+        return n>=ASIAN_GENUINE_AAD_PHASE1_MIN_FIXINGS&&
+               n<=ASIAN_GENUINE_AAD_PHASE1_MAX_FIXINGS?check_n((uint32_t)n):2;
     }
-    for(size_t i=0;i<sizeof(defaults)/sizeof(defaults[0]);++i)
-        if(check_n(defaults[i]))return 1;
-    puts("asian_genuine_aad_phase1 vector_gates=PASS");
+    if(argc!=1)return 2;
+    for(uint32_t n=ASIAN_GENUINE_AAD_PHASE1_MIN_FIXINGS;
+        n<=ASIAN_GENUINE_AAD_PHASE1_MAX_FIXINGS;++n)
+        if(check_n(n))return 1;
+    puts("asian_genuine_aad_phase1 vector_gates=PASS runtime_N_2_256=PASS");
     return 0;
 }

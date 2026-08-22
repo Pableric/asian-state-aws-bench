@@ -56,16 +56,37 @@ static int check_crn(void)
     return 0;
 }
 
+static int check_preparation_domain(void)
+{
+    asian_genuine_aad_phase1_controls_t *controls=a64(sizeof(*controls));
+    if(!controls)return-1;
+    const uint32_t rejected[]={0,1,257};
+    for(size_t i=0;i<sizeof(rejected)/sizeof(rejected[0]);++i){
+        const uint32_t n=rejected[i];
+        if(asian_genuine_aad_phase1_producer_fixing_count(n)!=0||
+           asian_genuine_aad_phase1_prepare_controls(controls,100,105,.03,.01,.2,1,n)!=
+             ASIAN_GENUINE_AAD_PHASE1_FIXING_COUNT_UNSUPPORTED||
+           asian_genuine_aad_phase1_prepare_context(NULL,NULL,NULL,NULL,
+             100,105,.03,.01,.2,1,n)!=
+             ASIAN_GENUINE_AAD_PHASE1_FIXING_COUNT_UNSUPPORTED){
+            fprintf(stderr,"preparation domain N=%u not rejected explicitly\n",n);
+            free(controls);return-1;
+        }
+    }
+    if(asian_genuine_aad_phase1_producer_fixing_count(2)!=16||
+       asian_genuine_aad_phase1_producer_fixing_count(17)!=16||
+       asian_genuine_aad_phase1_producer_fixing_count(32)!=32){
+        free(controls);return-1;
+    }
+    free(controls);return 0;
+}
+
 int main(void)
 {
-    const uint32_t ns[]={1,2,15,16,17,31,32,33,63,64,65,127,128,129,255,256};
-    for(size_t i=0;i<sizeof(ns)/sizeof(ns[0]);++i)if(check_n(ns[i],.03,.01,.2))return 2;
-    if(check_controls()||check_crn())return 2;
-    if(asian_genuine_aad_phase1_producer_fixing_count(1)!=16||
-       asian_genuine_aad_phase1_producer_fixing_count(17)!=16||
-       asian_genuine_aad_phase1_producer_fixing_count(32)!=32||
-       asian_genuine_aad_phase1_producer_fixing_count(0)!=0||
-       asian_genuine_aad_phase1_producer_fixing_count(257)!=0)return 2;
-    puts("asian_genuine_aad_phase1 mathematical_identities=PASS sigma_zero_reference=PASS crn_convergence=PASS");
+    for(uint32_t n=ASIAN_GENUINE_AAD_PHASE1_MIN_FIXINGS;
+        n<=ASIAN_GENUINE_AAD_PHASE1_MAX_FIXINGS;++n)
+        if(check_n(n,.03,.01,.2))return 2;
+    if(check_controls()||check_crn()||check_preparation_domain())return 2;
+    puts("asian_genuine_aad_phase1 mathematical_identities=PASS runtime_N_2_256=PASS preparation_domain=PASS sigma_zero_reference=PASS crn_convergence=PASS");
     return 0;
 }

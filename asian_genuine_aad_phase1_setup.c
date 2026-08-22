@@ -37,7 +37,8 @@ uint32_t asian_genuine_aad_phase1_producer_fixing_count(uint32_t n)
 {
     switch (n) {
     case 16u: case 32u: case 64u: case 128u: case 256u: return n;
-    default: return n >= 1u && n <= 256u ? 16u : 0u;
+    default: return n >= ASIAN_GENUINE_AAD_PHASE1_MIN_FIXINGS &&
+                    n <= ASIAN_GENUINE_AAD_PHASE1_MAX_FIXINGS ? 16u : 0u;
     }
 }
 
@@ -53,8 +54,9 @@ static void geometric_exact(double s0, double strike, double rate,
     const double sum_t = dt * n * (n + 1.0) * 0.5;
     const double sum_min = n * (n + 1.0) * (2.0*n + 1.0) / 6.0;
     const double variance_scale = dt * sum_min / (n*n);
-    const double variance = sigma * sigma * variance_scale;
-    const double mean = (n*log(s0) +
+    /* Match the qualified geometric-control price operation order exactly. */
+    const double variance = sigma * sigma * dt * sum_min / (n*n);
+    const double mean = (0.0 + n*log(s0) +
         (rate - dividend_yield - 0.5*sigma*sigma) * sum_t) / n;
     const double discount = exp(-rate*maturity);
 
@@ -102,9 +104,14 @@ int asian_genuine_aad_phase1_prepare_controls(
     double s0, double strike, double rate, double dividend_yield,
     double sigma, double maturity, uint32_t n)
 {
+    if (n < ASIAN_GENUINE_AAD_PHASE1_MIN_FIXINGS ||
+        n > ASIAN_GENUINE_AAD_PHASE1_MAX_FIXINGS) {
+        if (out != NULL) out->magic = 0u;
+        return ASIAN_GENUINE_AAD_PHASE1_FIXING_COUNT_UNSUPPORTED;
+    }
     if (out == NULL || ((uintptr_t)out & 63u) != 0u || !(s0 > 0.0) ||
         !(strike > 0.0) || !isfinite(rate) || !isfinite(dividend_yield) ||
-        !(sigma >= 0.0) || !(maturity > 0.0) || n == 0u || n > 256u) {
+        !(sigma >= 0.0) || !(maturity > 0.0)) {
         if (out != NULL) out->magic = 0u;
         return ASIAN_GENUINE_AAD_PHASE1_INVALID;
     }
@@ -129,6 +136,9 @@ int asian_genuine_aad_phase1_prepare_context(
     double s0, double strike, double rate, double dividend_yield,
     double sigma, double maturity, uint32_t n)
 {
+    if (n < ASIAN_GENUINE_AAD_PHASE1_MIN_FIXINGS ||
+        n > ASIAN_GENUINE_AAD_PHASE1_MAX_FIXINGS)
+        return ASIAN_GENUINE_AAD_PHASE1_FIXING_COUNT_UNSUPPORTED;
     if (out == NULL || ((uintptr_t)out & 63u) != 0u || routes == NULL ||
         ((uintptr_t)routes & 31u) != 0u || s_tape == NULL ||
         ((uintptr_t)s_tape & 63u) != 0u || controls == NULL ||
@@ -137,7 +147,7 @@ int asian_genuine_aad_phase1_prepare_context(
         controls->abi_version != ASIAN_GENUINE_AAD_PHASE1_ABI_VERSION ||
         controls->fixing_count != n || !(s0 > 0.0) || !(strike > 0.0) ||
         !isfinite(rate) || !isfinite(dividend_yield) ||
-        !isfinite(sigma) || !(maturity > 0.0) || n == 0u || n > 256u) {
+        !isfinite(sigma) || !(maturity > 0.0)) {
         return ASIAN_GENUINE_AAD_PHASE1_INVALID;
     }
     if (sigma == 0.0) return ASIAN_GENUINE_AAD_PHASE1_SIGMA_ZERO_UNSUPPORTED;
