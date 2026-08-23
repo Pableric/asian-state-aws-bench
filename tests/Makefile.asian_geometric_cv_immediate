@@ -1,0 +1,64 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .asian_geometric_cv_immediate_objects
+
+COMMON_SOURCES := \
+	asian_genuine_permute_setup.c \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_fixed_block_source_setup.c \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_geometric_cv_payoff_avx512.s \
+	asian_genuine_sql_variable_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	asian_geometric_cv_packet_local_setup.c \
+	asian_geometric_cv_packet_local_avx512.s \
+	asian_geometric_cv_immediate_setup.c \
+	asian_geometric_cv_immediate_avx512.s
+
+COMMON_OBJECTS := $(addprefix $(OBJDIR)/,$(COMMON_SOURCES))
+COMMON_OBJECTS := $(COMMON_OBJECTS:.c=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.s=.o)
+TEST_OBJECT := $(OBJDIR)/tests/test_asian_geometric_cv_immediate.o
+BENCH_OBJECT := $(OBJDIR)/benchmarks/bench_asian_geometric_cv_immediate.o
+
+.PHONY: check audit benchmark-native
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(TEST_OBJECT): tests/test_asian_geometric_cv_packet_local.c
+$(BENCH_OBJECT): tests/test_asian_geometric_cv_immediate.c \
+	tests/test_asian_geometric_cv_packet_local.c
+
+test_asian_geometric_cv_immediate: $(TEST_OBJECT) $(COMMON_OBJECTS)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+bench_asian_geometric_cv_immediate: $(BENCH_OBJECT) $(COMMON_OBJECTS)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+check: test_asian_geometric_cv_immediate
+	/opt/intel-sde/sde64 -skx -- ./test_asian_geometric_cv_immediate
+
+audit: bench_asian_geometric_cv_immediate
+	python3 tests/audit_asian_geometric_cv_immediate.py \
+		--binary ./bench_asian_geometric_cv_immediate
+
+benchmark-native: bench_asian_geometric_cv_immediate
+	@test -n "$(CPU)" || (echo "CPU=<permitted Sapphire Rapids logical CPU> is required"; exit 2)
+	./bench_asian_geometric_cv_immediate --cpu $(CPU) --check-only
+	@set -e; audit_output="$$(python3 tests/audit_asian_geometric_cv_immediate.py \
+		--binary ./bench_asian_geometric_cv_immediate)"; \
+	printf '%s\n' "$$audit_output"; \
+	mask="$$(printf '%s\n' "$$audit_output" | sed -n 's/.* accepted_mask=\([0-9][0-9]*\).*/\1/p')"; \
+	test -n "$$mask"; \
+	./bench_asian_geometric_cv_immediate --cpu $(CPU) --accepted-mask "$$mask"
