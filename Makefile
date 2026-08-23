@@ -2,9 +2,52 @@ CC ?= gcc
 CFLAGS ?= -O3 -march=native -fPIC -Wall -Wextra -I. -Iprivate
 LDFLAGS ?= -lm
 
-.PHONY: all clean check bench test test-dynamic-sde test-reduced-fma-sde test-ordered-d1-sde
+.PHONY: all asian check-asian clean check bench test test-dynamic-sde test-reduced-fma-sde test-ordered-d1-sde
 
 all: libeuropean_pricer.so bench_european bench_european_points
+
+ASIAN_CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fPIC -fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+ASIAN_OBJDIR := .asian_arithmetic_pricer_objects
+ASIAN_SOURCES := \
+	asian_arithmetic_pricer.c \
+	asian_arithmetic_joe_kuo_256.s \
+	asian_genuine_permute_setup.c \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_fixed_block_source_setup.c \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_arithmetic_growth_only_setup.c \
+	asian_genuine_arithmetic_growth_only_sha256.c \
+	asian_genuine_arithmetic_growth_only_strip_adapter.c \
+	asian_genuine_arithmetic_downstream_layout_anchor.s \
+	asian_genuine_arithmetic_growth_only_q_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_setup.c \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s
+ASIAN_OBJECTS := $(addprefix $(ASIAN_OBJDIR)/,$(ASIAN_SOURCES))
+ASIAN_OBJECTS := $(ASIAN_OBJECTS:.c=.o)
+ASIAN_OBJECTS := $(ASIAN_OBJECTS:.s=.o)
+
+$(ASIAN_OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(ASIAN_CFLAGS) -c $< -o $@
+
+$(ASIAN_OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	$(CC) $(ASIAN_CFLAGS) -c $< -o $@
+
+libasian_arithmetic_pricer.so: $(ASIAN_OBJECTS) asian_arithmetic_pricer.map
+	$(CC) -shared -Wl,--gc-sections \
+		-Wl,--version-script=asian_arithmetic_pricer.map \
+		-o $@ $(ASIAN_OBJECTS) -lm
+
+asian: libasian_arithmetic_pricer.so
+
+check-asian:
+	$(MAKE) -f tests/Makefile.asian_arithmetic_pricer check
 
 private/sobol.o: private/sobol.c private/sobol.h
 	$(CC) -std=c23 $(CFLAGS) -c $< -o $@
@@ -128,3 +171,9 @@ check:
 clean:
 	rm -f *.o private/*.o libeuropean_pricer.so bench_european bench_european_points \
 		bench_reduced_setup test_reduced_setup test_ordered_d1_kernel
+	$(RM) -r $(ASIAN_OBJDIR) .asian_arithmetic_pricer_test_objects \
+		.asian_genuine_arithmetic_growth_only_objects \
+		libasian_arithmetic_pricer.so test_asian_arithmetic_pricer \
+		bench_asian_arithmetic_pricer \
+		test_asian_genuine_arithmetic_growth_only \
+		bench_asian_genuine_arithmetic_growth_only

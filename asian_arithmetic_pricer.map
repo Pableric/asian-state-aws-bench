@@ -1,0 +1,10 @@
+ASIAN_ARITHMETIC_1.0 {
+    global:
+        asian_arithmetic_route_plan_create;
+        asian_arithmetic_route_plan_destroy;
+        asian_arithmetic_prepare;
+        asian_arithmetic_price_prepared;
+        asian_arithmetic_prepared_destroy;
+    local:
+        *;
+};

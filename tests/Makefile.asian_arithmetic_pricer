@@ -1,0 +1,76 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .asian_arithmetic_pricer_test_objects
+
+SOURCES := \
+	asian_arithmetic_pricer.c \
+	asian_arithmetic_joe_kuo_256.s \
+	asian_genuine_permute_setup.c \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_fixed_block_source_setup.c \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_arithmetic_growth_only_setup.c \
+	asian_genuine_arithmetic_growth_only_sha256.c \
+	asian_genuine_arithmetic_growth_only_strip_adapter.c \
+	asian_genuine_arithmetic_downstream_layout_anchor.s \
+	asian_genuine_arithmetic_growth_only_q_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_setup.c \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s
+
+OBJECTS := $(addprefix $(OBJDIR)/,$(SOURCES))
+OBJECTS := $(OBJECTS:.c=.o)
+OBJECTS := $(OBJECTS:.s=.o)
+TEST_OBJECT := $(OBJDIR)/tests/test_asian_arithmetic_pricer.o
+BENCH_OBJECT := $(OBJDIR)/benchmarks/bench_asian_arithmetic_pricer.o
+
+.PHONY: check audit benchmark-native clean
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+test_asian_arithmetic_pricer: $(TEST_OBJECT) $(OBJECTS)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+bench_asian_arithmetic_pricer: $(BENCH_OBJECT) $(OBJECTS)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+check: test_asian_arithmetic_pricer
+	/opt/intel-sde/sde64 -skx -- ./test_asian_arithmetic_pricer
+	$(MAKE) -f tests/Makefile.asian_genuine_arithmetic_growth_only check
+	$(MAKE) -f tests/Makefile.asian_arithmetic_pricer audit
+
+audit: test_asian_arithmetic_pricer bench_asian_arithmetic_pricer libasian_arithmetic_pricer.so
+	python3 tests/audit_asian_genuine_arithmetic_growth_only.py \
+		--binary ./bench_asian_arithmetic_pricer
+	python3 tests/audit_asian_arithmetic_pricer.py \
+		--library ./libasian_arithmetic_pricer.so \
+		--binary ./bench_asian_arithmetic_pricer
+
+libasian_arithmetic_pricer.so:
+	$(MAKE) asian
+
+benchmark-native: test_asian_arithmetic_pricer bench_asian_arithmetic_pricer \
+		libasian_arithmetic_pricer.so
+	@test -n "$(CPU)" || (echo "CPU=<Sapphire Rapids logical CPU> is required"; exit 2)
+	./test_asian_arithmetic_pricer
+	python3 tests/audit_asian_genuine_arithmetic_growth_only.py \
+		--binary ./bench_asian_arithmetic_pricer
+	python3 tests/audit_asian_arithmetic_pricer.py \
+		--library ./libasian_arithmetic_pricer.so \
+		--binary ./bench_asian_arithmetic_pricer
+	./bench_asian_arithmetic_pricer --cpu $(CPU)
+
+clean:
+	$(RM) -r $(OBJDIR) test_asian_arithmetic_pricer \
+		bench_asian_arithmetic_pricer

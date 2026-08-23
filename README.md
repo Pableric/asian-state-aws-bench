@@ -54,3 +54,30 @@ python3 direction_numbers/verify_joe_kuo.py
 The first implementation step is to add caller-selected D2/other-dimension
 construction around the existing D1 packet schedule. Keep intermediate Sobol
 values in registers unless native measurements prove materialization faster.
+
+## Production arithmetic Asian fast path
+
+`libasian_arithmetic_pricer.so` exposes the promoted fixed-block arithmetic
+Asian price/Delta engine through `asian_arithmetic_pricer.h`. It supports the
+qualified 4,096-path block, 2--256 future fixings, 1--32 arbitrary positive
+strikes, calls and puts, seasoning, and price or price+Delta workloads.
+
+The prepared route plan is immutable and reusable. A prepared contract owns
+its path workspace and must not be used concurrently; create one prepared
+contract per calling thread. The selected production stack is:
+
+```text
+fused fixed signed-z / affine transform / vector exponential
+    -> arithmetic growth-only evolution
+    -> measured Stage-1 or immediate strike consumer
+```
+
+Build and qualify it with:
+
+```sh
+make asian
+make check-asian
+```
+
+Geometric-CV and full-risk products remain on their existing qualified paths;
+this library intentionally exports only the arithmetic fixed-block product.
