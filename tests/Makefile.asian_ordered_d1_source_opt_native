@@ -1,0 +1,54 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I. \
+	-Iordered_d1_x_growth_handoff \
+	-Iordered_d1_x_growth_handoff/private
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .asian_ordered_d1_source_opt_native_objects
+BINARY := bench_asian_ordered_d1_source_opt_native
+
+SOURCES := \
+	asian_genuine_permute_setup.c \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_fixed_block_source_setup.c \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_geometric_cv_payoff_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_arithmetic_growth_only_setup.c \
+	asian_genuine_arithmetic_growth_only_sha256.c \
+	asian_genuine_arithmetic_growth_only_strip_adapter.c \
+	asian_genuine_arithmetic_downstream_layout_anchor.s \
+	asian_genuine_arithmetic_growth_only_q_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_setup.c \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c \
+	ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s \
+	asian_ordered_d1_source_opt_avx512.s
+
+OBJECTS := $(addprefix $(OBJDIR)/,$(SOURCES))
+OBJECTS := $(OBJECTS:.c=.o)
+OBJECTS := $(OBJECTS:.s=.o)
+BENCH_OBJECT := $(OBJDIR)/benchmarks/bench_asian_ordered_d1_source_opt_native.o
+
+.PHONY: benchmark-native clean
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(BINARY): $(BENCH_OBJECT) $(OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+benchmark-native: $(BINARY)
+	@test -n "$(CPU)" || \
+	  (echo "CPU=<permitted Sapphire Rapids logical CPU> is required" >&2; exit 2)
+	@./$(BINARY) --cpu $(CPU)
+
+clean:
+	@$(RM) -r $(OBJDIR) $(BINARY)
