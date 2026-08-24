@@ -2,7 +2,10 @@ CC ?= gcc
 CFLAGS ?= -O3 -march=native -fPIC -Wall -Wextra -I. -Iprivate
 LDFLAGS ?= -lm
 
-.PHONY: all clean check bench test test-dynamic-sde test-reduced-fma-sde test-ordered-d1-sde
+.PHONY: all clean check bench test test-dynamic-sde test-reduced-fma-sde test-ordered-d1-sde screen-asian-ordered-d1-jit-basis test-asian-ordered-d1-source-opt-sde audit-asian-ordered-d1-source-opt
+
+screen-asian-ordered-d1-jit-basis:
+	python3 tools/screen_asian_ordered_d1_jit_basis.py
 
 all: libeuropean_pricer.so bench_european bench_european_points
 
@@ -41,6 +44,44 @@ european_reduced_setup.o: european_reduced_setup.c private/european_reduced_setu
 
 european_ordered_setup.o: european_ordered_setup.c private/european_ordered_setup.h private/european_ordered_d1_coeffs.h
 	$(CC) $(CFLAGS) -c $< -o $@
+
+ordered_d1_x_growth_carrier_setup.o: ordered_d1_x_growth_handoff/ordered_d1_x_growth_setup.c ordered_d1_x_growth_handoff/private/ordered_d1_x_growth_diag.h ordered_d1_x_growth_handoff/private/ordered_d1_x_growth_diag_coeffs.h
+	$(CC) -std=c11 -O3 -fPIC -Wall -Wextra -Werror -Iordered_d1_x_growth_handoff -Iordered_d1_x_growth_handoff/private -c $< -o $@
+
+ordered_d1_x_growth_carrier_avx512.o: ordered_d1_x_growth_handoff/sobol_ordered_d1_x_growth_diag_avx512.s ordered_d1_x_growth_handoff/private/ordered_d1_x_growth_diag_data.inc
+	$(CC) -O3 -fPIC -mavx512f -mfma -Iordered_d1_x_growth_handoff -c $< -o $@
+
+asian_geometric_cv_payoff_avx512.o: asian_geometric_cv_payoff_avx512.s private/asian_exp_p8_18diag.inc
+	$(CC) -O2 -fPIC -mavx512f -mfma -I. -c $< -o $@
+
+asian_ordered_d1_source_opt_avx512.o: asian_ordered_d1_source_opt_avx512.s \
+		ordered_d1_x_growth_handoff/private/ordered_d1_x_growth_diag_data.inc
+	$(CC) -O3 -fPIC -mavx512f -mfma -I. -c $< -o $@
+
+test_asian_ordered_d1_source_opt: tests/test_asian_ordered_d1_source_opt.c \
+		asian_ordered_d1_source_opt_avx512.o ordered_d1_x_growth_carrier_setup.o \
+		ordered_d1_x_growth_carrier_avx512.o
+	$(CC) -std=c11 -O2 -mavx512f -mfma -ffp-contract=off -Wall -Wextra -Werror -I. $^ -lm -o $@
+
+run_asian_ordered_d1_source_opt_symbol: \
+		tests/run_asian_ordered_d1_source_opt_symbol.c \
+		asian_ordered_d1_source_opt_avx512.o ordered_d1_x_growth_carrier_setup.o \
+		ordered_d1_x_growth_carrier_avx512.o asian_geometric_cv_payoff_avx512.o
+	$(CC) -std=c11 -O2 -mavx512f -mfma -ffp-contract=off -Wall -Wextra -Werror -I. $^ -lm -o $@
+
+test-asian-ordered-d1-source-opt-sde: test_asian_ordered_d1_source_opt
+	/opt/intel-sde/sde64 -skx -- ./test_asian_ordered_d1_source_opt
+
+audit-asian-ordered-d1-source-opt: run_asian_ordered_d1_source_opt_symbol
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-ordered-source-current.mix -- \
+		./run_asian_ordered_d1_source_opt_symbol current
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-ordered-source-optimized.mix -- \
+		./run_asian_ordered_d1_source_opt_symbol optimized
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-ordered-source-baseline.mix -- \
+		./run_asian_ordered_d1_source_opt_symbol baseline
+	/opt/intel-sde/sde64 -skx -omix /tmp/asian-ordered-source-candidate.mix -- \
+		./run_asian_ordered_d1_source_opt_symbol candidate
+	python3 tests/audit_asian_ordered_d1_source_opt.py
 
 libeuropean_pricer.so: european_pricer.o european_reduced_setup.o european_ordered_setup.o private/sobol.o private/sobol_gaussian_avx512.o sobol_european_avx512.o sobol_european_reduced_fma_avx512.o sobol_european_ordered_d1_avx512.o sobol_european_center_shared_avx512.o sobol_european_dynamic_ranges_avx512.o sobol_european_direct_avx512.o sobol_hybrid.o
 	$(CC) -shared -o $@ $^ $(LDFLAGS)
