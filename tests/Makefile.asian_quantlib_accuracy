@@ -1,0 +1,69 @@
+CC ?= gcc
+CXX ?= g++
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+CXXFLAGS := -std=c++17 -O2 -Wall -Wextra -Werror -I. \
+	$(shell quantlib-config --cflags 2>/dev/null)
+CLDFLAGS := -Wl,--gc-sections -lm
+QLLDFLAGS := $(shell quantlib-config --libs 2>/dev/null)
+
+OBJDIR := .asian_quantlib_accuracy_objects
+OURS := asian_accuracy_ours
+QUANTLIB := asian_accuracy_quantlib
+
+OURS_SOURCES := \
+	asian_genuine_permute_setup.c \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_fixed_block_source_setup.c \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_geometric_cv_setup.c \
+	asian_geometric_cv_payoff_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_arithmetic_growth_only_setup.c \
+	asian_genuine_arithmetic_growth_only_sha256.c \
+	asian_genuine_arithmetic_growth_only_strip_adapter.c \
+	asian_genuine_arithmetic_downstream_layout_anchor.s \
+	asian_genuine_arithmetic_growth_only_q_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_setup.c \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	asian_genuine_sql_variable_avx512.s
+
+OURS_OBJECTS := $(addprefix $(OBJDIR)/,$(OURS_SOURCES))
+OURS_OBJECTS := $(OURS_OBJECTS:.c=.o)
+OURS_OBJECTS := $(OURS_OBJECTS:.s=.o)
+OURS_RUNNER := $(OBJDIR)/tests/asian_accuracy_ours.o
+QL_RUNNER := $(OBJDIR)/tests/asian_accuracy_quantlib.o
+
+.DELETE_ON_ERROR:
+.PHONY: check clean
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(QL_RUNNER): tests/asian_accuracy_quantlib.cpp \
+		private/asian_quantlib_accuracy_cases.h
+	@mkdir -p $(@D)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OURS): $(OURS_RUNNER) $(OURS_OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(CLDFLAGS) -o $@
+
+$(QUANTLIB): $(QL_RUNNER)
+	@$(CXX) $(CXXFLAGS) $^ $(QLLDFLAGS) -o $@
+
+check: $(OURS) $(QUANTLIB)
+	@command -v quantlib-config >/dev/null
+	@test "$$(quantlib-config --version)" = "1.39-dev"
+	@ldd ./$(QUANTLIB) | grep -q 'libQuantLib\.so'
+	@python3 tests/compare_asian_quantlib_accuracy.py \
+		--ours ./$(OURS) --quantlib ./$(QUANTLIB)
+
+clean:
+	@$(RM) -r $(OBJDIR) $(OURS) $(QUANTLIB)
