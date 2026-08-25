@@ -1,0 +1,66 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .asian_n64_geocv_comparison_objects
+BINARY := bench_asian_n64_geocv_comparison
+
+SOURCES := \
+	asian_arithmetic_joe_kuo_256.s \
+	asian_genuine_permute_setup.c \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_fixed_block_source_setup.c \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_geometric_cv_payoff_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_arithmetic_growth_only_setup.c \
+	asian_genuine_arithmetic_growth_only_strip_adapter.c \
+	asian_genuine_arithmetic_fused_source_exp_setup.c \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	private/asian_meta_direction_descriptors.c \
+	private/asian_meta_direction_affine_route.c \
+	private/asian_meta_direction_qsort_control.c \
+	private/asian_meta_arithmetic_growth_only_q_avx512.s \
+	asian_geometric_cv_packet_local_setup.c \
+	asian_geometric_cv_packet_local_avx512.s \
+	asian_geometric_cv_immediate_setup.c \
+	asian_geometric_cv_immediate_avx512.s \
+	asian_geocv_affine_lifecycle.c \
+	private/asian_n64_generic_geocv_immediate_avx512.s \
+	asian_n64_geocv_comparison.c \
+	benchmarks/bench_asian_n64_geocv_comparison.c
+
+OBJECTS := $(addprefix $(OBJDIR)/,$(SOURCES))
+OBJECTS := $(OBJECTS:.c=.o)
+OBJECTS := $(OBJECTS:.s=.o)
+
+.DELETE_ON_ERROR:
+.PHONY: check audit benchmark-native clean
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	$(CC) $(CFLAGS) -c $< -o $@
+
+$(BINARY): $(OBJECTS)
+	$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(BINARY)
+	/opt/intel-sde/sde64 -spr -- ./$(BINARY) --check-only
+
+audit: $(BINARY)
+	python3 tests/audit_asian_n64_geocv_comparison.py --binary ./$(BINARY)
+
+benchmark-native: $(BINARY)
+	@test -n "$(CPU)" || (echo "CPU=<Sapphire Rapids logical CPU> is required"; exit 2)
+	@python3 tests/audit_asian_n64_geocv_comparison.py --binary ./$(BINARY)
+	./$(BINARY) --cpu $(CPU)
+
+clean:
+	$(RM) -r $(OBJDIR) $(BINARY)
