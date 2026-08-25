@@ -1,0 +1,84 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .asian_affine_route_family_objects
+TEST := test_asian_affine_route_family
+BENCH := bench_asian_affine_route_family
+
+COMMON_SOURCES := \
+	asian_arithmetic_joe_kuo_256.s \
+	asian_genuine_permute_setup.c \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_fixed_block_source_setup.c \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_geometric_cv_payoff_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_arithmetic_growth_only_setup.c \
+	asian_genuine_arithmetic_growth_only_strip_adapter.c \
+	asian_genuine_arithmetic_growth_only_q_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_setup.c \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	private/asian_meta_direction_descriptors.c \
+	private/asian_meta_direction_affine_route.c \
+	private/asian_meta_direction_qsort_control.c \
+	private/asian_meta_arithmetic_growth_only_q_avx512.s \
+	asian_geometric_cv_packet_local_setup.c \
+	asian_geometric_cv_packet_local_avx512.s \
+	asian_geometric_cv_immediate_setup.c \
+	asian_geometric_cv_immediate_avx512.s \
+	private/asian_affine_route_family_generic_immediate_avx512.S \
+	private/asian_affine_route_family_generic_packet_avx512.s \
+	asian_affine_route_family.c
+
+COMMON_OBJECTS := $(addprefix $(OBJDIR)/,$(COMMON_SOURCES))
+COMMON_OBJECTS := $(COMMON_OBJECTS:.c=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.s=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.S=.o)
+TEST_OBJECT := $(OBJDIR)/tests/test_asian_affine_route_family.o
+BENCH_OBJECT := $(OBJDIR)/benchmarks/bench_asian_affine_route_family.o
+
+.DELETE_ON_ERROR:
+.PHONY: check audit benchmark-native
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(TEST): $(TEST_OBJECT) $(COMMON_OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+$(BENCH): $(BENCH_OBJECT) $(COMMON_OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(TEST) $(BENCH)
+	@/opt/intel-sde/sde64 -spr -- ./$(TEST)
+	@/opt/intel-sde/sde64 -spr -- ./$(BENCH) --check
+	@$(MAKE) -f tests/Makefile.asian_meta_direction_affine_route check
+	@$(MAKE) -f tests/Makefile.asian_geometric_cv_packet_local check
+	@$(MAKE) -f tests/Makefile.asian_geometric_cv_immediate check
+	@$(MAKE) -f tests/Makefile.asian_n64_lifecycle check
+	@$(MAKE) -f tests/Makefile.asian_quantlib_accuracy check
+	@$(MAKE) test-ordered-d1-sde
+
+audit: $(TEST) $(BENCH)
+	@python3 tests/audit_asian_affine_route_family.py --binary ./$(BENCH)
+
+benchmark-native: $(TEST) $(BENCH)
+	@test "$(CPU)" = "0" || \
+	  (echo "CPU=0 on Sapphire Rapids is required" >&2; exit 2)
+	@/opt/intel-sde/sde64 -spr -- ./$(TEST) >/dev/null
+	@python3 tests/audit_asian_affine_route_family.py --binary ./$(BENCH)
+	@./$(BENCH) --cpu $(CPU)
