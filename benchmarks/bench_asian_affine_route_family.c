@@ -650,6 +650,8 @@ int main(int argc, char **argv)
     }
     if (initialize() != 0) return 1;
     benchmark_builders();
-    if (benchmark_grid() != 0 || benchmark_lifecycle() != 0) return 1;
+    if (benchmark_grid() != 0 || lifecycle_identity() != 0 ||
+        benchmark_lifecycle() != 0)
+        return 1;
     return identity_pass ? 0 : 1;
 }
