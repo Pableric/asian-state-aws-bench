@@ -1,0 +1,79 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .asian_commercial_full_risk_lifecycle_objects
+BINARY := bench_asian_commercial_full_risk_lifecycle
+
+SOURCES := \
+	asian_arithmetic_joe_kuo_256.s \
+	asian_genuine_permute_setup.c \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_fixed_block_source_setup.c \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_geometric_cv_payoff_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_arithmetic_growth_only_setup.c \
+	asian_genuine_arithmetic_growth_only_strip_adapter.c \
+	asian_genuine_arithmetic_growth_only_q_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_setup.c \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	private/asian_meta_direction_descriptors.c \
+	private/asian_meta_direction_affine_route.c \
+	private/asian_meta_direction_qsort_control.c \
+	private/asian_meta_arithmetic_growth_only_q_avx512.s \
+	asian_geometric_cv_packet_local_setup.c \
+	asian_geometric_cv_packet_local_avx512.s \
+	asian_geometric_cv_immediate_setup.c \
+	asian_geometric_cv_immediate_avx512.s \
+	private/asian_affine_route_family_generic_immediate_avx512.S \
+	private/asian_affine_route_family_generic_packet_avx512.s \
+	asian_affine_route_family.c \
+	asian_genuine_aad_phase1_setup.c \
+	asian_genuine_aad_phase1_avx512.s \
+	private/asian_commercial_full_risk_affine_phase1_avx512.S \
+	asian_commercial_full_risk_lifecycle.c \
+	benchmarks/bench_asian_commercial_full_risk_lifecycle.c
+
+OBJECTS := $(addprefix $(OBJDIR)/,$(SOURCES))
+OBJECTS := $(OBJECTS:.c=.o)
+OBJECTS := $(OBJECTS:.s=.o)
+OBJECTS := $(OBJECTS:.S=.o)
+
+.DELETE_ON_ERROR:
+.PHONY: check audit benchmark-native
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin \
+		asian_genuine_aad_phase1_avx512.s
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(BINARY): $(OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(BINARY)
+	@/opt/intel-sde/sde64 -spr -- ./$(BINARY) --check
+
+audit: $(BINARY)
+	@python3 tests/audit_asian_commercial_full_risk_lifecycle.py \
+		--binary ./$(BINARY)
+
+benchmark-native: $(BINARY)
+	@test "$(CPU)" = "0" || \
+	  (echo "CPU=0 on Sapphire Rapids is required" >&2; exit 2)
+	@./$(BINARY) --native-check --cpu $(CPU)
+	@python3 tests/audit_asian_commercial_full_risk_lifecycle.py \
+		--binary ./$(BINARY)
+	@./$(BINARY) --timing --cpu $(CPU)
