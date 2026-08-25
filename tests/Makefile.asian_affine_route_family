@@ -79,6 +79,6 @@ audit: $(TEST) $(BENCH)
 benchmark-native: $(TEST) $(BENCH)
 	@test "$(CPU)" = "0" || \
 	  (echo "CPU=0 on Sapphire Rapids is required" >&2; exit 2)
-	@/opt/intel-sde/sde64 -spr -- ./$(TEST) >/dev/null
+	@./$(TEST) >/dev/null
 	@python3 tests/audit_asian_affine_route_family.py --binary ./$(BENCH)
 	@./$(BENCH) --cpu $(CPU)
