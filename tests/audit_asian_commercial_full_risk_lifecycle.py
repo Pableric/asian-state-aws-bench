@@ -120,12 +120,15 @@ def main():
     if not binary.is_file():
         raise RuntimeError("linked benchmark missing")
 
-    changed = set(run("git", "diff", "--name-only", PARENT, "--").splitlines())
-    changed.update(run("git", "ls-files", "--others", "--exclude-standard")
-                   .splitlines())
-    changed.discard("bench_asian_commercial_full_risk_lifecycle")
+    # Audit the committed diagnostic manifest, not unrelated untracked files
+    # left by other benchmark branches in a long-lived AWS transport checkout.
+    changed = set(run("git", "diff", "--name-only", PARENT, "HEAD", "--")
+                  .splitlines())
     if changed != ALLOWED:
         raise RuntimeError(f"additive manifest mismatch {sorted(changed)}")
+    for path in ALLOWED:
+        if git_blob(path) != git_blob(path, "HEAD"):
+            raise RuntimeError(f"diagnostic worktree drift {path}")
     for path in PARENT_KERNELS:
         if git_blob(path) != git_blob(path, PARENT):
             raise RuntimeError(f"parent kernel blob drift {path}")
