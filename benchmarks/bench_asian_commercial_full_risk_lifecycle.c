@@ -1,5 +1,6 @@
 #define _GNU_SOURCE
 #include "private/asian_commercial_full_risk_lifecycle_diag.h"
+#include "private/asian_genuine_multistrike_full_risk_hybrid_dispatch_diag.h"
 
 #include <cpuid.h>
 #include <immintrin.h>
@@ -66,19 +67,27 @@ typedef struct __attribute__((aligned(64))) {
     asian_affine_family_xgrowth_carrier_t xgrowth_scratch;
     asian_affine_family_arithmetic_request_t arithmetic[2][2];
     asian_affine_family_arithmetic_request_t arithmetic_scratch;
-    asian_commercial_full_risk_request_t full_risk[2];
-    asian_commercial_full_risk_request_t full_risk_scratch;
+    asian_affine_family_full_risk_k1_request_t full_risk[2];
+    asian_affine_family_full_risk_k1_request_t full_risk_scratch;
     asian_affine_family_geocv_request_t generic_routes;
     asian_genuine_aad_phase1_controls_t generic_controls;
     asian_genuine_aad_phase1_context_t generic_context;
-    float generic_tape[ASIAN_GENUINE_AAD_PHASE1_TAPE_FLOATS];
+    asian_genuine_msfr_strike_t generic_parity;
+    asian_genuine_msfr_strike_controls_t qualified_strikes;
+    asian_genuine_msfr_consumer_context_t qualified_consumer;
+    asian_genuine_msfr_accumulator_t qualified_accumulator;
+    asian_genuine_aad_phase1_controls_t qualified_phase_controls;
+    asian_genuine_aad_phase1_context_t qualified_phase_context;
+    asian_genuine_msfr_output_t qualified_output;
     asian_genuine_strip_output_t strip_output[2];
-    asian_commercial_full_risk_output_t full_output;
+    asian_affine_family_full_risk_k1_output_t full_output;
+    asian_affine_family_full_risk_k1_output_t independent_output;
     uint32_t pressure[8192];
 } workspace_t;
 
 static workspace_t *workspace;
 static volatile uint64_t sink;
+static float generic_forward_tape_sentinel[16] __attribute__((aligned(64)));
 
 static const char *const workload_name[] = {
     "PRICE", "PRICE_DELTA", "PRICE_DELTA_VEGA_RHO"
@@ -225,40 +234,124 @@ static int generic_full_risk_prepare(
             &workspace->oracle, carrier, &route_input,
             ASIAN_AFFINE_FAMILY_GENERIC, &workspace->generic_routes) != 0)
         return -1;
-    if (asian_genuine_aad_phase1_prepare_controls(
+    if (asian_genuine_aad_phase1_prepare_arithmetic_controls(
             &workspace->generic_controls, input->s0, input->strikes[0],
             input->rate, input->dividend_yield, input->sigma,
             input->maturity, input->future_fixings) != 0)
         return -1;
+    if (asian_genuine_msfr_prepare_arithmetic_strike(
+            &workspace->generic_parity, input->s0, input->rate,
+            input->dividend_yield, input->sigma, input->maturity,
+            input->future_fixings, input->strikes[0]) != 0)
+        return -1;
     return asian_genuine_aad_phase1_prepare_context(
         &workspace->generic_context, workspace->generic_routes.routes.generic,
-        workspace->generic_tape, &workspace->generic_controls,
+        generic_forward_tape_sentinel, &workspace->generic_controls,
         input->s0, input->strikes[0], input->rate, input->dividend_yield,
         input->sigma, input->maturity, input->future_fixings);
 }
 
-static void generic_full_risk_price(asian_commercial_full_risk_output_t *output)
+__attribute__((noinline, used))
+void asian_commercial_full_risk_generic_one_side_oracle_diag(
+    asian_affine_family_full_risk_k1_output_t *output)
 {
-    memset(output, 0, sizeof(*output));
-    asian_genuine_aad_phase1_forward_arithmetic_call_diag(
-        &workspace->generic_context, &output->call);
-    asian_genuine_aad_phase1_forward_arithmetic_put_diag(
-        &workspace->generic_context, &output->put);
+    const int direct_call = (workspace->generic_parity.flags &
+                             ASIAN_GENUINE_MSFR_DIRECT_CALL) != 0u;
+    void (*leaf)(const asian_genuine_aad_phase1_context_t *,
+                 asian_genuine_aad_phase1_value_t *) = direct_call ?
+        asian_genuine_aad_phase1_forward_arithmetic_call_diag :
+        asian_genuine_aad_phase1_forward_arithmetic_put_diag;
+    asian_genuine_aad_phase1_value_t *direct = direct_call ?
+        &output->call : &output->put;
+    leaf(&workspace->generic_context, direct);
+    const double *values = (const double *)direct;
+    double *call = (double *)&output->call;
+    double *put = (double *)&output->put;
+    for (uint32_t field = 0; field < ASIAN_GENUINE_MSFR_RISK_FIELDS; ++field) {
+        const double sum = 0.0 + (values[field] - 0.0) * 4096.0;
+        const double normalized = sum * (1.0 / 4096.0);
+        call[field] = normalized + workspace->generic_parity.call_adjust[field];
+        put[field] = normalized + workspace->generic_parity.put_adjust[field];
+    }
+}
+
+static int parity_record_matches(
+    const asian_genuine_msfr_strike_t *arithmetic,
+    const asian_genuine_msfr_strike_t *qualified)
+{
+    return arithmetic->strike == qualified->strike &&
+        arithmetic->direct_sign == qualified->direct_sign &&
+        arithmetic->strike_bits == qualified->strike_bits &&
+        arithmetic->flags == qualified->flags &&
+        memcmp(arithmetic->call_adjust, qualified->call_adjust,
+               sizeof(arithmetic->call_adjust)) == 0 &&
+        memcmp(arithmetic->put_adjust, qualified->put_adjust,
+               sizeof(arithmetic->put_adjust)) == 0;
+}
+
+static int qualified_k1_parity_output(
+    const asian_affine_family_request_input_t *input,
+    asian_affine_family_full_risk_k1_output_t *output)
+{
+    if (asian_genuine_msfr_prepare_strikes(&workspace->qualified_strikes,
+            input->s0, input->rate, input->dividend_yield, input->sigma,
+            input->maturity, input->future_fixings, input->strikes, 1u) != 0 ||
+        asian_genuine_msfr_prepare_consumer_context(
+            &workspace->qualified_consumer,
+            &workspace->qualified_strikes) != 0 ||
+        asian_genuine_msfr_accumulator_init(
+            &workspace->qualified_accumulator,
+            &workspace->qualified_consumer,
+            ASIAN_GENUINE_MSFR_ARITHMETIC) != 0 ||
+        asian_genuine_aad_phase1_prepare_controls(
+            &workspace->qualified_phase_controls, input->s0,
+            input->strikes[0], input->rate, input->dividend_yield,
+            input->sigma, input->maturity, input->future_fixings) != 0)
+        return -1;
+
+    workspace->qualified_phase_context = workspace->generic_context;
+    workspace->qualified_phase_context.controls =
+        &workspace->qualified_phase_controls;
+    if (!parity_record_matches(&workspace->generic_parity,
+                               &workspace->qualified_strikes.strikes[0]) ||
+        memcmp(&workspace->generic_controls,
+               &workspace->qualified_phase_controls,
+               offsetof(asian_genuine_aad_phase1_controls_t,
+                        geometric_call)) != 0 ||
+        asian_genuine_msfr_hybrid_consume_block_diag(
+            NULL, &workspace->qualified_consumer,
+            ASIAN_GENUINE_MSFR_ARITHMETIC,
+            &workspace->qualified_phase_context,
+            &workspace->qualified_accumulator) != 0 ||
+        asian_genuine_msfr_finalize(&workspace->qualified_consumer,
+            &workspace->qualified_accumulator,
+            &workspace->qualified_output) != 0)
+        return -1;
+    memcpy(&output->call, &workspace->qualified_output.values[0].call,
+           sizeof(output->call));
+    memcpy(&output->put, &workspace->qualified_output.values[0].put,
+           sizeof(output->put));
+    return 0;
 }
 
 static int compare_full_risk_case(const market_t *market, uint32_t n,
                                   uint32_t variant, int strong)
 {
-    asian_commercial_full_risk_output_t generic __attribute__((aligned(64)));
-    asian_commercial_full_risk_output_t affine __attribute__((aligned(64)));
-    asian_commercial_full_risk_output_t repeated __attribute__((aligned(64)));
+    asian_affine_family_full_risk_k1_output_t qualified
+        __attribute__((aligned(64)));
+    asian_affine_family_full_risk_k1_output_t generic
+        __attribute__((aligned(64)));
+    asian_affine_family_full_risk_k1_output_t affine
+        __attribute__((aligned(64)));
+    asian_affine_family_full_risk_k1_output_t repeated
+        __attribute__((aligned(64)));
     const asian_affine_family_carrier_input_t ci = carrier_input(market, n);
     const asian_affine_family_request_input_t input =
         request_input(market, n, variant, WORK_FULL_RISK);
     if (asian_affine_family_xgrowth_carrier_prepare(&workspace->engine, &ci,
             &workspace->xgrowth[0]) != 0 ||
         generic_full_risk_prepare(&workspace->xgrowth[0], &input) != 0 ||
-        asian_commercial_full_risk_request_prepare(&workspace->engine,
+        asian_affine_family_full_risk_k1_request_prepare(&workspace->engine,
             &workspace->xgrowth[0], &input, &workspace->full_risk[0]) != 0)
         return -1;
 
@@ -269,14 +362,35 @@ static int compare_full_risk_case(const market_t *market, uint32_t n,
         request_before = hash_bytes(UINT64_C(1469598103934665603),
             &workspace->full_risk[0], sizeof(workspace->full_risk[0]));
     }
-    generic_full_risk_price(&generic);
-    if (asian_commercial_full_risk_prepared_price(&workspace->full_risk[0],
+    if (qualified_k1_parity_output(&input, &qualified) != 0)
+        return -1;
+    const asian_genuine_aad_phase1_value_t zero = {0.0, 0.0, 0.0, 0.0};
+    if (!parity_record_matches(&workspace->full_risk[0].parity,
+                               &workspace->qualified_strikes.strikes[0]) ||
+        memcmp(&workspace->full_risk[0].controls,
+               &workspace->qualified_phase_controls,
+               offsetof(asian_genuine_aad_phase1_controls_t,
+                        geometric_call)) != 0 ||
+        memcmp(&workspace->full_risk[0].controls.geometric_call,
+               &zero, sizeof(zero)) != 0 ||
+        memcmp(&workspace->full_risk[0].controls.geometric_put,
+               &zero, sizeof(zero)) != 0)
+        return -1;
+    asian_commercial_full_risk_generic_one_side_oracle_diag(&generic);
+    if (asian_affine_family_full_risk_k1_prepared_price(
+            &workspace->full_risk[0],
             &affine) != 0 ||
-        asian_commercial_full_risk_prepared_price(&workspace->full_risk[0],
+        asian_affine_family_full_risk_k1_prepared_price(
+            &workspace->full_risk[0],
             &repeated) != 0 ||
-        memcmp(&generic, &affine, sizeof(generic)) != 0 ||
+        memcmp(&qualified, &generic, sizeof(qualified)) != 0 ||
+        memcmp(&qualified, &affine, sizeof(qualified)) != 0 ||
         memcmp(&affine, &repeated, sizeof(affine)) != 0)
         return -1;
+    asian_commercial_full_risk_independent_call_plus_put_diag(
+        &workspace->full_risk[0], &workspace->independent_output);
+    sink = hash_bytes(sink, &workspace->independent_output,
+                      sizeof(workspace->independent_output));
     if (strong &&
         (carrier_before != hash_bytes(UINT64_C(1469598103934665603),
              &workspace->xgrowth[0], sizeof(workspace->xgrowth[0])) ||
@@ -310,7 +424,9 @@ static int correctness(int exhaustive)
     memset(&workspace->oracle, 0, sizeof(workspace->oracle));
     memset(&workspace->engine, 0, sizeof(workspace->engine));
     printf("commercial_full_risk_correctness PASS N=2..256=%s "
-           "markets=4 call_put_fields=price,delta,vega,rho identity=EXACT\n",
+           "markets=4 call_put_fields=price,delta,vega,rho identity=EXACT "
+           "oracle=QUALIFIED_K1_MULTI_STRIKE_PARITY phase1_calls=1 "
+           "INDEPENDENT_CALL_PLUS_PUT=RETAINED_NOT_TIMED\n",
            exhaustive ? "YES" : "BOUNDED_64_256");
     return 0;
 }
@@ -337,7 +453,8 @@ static int prepare_timed_fixture(uint32_t n)
         }
         const asian_affine_family_request_input_t full_input = request_input(
             &timed_markets[variant], n, variant, WORK_FULL_RISK);
-        if (asian_commercial_full_risk_request_prepare(&workspace->engine,
+        if (asian_affine_family_full_risk_k1_request_prepare(
+                &workspace->engine,
                 &workspace->xgrowth[variant], &full_input,
                 &workspace->full_risk[variant]) != 0)
             return -1;
@@ -345,7 +462,25 @@ static int prepare_timed_fixture(uint32_t n)
     return 0;
 }
 
-static void condition(enum workload_kind workload,
+static void warm_full_risk_request(
+    const asian_affine_family_full_risk_k1_request_t *request, uint32_t n)
+{
+    warm_bytes(request->routes, n * sizeof(request->routes[0]));
+    warm_bytes(request->controls.forward_weights,
+               n * sizeof(request->controls.forward_weights[0]));
+    warm_bytes(&request->context, sizeof(request->context));
+    warm_bytes(&request->parity, sizeof(request->parity));
+}
+
+static void warm_full_risk_plan(uint32_t n)
+{
+    warm_bytes(workspace->engine.affine_plan, ASIAN_META_PLAN_HEADER_BYTES);
+    for (uint32_t fixing = 0; fixing < n; ++fixing)
+        warm_bytes(&workspace->engine.affine_plan->contexts[fixing],
+                   sizeof(workspace->engine.affine_plan->contexts[fixing]));
+}
+
+static void condition(uint32_t n, enum workload_kind workload,
                       enum lifecycle_kind lifecycle,
                       enum cache_kind cache, uint32_t variant)
 {
@@ -353,18 +488,24 @@ static void condition(enum workload_kind workload,
         pressure_32k();
         return;
     }
-    warm_bytes(workspace->engine.affine_plan,
-               sizeof(*workspace->engine.affine_plan));
     if (workload == WORK_FULL_RISK) {
-        const void *carrier = lifecycle == LIFE_FRESH ?
-            (const void *)&workspace->xgrowth_scratch :
-            (const void *)&workspace->xgrowth[variant];
-        const void *request = lifecycle == LIFE_PREPARED ?
-            (const void *)&workspace->full_risk[variant] :
-            (const void *)&workspace->full_risk_scratch;
-        warm_bytes(carrier, sizeof(workspace->xgrowth[0]));
-        warm_bytes(request, sizeof(workspace->full_risk[0]));
+        const asian_affine_family_xgrowth_carrier_t *carrier =
+            lifecycle == LIFE_FRESH ? &workspace->xgrowth_scratch :
+                                      &workspace->xgrowth[variant];
+        const asian_affine_family_full_risk_k1_request_t *request =
+            lifecycle == LIFE_PREPARED ? &workspace->full_risk[variant] :
+                                         &workspace->full_risk_scratch;
+        warm_full_risk_plan(n);
+        warm_bytes(carrier->x, sizeof(carrier->x));
+        warm_bytes(carrier->growth, sizeof(carrier->growth));
+        if (lifecycle != LIFE_PREPARED)
+            warm_bytes(&carrier->market,
+                       sizeof(*carrier) - offsetof(
+                           asian_affine_family_xgrowth_carrier_t, market));
+        warm_full_risk_request(request, n);
     } else {
+        warm_bytes(workspace->engine.affine_plan,
+                   sizeof(*workspace->engine.affine_plan));
         const void *carrier = lifecycle == LIFE_FRESH ?
             (const void *)&workspace->growth_scratch :
             (const void *)&workspace->growth[variant];
@@ -387,11 +528,11 @@ static timing_t observe(uint32_t n, enum workload_kind workload,
         request_input(market, n, variant, workload);
     const asian_affine_family_carrier_input_t ci = carrier_input(market, n);
     int status = 0;
-    condition(workload, lifecycle, cache, carrier_variant);
+    condition(n, workload, lifecycle, cache, carrier_variant);
     const uint64_t wall0 = wall_now();
     const uint64_t ticks0 = tsc_begin();
     if (workload == WORK_FULL_RISK) {
-        asian_commercial_full_risk_request_t *request =
+        asian_affine_family_full_risk_k1_request_t *request =
             lifecycle == LIFE_PREPARED ? &workspace->full_risk[variant] :
                                          &workspace->full_risk_scratch;
         if (lifecycle == LIFE_FRESH)
@@ -401,11 +542,11 @@ static timing_t observe(uint32_t n, enum workload_kind workload,
             const asian_affine_family_xgrowth_carrier_t *carrier =
                 lifecycle == LIFE_FRESH ? &workspace->xgrowth_scratch :
                                           &workspace->xgrowth[0];
-            status = asian_commercial_full_risk_request_prepare(
+            status = asian_affine_family_full_risk_k1_request_prepare(
                 &workspace->engine, carrier, &input, request);
         }
         if (status == 0)
-            status = asian_commercial_full_risk_prepared_price(
+            status = asian_affine_family_full_risk_k1_prepared_price(
                 request, &workspace->full_output);
     } else {
         asian_affine_family_arithmetic_request_t *request =

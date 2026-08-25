@@ -51,5 +51,5 @@
 .endm
 
 .section .text.asian_commercial_full_risk_affine,"ax",@progbits
-AAD_FORWARD_FUNCTION asian_commercial_full_risk_affine_call_diag,0,0
-AAD_FORWARD_FUNCTION asian_commercial_full_risk_affine_put_diag,1,0
+AAD_FORWARD_FUNCTION asian_affine_family_full_risk_k1_affine_call_impl_diag,0,0
+AAD_FORWARD_FUNCTION asian_affine_family_full_risk_k1_affine_put_impl_diag,1,0

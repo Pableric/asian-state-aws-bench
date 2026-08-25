@@ -10,6 +10,7 @@ SOURCES := \
 	asian_arithmetic_joe_kuo_256.s \
 	asian_genuine_permute_setup.c \
 	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_multistrike_full_risk_avx512.s \
 	asian_genuine_fixed_block_source_setup.c \
 	asian_genuine_fixed_block_source_avx512.s \
 	asian_geometric_cv_payoff_avx512.s \
@@ -33,7 +34,9 @@ SOURCES := \
 	asian_affine_route_family.c \
 	asian_genuine_aad_phase1_setup.c \
 	asian_genuine_aad_phase1_avx512.s \
+	asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
 	private/asian_commercial_full_risk_affine_phase1_avx512.S \
+	asian_affine_family_full_risk_k1.c \
 	asian_commercial_full_risk_lifecycle.c \
 	benchmarks/bench_asian_commercial_full_risk_lifecycle.c
 

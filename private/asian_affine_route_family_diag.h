@@ -5,8 +5,10 @@
 #include <stdint.h>
 
 #include "asian_geometric_cv_immediate_diag.h"
+#include "asian_genuine_aad_phase1_diag.h"
 #include "asian_genuine_arithmetic_fused_source_exp_diag.h"
 #include "asian_genuine_arithmetic_growth_only_strip_adapter.h"
+#include "asian_genuine_multistrike_full_risk_diag.h"
 
 enum {
     ASIAN_AFFINE_FAMILY_PATHS = 4096,
@@ -47,6 +49,8 @@ enum asian_affine_family_leaf {
 #define ASIAN_AFFINE_FAMILY_XGROWTH_MAGIC UINT32_C(0x58464641)
 #define ASIAN_AFFINE_FAMILY_ARITH_REQUEST_MAGIC UINT32_C(0x41464641)
 #define ASIAN_AFFINE_FAMILY_GEOCV_REQUEST_MAGIC UINT32_C(0x43464641)
+#define ASIAN_AFFINE_FAMILY_FULL_RISK_K1_REQUEST_MAGIC \
+    UINT32_C(0x52464641)
 
 typedef struct __attribute__((aligned(64))) {
     asian_meta_affine_plan_t *affine_plan;
@@ -106,6 +110,27 @@ typedef union __attribute__((aligned(64))) {
     asian_genuine_route_t generic[ASIAN_AFFINE_FAMILY_MAX_FIXINGS];
     asian_meta_affine_route_t affine[ASIAN_AFFINE_FAMILY_MAX_FIXINGS];
 } asian_affine_family_routes_t;
+
+typedef struct __attribute__((aligned(64))) {
+    asian_genuine_aad_phase1_value_t call;
+    asian_genuine_aad_phase1_value_t put;
+} asian_affine_family_full_risk_k1_output_t;
+
+_Static_assert(sizeof(asian_affine_family_full_risk_k1_output_t) == 64,
+               "one cache-line K=1 full-risk result");
+
+typedef struct __attribute__((aligned(64))) {
+    asian_meta_affine_route_t routes[ASIAN_META_DIRECTIONS];
+    asian_genuine_aad_phase1_controls_t controls;
+    asian_genuine_aad_phase1_context_t context;
+    asian_genuine_msfr_strike_t parity;
+    uint32_t magic;
+    uint8_t reserved[60];
+} asian_affine_family_full_risk_k1_request_t;
+
+enum {
+    ASIAN_AFFINE_FAMILY_FULL_RISK_K1_FORWARD_REQUEST_TAPE_BYTES = 0,
+};
 
 typedef union __attribute__((aligned(64))) {
     asian_genuine_arithmetic_growth_only_context_t generic;
@@ -229,6 +254,18 @@ int asian_affine_family_geocv_request_prepare(
 int asian_affine_family_geocv_prepared_price(
     asian_affine_family_geocv_request_t *request,
     asian_genuine_strip_output_t *output);
+
+int asian_affine_family_full_risk_k1_request_prepare(
+    const asian_affine_family_engine_t *engine,
+    const asian_affine_family_xgrowth_carrier_t *carrier,
+    const asian_affine_family_request_input_t *input,
+    asian_affine_family_full_risk_k1_request_t *request);
+
+/* The only family valuation ABI for K=1 full risk.  It returns both sides
+ * after exactly one direct-side Phase-1 implementation leaf invocation. */
+int asian_affine_family_full_risk_k1_prepared_price(
+    const asian_affine_family_full_risk_k1_request_t *request,
+    asian_affine_family_full_risk_k1_output_t *output);
 
 void asian_affine_family_generic_packet_qg_diag(
     const asian_affine_family_generic_packet_context_t *context);

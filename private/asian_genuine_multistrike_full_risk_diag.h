@@ -233,6 +233,14 @@ int asian_genuine_msfr_prepare_strikes(
     double maturity, uint32_t fixing_count,
     const float *strikes, uint32_t strike_count);
 
+/* K=1 arithmetic-only direct-side/parity preparation.  This is the same
+ * strike record used by the qualified multi-strike path, without analytic
+ * geometric controls or padded strike storage. */
+int asian_genuine_msfr_prepare_arithmetic_strike(
+    asian_genuine_msfr_strike_t *out,
+    double s0, double rate, double dividend_yield, double sigma,
+    double maturity, uint32_t fixing_count, float strike);
+
 int asian_genuine_msfr_prepare_consumer_context(
     asian_genuine_msfr_consumer_context_t *out,
     const asian_genuine_msfr_strike_controls_t *controls);

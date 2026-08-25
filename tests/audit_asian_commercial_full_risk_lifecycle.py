@@ -10,24 +10,32 @@ from pathlib import Path
 
 PARENT = "bea7101d99085615b9448075f27bb64949508fe8"
 ALLOWED = {
+    "asian_affine_family_full_risk_k1.c",
     "asian_commercial_full_risk_lifecycle.c",
+    "asian_genuine_aad_phase1_setup.c",
+    "asian_genuine_multistrike_full_risk_setup.c",
     "benchmarks/bench_asian_commercial_full_risk_lifecycle.c",
+    "private/asian_affine_route_family_diag.h",
     "private/asian_commercial_full_risk_affine_phase1_avx512.S",
     "private/asian_commercial_full_risk_lifecycle_diag.h",
+    "private/asian_genuine_aad_phase1_diag.h",
+    "private/asian_genuine_multistrike_full_risk_diag.h",
     "tests/Makefile.asian_commercial_full_risk_lifecycle",
     "tests/audit_asian_commercial_full_risk_lifecycle.py",
 }
 
 PAIRS = (
     ("asian_genuine_aad_phase1_forward_arithmetic_call_diag",
-     "asian_commercial_full_risk_affine_call_diag"),
+     "asian_affine_family_full_risk_k1_affine_call_impl_diag"),
     ("asian_genuine_aad_phase1_forward_arithmetic_put_diag",
-     "asian_commercial_full_risk_affine_put_diag"),
+     "asian_affine_family_full_risk_k1_affine_put_impl_diag"),
 )
 
 PARENT_KERNELS = (
     "asian_genuine_aad_phase1_avx512.s",
     "asian_genuine_arithmetic_growth_only_q_avx512.s",
+    "asian_genuine_multistrike_full_risk_avx512.s",
+    "asian_genuine_multistrike_full_risk_hybrid_dispatch.c",
     "asian_genuine_price_delta_strip_avx512.s",
     "private/asian_meta_arithmetic_growth_only_q_avx512.s",
     "private/asian_meta_direction_descriptors.c",
@@ -97,6 +105,35 @@ def calls(binary, symbol):
                       body(binary, symbol))
 
 
+def target_referrers(binary, target):
+    current = None
+    referrers = set()
+    for line in run("objdump", "-d", "-M", "intel", str(binary)).splitlines():
+        label = re.match(r"^[0-9a-f]+ <([^>]+)>:$", line)
+        if label:
+            current = label.group(1)
+        elif current is not None and f"<{target}>" in line and \
+                current != target:
+            referrers.add(current)
+    return referrers
+
+
+def source_function(text, name):
+    match = re.search(rf"\b{re.escape(name)}\s*\([^;]*?\)\s*\{{", text,
+                      re.DOTALL)
+    if not match:
+        raise RuntimeError(f"cannot locate source function {name}")
+    depth = 0
+    for index in range(match.end() - 1, len(text)):
+        if text[index] == "{":
+            depth += 1
+        elif text[index] == "}":
+            depth -= 1
+            if depth == 0:
+                return text[match.start():index + 1]
+    raise RuntimeError(f"unterminated source function {name}")
+
+
 def git_blob(path, revision=None):
     if revision is None:
         return run("git", "hash-object", path).strip()
@@ -153,15 +190,94 @@ def main():
     if "asian_meta_qsort_control_plan_create" not in oracle_calls:
         raise RuntimeError("generic diagnostic oracle is not explicit")
 
-    request_calls = calls(binary, "asian_commercial_full_risk_request_prepare")
+    request_calls = calls(
+        binary, "asian_affine_family_full_risk_k1_request_prepare")
     forbidden_request = re.compile(
         r"plan_create|qsort|bsearch|carrier_prepare|source|vector_exp|sha|"
         r"malloc|calloc|free|replay|validate", re.I)
     if any(forbidden_request.search(call) for call in request_calls):
         raise RuntimeError(f"full-risk request contamination {request_calls}")
     if "asian_meta_affine_routes_bind" not in request_calls or \
-       "asian_genuine_aad_phase1_prepare_controls" not in request_calls:
+       "asian_genuine_aad_phase1_prepare_arithmetic_controls" not in \
+            request_calls or \
+       "asian_genuine_msfr_prepare_arithmetic_strike" not in request_calls or \
+       "asian_genuine_aad_phase1_prepare_controls" in request_calls:
         raise RuntimeError(f"full-risk request boundary incomplete {request_calls}")
+
+    family_value = "asian_affine_family_full_risk_k1_prepared_price"
+    affine_call = \
+        "asian_affine_family_full_risk_k1_affine_call_impl_diag"
+    affine_put = "asian_affine_family_full_risk_k1_affine_put_impl_diag"
+    value_body = body(binary, family_value)
+    value_calls = [(mnemonic, operands) for mnemonic, operands in
+                   decoded(binary, family_value) if mnemonic == "call"]
+    if value_calls != [("call", "rax")] or \
+       f"<{affine_call}>" not in value_body or \
+       f"<{affine_put}>" not in value_body:
+        raise RuntimeError(
+            f"family K=1 wrapper is not one implementation invocation "
+            f"{value_calls}")
+
+    independent = "asian_commercial_full_risk_independent_call_plus_put_diag"
+    independent_code = decoded(binary, independent)
+    independent_calls = [(mnemonic, operands) for mnemonic, operands in
+                         independent_code if mnemonic == "call"]
+    independent_jumps = [(mnemonic, operands) for mnemonic, operands in
+                         independent_code if mnemonic == "jmp"]
+    if len(independent_calls) != 1 or len(independent_jumps) != 1 or \
+       f"<{affine_call}>" not in body(binary, independent) or \
+       f"<{affine_put}>" not in body(binary, independent):
+        raise RuntimeError("independent two-side diagnostic shape drift")
+
+    allowed_impl_referrers = {family_value, independent}
+    if target_referrers(binary, affine_call) != allowed_impl_referrers or \
+       target_referrers(binary, affine_put) != allowed_impl_referrers:
+        raise RuntimeError("direct affine implementation leaf escaped wrapper")
+
+    generic_value = \
+        "asian_commercial_full_risk_generic_one_side_oracle_diag"
+    generic_body = body(binary, generic_value)
+    generic_calls = [(mnemonic, operands) for mnemonic, operands in
+                     decoded(binary, generic_value) if mnemonic == "call"]
+    if generic_calls != [("call", "rax")] or \
+       "<asian_genuine_aad_phase1_forward_arithmetic_call_diag>" not in \
+            generic_body or \
+       "<asian_genuine_aad_phase1_forward_arithmetic_put_diag>" not in \
+            generic_body:
+        raise RuntimeError("generic oracle is not one direct-side invocation")
+
+    if symbol_size(binary, "forward_tape_sentinel") != 64 or \
+       symbol_size(binary, "generic_forward_tape_sentinel") != 64:
+        raise RuntimeError("forward tape sentinel ABI drift")
+
+    arithmetic_control_body = body(
+        binary, "asian_genuine_aad_phase1_prepare_arithmetic_controls")
+    if re.search(r"erfc|geometric_exact|normal_cdf", arithmetic_control_body,
+                 re.I):
+        raise RuntimeError("arithmetic controls compute geometric Greeks")
+
+    family_header = (root / "private/asian_affine_route_family_diag.h").read_text()
+    commercial_header = (
+        root / "private/asian_commercial_full_risk_lifecycle_diag.h").read_text()
+    if affine_call in family_header or affine_put in family_header or \
+       affine_call in commercial_header or affine_put in commercial_header:
+        raise RuntimeError("implementation leaves exposed in private family ABI")
+    if "ASIAN_AFFINE_FAMILY_FULL_RISK_K1_FORWARD_REQUEST_TAPE_BYTES = 0" \
+            not in family_header or re.search(r"\bfloat\s+s_tape\s*\[",
+                                               family_header):
+        raise RuntimeError("dead forward request tape remains in family ABI")
+
+    bench_source = (
+        root / "benchmarks/bench_asian_commercial_full_risk_lifecycle.c"
+        ).read_text()
+    observe_source = source_function(bench_source, "observe")
+    compare_source = source_function(bench_source, "compare_full_risk_case")
+    condition_source = source_function(bench_source, "condition")
+    if independent in observe_source or independent not in compare_source:
+        raise RuntimeError("independent two-side diagnostic entered timing")
+    if "generic_tape" in bench_source or "s_tape" in condition_source or \
+       "sizeof(workspace->full_risk[0])" in condition_source:
+        raise RuntimeError("candidate-warm touches unused forward request data")
 
     carrier_calls = calls(binary, "asian_affine_family_xgrowth_carrier_prepare")
     if "asian_genuine_fixed_block_signed_z_one_fma_source_diag" not in \
@@ -209,7 +325,14 @@ def main():
           "full_risk_affine_vpermd=4 selector_loads=2 controls_reused=YES "
           "generic_pattern_loads_affine=0 intermediate_state_traffic=0 "
           f"peak_zmm={peak_zmm} parent_kernels_unchanged=YES "
-          "mathematical_sequence_exact=YES")
+          "mathematical_sequence_exact=YES family_k1_abi=CALL_AND_PUT "
+          "phase1_leaves_per_prepared_valuation=1 "
+          "generic_phase1_leaves_per_prepared_valuation=1 "
+          "direct_leaves=PRIVATE_IMPLEMENTATION "
+          "forward_request_tape_bytes=0 sentinel_bytes=64 "
+          "arithmetic_controls_geometric_greeks=SKIPPED "
+          "candidate_warm_unused_tape=NO "
+          "independent_call_plus_put=RETAINED_NOT_TIMED")
 
 
 if __name__ == "__main__":

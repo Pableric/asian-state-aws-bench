@@ -6,6 +6,17 @@
 #include <stdint.h>
 #include <string.h>
 
+void asian_affine_family_full_risk_k1_affine_call_impl_diag(
+    const asian_genuine_aad_phase1_context_t *,
+    asian_genuine_aad_phase1_value_t *);
+void asian_affine_family_full_risk_k1_affine_put_impl_diag(
+    const asian_genuine_aad_phase1_context_t *,
+    asian_genuine_aad_phase1_value_t *);
+
+/* Forward Phase-1 never reads AAD_CTX_TAPE.  Keep the context ABI non-null and
+ * aligned without carrying a dead 32-KiB request allocation. */
+static float forward_tape_sentinel[16] __attribute__((aligned(64)));
+
 static int same_double(double left, double right)
 {
     uint64_t a, b;
@@ -39,7 +50,7 @@ static int input_matches_carrier(
  */
 static int prepare_hot_context(
     asian_genuine_aad_phase1_context_t *out,
-    const asian_meta_affine_route_t *routes, float *s_tape,
+    const asian_meta_affine_route_t *routes,
     const asian_genuine_aad_phase1_controls_t *controls,
     const asian_affine_family_request_input_t *input)
 {
@@ -73,7 +84,7 @@ static int prepare_hot_context(
 
     memset(out, 0, sizeof(*out));
     out->routes = (const asian_genuine_route_t *)(const void *)routes;
-    out->s_tape = s_tape;
+    out->s_tape = forward_tape_sentinel;
     out->controls = controls;
     out->fixing_count = n;
     out->route_count = n - 1u;
@@ -90,11 +101,11 @@ static int prepare_hot_context(
 }
 
 __attribute__((noinline, used))
-int asian_commercial_full_risk_request_prepare(
+int asian_affine_family_full_risk_k1_request_prepare(
     const asian_affine_family_engine_t *engine,
     const asian_affine_family_xgrowth_carrier_t *carrier,
     const asian_affine_family_request_input_t *input,
-    asian_commercial_full_risk_request_t *request)
+    asian_affine_family_full_risk_k1_request_t *request)
 {
     if (engine == NULL || engine->magic != ASIAN_AFFINE_FAMILY_ENGINE_MAGIC ||
         engine->affine_plan == NULL || request == NULL ||
@@ -106,32 +117,32 @@ int asian_commercial_full_risk_request_prepare(
     if (asian_meta_affine_routes_bind(engine->affine_plan, carrier->x,
             carrier->growth, n, request->routes) != 0)
         return ASIAN_AFFINE_FAMILY_INVALID;
-    if (asian_genuine_aad_phase1_prepare_controls(&request->controls,
+    if (asian_genuine_aad_phase1_prepare_arithmetic_controls(
+            &request->controls,
             input->s0, input->strikes[0], input->rate,
             input->dividend_yield, input->sigma, input->maturity, n) !=
             ASIAN_GENUINE_AAD_PHASE1_OK)
         return ASIAN_AFFINE_FAMILY_INVALID;
+    if (asian_genuine_msfr_prepare_arithmetic_strike(&request->parity,
+            input->s0, input->rate, input->dividend_yield, input->sigma,
+            input->maturity, n, input->strikes[0]) !=
+            ASIAN_GENUINE_MSFR_OK)
+        return ASIAN_AFFINE_FAMILY_INVALID;
     if (prepare_hot_context(&request->context, request->routes,
-            request->s_tape, &request->controls, input) !=
+            &request->controls, input) !=
             ASIAN_GENUINE_AAD_PHASE1_OK)
         return ASIAN_AFFINE_FAMILY_INVALID;
-    request->magic = ASIAN_COMMERCIAL_FULL_RISK_REQUEST_MAGIC;
+    request->magic = ASIAN_AFFINE_FAMILY_FULL_RISK_K1_REQUEST_MAGIC;
     return ASIAN_AFFINE_FAMILY_OK;
 }
 
 __attribute__((noinline, used))
-int asian_commercial_full_risk_prepared_price(
-    const asian_commercial_full_risk_request_t *request,
-    asian_commercial_full_risk_output_t *output)
+void asian_commercial_full_risk_independent_call_plus_put_diag(
+    const asian_affine_family_full_risk_k1_request_t *request,
+    asian_affine_family_full_risk_k1_output_t *output)
 {
-    if (request == NULL || output == NULL ||
-        request->magic != ASIAN_COMMERCIAL_FULL_RISK_REQUEST_MAGIC ||
-        ((uintptr_t)output & 63u) != 0u)
-        return ASIAN_AFFINE_FAMILY_INVALID;
-    memset(output, 0, sizeof(*output));
-    asian_commercial_full_risk_affine_call_diag(&request->context,
-                                                 &output->call);
-    asian_commercial_full_risk_affine_put_diag(&request->context,
-                                                &output->put);
-    return ASIAN_AFFINE_FAMILY_OK;
+    asian_affine_family_full_risk_k1_affine_call_impl_diag(
+        &request->context, &output->call);
+    asian_affine_family_full_risk_k1_affine_put_impl_diag(
+        &request->context, &output->put);
 }

@@ -99,10 +99,10 @@ static void geometric_exact(double s0, double strike, double rate,
     put->rho = put_m*b - maturity*put->price;
 }
 
-int asian_genuine_aad_phase1_prepare_controls(
+static int prepare_controls(
     asian_genuine_aad_phase1_controls_t *out,
     double s0, double strike, double rate, double dividend_yield,
-    double sigma, double maturity, uint32_t n)
+    double sigma, double maturity, uint32_t n, int geometric)
 {
     if (n < ASIAN_GENUINE_AAD_PHASE1_MIN_FIXINGS ||
         n > ASIAN_GENUINE_AAD_PHASE1_MAX_FIXINGS) {
@@ -123,10 +123,29 @@ int asian_genuine_aad_phase1_prepare_controls(
     out->discount = (float)exp(-rate*maturity);
     out->log_s0 = logf((float)s0);
     for (uint32_t k = 0; k < n; ++k) out->forward_weights[k] = (float)(k+1u);
-    geometric_exact(s0,strike,rate,dividend_yield,sigma,maturity,n,
-                    &out->geometric_call,&out->geometric_put);
+    if (geometric)
+        geometric_exact(s0,strike,rate,dividend_yield,sigma,maturity,n,
+                        &out->geometric_call,&out->geometric_put);
     out->magic = ASIAN_GENUINE_AAD_PHASE1_CONTROL_MAGIC;
     return ASIAN_GENUINE_AAD_PHASE1_OK;
+}
+
+int asian_genuine_aad_phase1_prepare_controls(
+    asian_genuine_aad_phase1_controls_t *out,
+    double s0, double strike, double rate, double dividend_yield,
+    double sigma, double maturity, uint32_t n)
+{
+    return prepare_controls(out, s0, strike, rate, dividend_yield, sigma,
+                            maturity, n, 1);
+}
+
+int asian_genuine_aad_phase1_prepare_arithmetic_controls(
+    asian_genuine_aad_phase1_controls_t *out,
+    double s0, double strike, double rate, double dividend_yield,
+    double sigma, double maturity, uint32_t n)
+{
+    return prepare_controls(out, s0, strike, rate, dividend_yield, sigma,
+                            maturity, n, 0);
 }
 
 int asian_genuine_aad_phase1_prepare_context(

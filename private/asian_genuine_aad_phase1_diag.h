@@ -150,6 +150,13 @@ int asian_genuine_aad_phase1_prepare_controls(
     double s0, double strike, double rate, double dividend_yield,
     double sigma, double maturity, uint32_t fixing_count);
 
+/* Arithmetic-only requests preserve the cold-control ABI and forward weights
+ * but leave the unused analytic geometric call/put records zero. */
+int asian_genuine_aad_phase1_prepare_arithmetic_controls(
+    asian_genuine_aad_phase1_controls_t *out,
+    double s0, double strike, double rate, double dividend_yield,
+    double sigma, double maturity, uint32_t fixing_count);
+
 int asian_genuine_aad_phase1_prepare_context(
     asian_genuine_aad_phase1_context_t *out,
     const asian_genuine_route_t *routes, float *s_tape,

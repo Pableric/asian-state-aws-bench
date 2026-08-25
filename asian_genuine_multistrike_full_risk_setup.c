@@ -196,6 +196,76 @@ static void geometric_exact(double s0, double strike, double rate,
     put->rho = put_m * b - maturity * put->price;
 }
 
+static void arithmetic_expectations(double s0, double rate,
+                                    double dividend_yield, double maturity,
+                                    uint32_t n, double *expected_a,
+                                    double *expected_a_rho, double *discount)
+{
+    const double dt = maturity / n;
+    double a = 0.0, rho = 0.0;
+    for (uint32_t k = 0; k < n; ++k) {
+        const double t = (k + 1.0) * dt;
+        const double expected_s = s0 * exp((rate - dividend_yield) * t);
+        a += expected_s;
+        rho += t * expected_s;
+    }
+    *expected_a = a / n;
+    *expected_a_rho = rho / n;
+    *discount = exp(-rate * maturity);
+}
+
+static void prepare_arithmetic_strike_record(
+    asian_genuine_msfr_strike_t *record, double s0, double maturity,
+    double discount, double expected_a, double expected_a_rho, float strike)
+{
+    memset(record, 0, sizeof(*record));
+    record->strike = strike;
+    memcpy(&record->strike_bits, &strike, sizeof(strike));
+    const int direct_call = (double)strike >= expected_a;
+    record->direct_sign = direct_call ? 1.0f : -1.0f;
+    if (direct_call) record->flags |= ASIAN_GENUINE_MSFR_DIRECT_CALL;
+    if ((double)strike < expected_a)
+        record->flags |= ASIAN_GENUINE_MSFR_CALL_ITM;
+    else if ((double)strike > expected_a)
+        record->flags |= ASIAN_GENUINE_MSFR_CALL_OTM;
+    else
+        record->flags |= ASIAN_GENUINE_MSFR_CALL_ATM;
+
+    const double parity[ASIAN_GENUINE_MSFR_RISK_FIELDS] = {
+        discount * (expected_a - strike),
+        discount * expected_a / s0,
+        0.0,
+        discount * (expected_a_rho - maturity * (expected_a - strike))
+    };
+    for (uint32_t field = 0; field < ASIAN_GENUINE_MSFR_RISK_FIELDS; ++field) {
+        record->call_adjust[field] = direct_call ? 0.0 : parity[field];
+        record->put_adjust[field] = direct_call ? -parity[field] : 0.0;
+    }
+}
+
+int asian_genuine_msfr_prepare_arithmetic_strike(
+    asian_genuine_msfr_strike_t *out,
+    double s0, double rate, double dividend_yield, double sigma,
+    double maturity, uint32_t n, float strike)
+{
+    const int status =
+        validate_contract(s0, rate, dividend_yield, sigma, maturity, n);
+    if (status != ASIAN_GENUINE_MSFR_OK) {
+        if (out != NULL) memset(out, 0, sizeof(*out));
+        return status;
+    }
+    if (out == NULL || ((uintptr_t)out & 63u) != 0u ||
+        !(strike > 0.0f) || !isfinite(strike))
+        return ASIAN_GENUINE_MSFR_INVALID;
+
+    double expected_a, expected_a_rho, discount;
+    arithmetic_expectations(s0, rate, dividend_yield, maturity, n,
+                            &expected_a, &expected_a_rho, &discount);
+    prepare_arithmetic_strike_record(out, s0, maturity, discount,
+                                     expected_a, expected_a_rho, strike);
+    return ASIAN_GENUINE_MSFR_OK;
+}
+
 int asian_genuine_msfr_prepare_strikes(
     asian_genuine_msfr_strike_controls_t *out,
     double s0, double rate, double dividend_yield, double sigma,
@@ -220,17 +290,9 @@ int asian_genuine_msfr_prepare_strikes(
             return ASIAN_GENUINE_MSFR_INVALID;
         }
 
-    const double dt = maturity / n;
-    double expected_a = 0.0, expected_a_rho = 0.0;
-    for (uint32_t k = 0; k < n; ++k) {
-        const double t = (k + 1.0) * dt;
-        const double expected_s = s0 * exp((rate - dividend_yield) * t);
-        expected_a += expected_s;
-        expected_a_rho += t * expected_s;
-    }
-    expected_a /= n;
-    expected_a_rho /= n;
-    const double discount = exp(-rate * maturity);
+    double expected_a, expected_a_rho, discount;
+    arithmetic_expectations(s0, rate, dividend_yield, maturity, n,
+                            &expected_a, &expected_a_rho, &discount);
 
     memset(out, 0, sizeof(*out));
     out->abi_version = ASIAN_GENUINE_MSFR_ABI_VERSION;
@@ -254,31 +316,15 @@ int asian_genuine_msfr_prepare_strikes(
         geometric_exact(s0, strikes[i], rate, dividend_yield, sigma,
                         maturity, n, &call, &put);
         asian_genuine_msfr_strike_t *record = &out->strikes[i];
-        record->strike = strikes[i];
-        memcpy(&record->strike_bits, &strikes[i], sizeof(strikes[i]));
-        const int direct_call = (double)strikes[i] >= expected_a;
-        record->direct_sign = direct_call ? 1.0f : -1.0f;
-        if (direct_call) record->flags |= ASIAN_GENUINE_MSFR_DIRECT_CALL;
-        if ((double)strikes[i] < expected_a)
-            record->flags |= ASIAN_GENUINE_MSFR_CALL_ITM;
-        else if ((double)strikes[i] > expected_a)
-            record->flags |= ASIAN_GENUINE_MSFR_CALL_OTM;
-        else
-            record->flags |= ASIAN_GENUINE_MSFR_CALL_ATM;
-
-        const double parity[4] = {
-            discount * (expected_a - strikes[i]),
-            discount * expected_a / s0,
-            0.0,
-            discount * (expected_a_rho -
-                         maturity * (expected_a - strikes[i]))
-        };
+        prepare_arithmetic_strike_record(record, s0, maturity, discount,
+                                         expected_a, expected_a_rho,
+                                         strikes[i]);
+        const int direct_call =
+            (record->flags & ASIAN_GENUINE_MSFR_DIRECT_CALL) != 0u;
         const double *exact = direct_call ? (const double *)&call
                                           : (const double *)&put;
         for (uint32_t field = 0; field < 4u; ++field) {
             record->geometric_direct[field] = exact[field];
-            record->call_adjust[field] = direct_call ? 0.0 : parity[field];
-            record->put_adjust[field] = direct_call ? -parity[field] : 0.0;
         }
     }
     for (uint32_t i = strike_count; i < out->padded_count_tile4; ++i) {
