@@ -47,13 +47,13 @@ SOURCE_SHA256 = {
     "asian_genuine_arithmetic_fused_source_exp_avx512.s":
         "d7013c01b16370a611051a3f6abd615ce07ea0b35b972599fe14d98aabcc16f4",
     "asian_geometric_cv_packet_local_avx512.s":
-        "067a50bbc878252faf1c578792e05bd2da9b89712883216b6be9d9829fb1e74e",
+        "aa6c2f85e268bd244e8c6d81ee9a404ab0456aca0306827093c6324cf6986573",
     "private/asian_geometric_cv_immediate_diag.h":
-        "f5ad30ecb6a16d9c4376a5921c3ea007b349f005224d7d8239525cbd48a8aa0f",
+        "de1f29812c643f2fbeff804cd33a38a0243e08a5d9820c958a0d62d8459ae9a3",
     "asian_geometric_cv_immediate_setup.c":
         "680c0f70a8633a1f513d85b8d259e62056803c8f56ec311c4fdbd352c051253d",
     "asian_geometric_cv_immediate_avx512.s":
-        "1cd7854d811bc81d266a1201a006b4bf4b3d960f26db3aa6b784dd1cd52fe62c",
+        "8a72d29f67d735dfde4cbad48f3d3ae96774a4fd8c1ab73dfd6143762f8f4868",
 }
 
 CANONICAL_PARENT_SHA256 = {
@@ -74,7 +74,7 @@ CANONICAL_PARENT_SHA256 = {
     "asian_genuine_strip_cv_price_delta_4_diag":
         "97b2eb114133f1733aa697abf865f5cf699f1d689057a25ecea492226dafe718",
     "asian_geometric_cv_packet_local_qg_diag":
-        "d31f2ec6c63ea8a6485eef16cb948afabb3edf20149e1e9e2b3a0a62b176eaaa",
+        "ebec03f2a24dd64fddc192def3ed2e25405eaaf83dcd4fb825be02b8bc220d41",
 }
 
 REGISTER_RE = re.compile(
@@ -302,10 +302,10 @@ def audit_leaf(binary,symbol,count,delta):
     output_stores=[item for item in stores if not re.search(
       r"\b(?:rsp|rbp)\b",item["operands"])]
     expected_stores=2*count*(2 if delta else 1)
-    expected_route=["mov","mov","mov","movzx","shl","vmovdqa32",
-      "vmovdqa32","movzx","shl","vmovdqa32","vmovdqa32","movzx",
-      "shl","vmovdqa32","movzx","shl","vmovdqa32","vpermd",
-      "vpermd","vpermd","vpermd","vmulps","vmulps","vaddps",
+    expected_route=["mov","mov","mov","vmovdqa32","vmovdqa32","movzx",
+      "vpbroadcastd","vpxord","vpxord","movzx","shl","vmovdqa32",
+      "xor","vmovdqa32","xor","vmovdqa32","xor","vmovdqa32",
+      "vpermd","vpermd","vpermd","vpermd","vmulps","vmulps","vaddps",
       "vaddps","vfmadd231ps","vfmadd231ps","add","cmp","jne"]
     constant_offsets=[]
     for item in code:
@@ -316,7 +316,8 @@ def audit_leaf(binary,symbol,count,delta):
     one_exp_offsets=[0,4,8,44,40,36,32,28,24,20,16,12]
     hard={
       "exact_four_recurring_vpermd":route_m.count("vpermd")==4 and all_m.count("vpermd")==4,
-      "route_load_shape":route_m.count("vmovdqa32")==6 and route_m.count("movzx")==4,
+      "route_load_shape":route_m.count("vmovdqa32")==6 and route_m.count("movzx")==2 and
+        route_m.count("vpbroadcastd")==1 and route_m.count("vpxord")==2,
       "exact_route_shape":route_m==expected_route,
       "rounded_s_q":route_m.count("vmulps")==2 and route_m.count("vaddps")==2,
       "weighted_l":route_m.count("vfmadd231ps")==2,

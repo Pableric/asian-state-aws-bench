@@ -7,6 +7,9 @@
 .equ CTX_S0,28
 .equ CTX_D1_WEIGHT,32
 
+.equ META_AFF_BASE,320
+.equ META_AFF_DELTA,384
+
 .equ STRIP_INV_TOTAL,24
 .equ STRIP_INITIAL_Q,28
 .equ STRIP_DISCOUNT,32
@@ -262,20 +265,21 @@
     movq 8(%r8),%r14
     movq 0(%r8),%r15
     movq 16(%r8),%rax
-    movzbl 0(%rax,%r10,4),%r11d
+    vmovdqa32 META_AFF_BASE(%rax),%zmm24
+    vmovdqa32 META_AFF_DELTA(%rax),%zmm25
+    movzbl 1(%rax,%r10,2),%r11d
+    vpbroadcastd %r11d,%zmm22
+    vpxord %zmm22,%zmm24,%zmm24
+    vpxord %zmm24,%zmm25,%zmm25
+    movzbl 0(%rax,%r10,2),%r11d
     shlq $6,%r11
     vmovdqa32 0(%r14,%r11),%zmm22
-    vmovdqa32 0(%r15,%r11),%zmm26
-    movzbl 1(%rax,%r10,4),%r11d
-    shlq $6,%r11
+    xorl $64,%r11d
     vmovdqa32 0(%r14,%r11),%zmm23
+    xorl $64,%r11d
+    vmovdqa32 0(%r15,%r11),%zmm26
+    xorl $64,%r11d
     vmovdqa32 0(%r15,%r11),%zmm27
-    movzbl 2(%rax,%r10,4),%r11d
-    shlq $6,%r11
-    vmovdqa32 576(%rax,%r11),%zmm24
-    movzbl 3(%rax,%r10,4),%r11d
-    shlq $6,%r11
-    vmovdqa32 576(%rax,%r11),%zmm25
     vpermd %zmm22,%zmm24,%zmm22
     vpermd %zmm23,%zmm25,%zmm23
     vpermd %zmm26,%zmm24,%zmm24

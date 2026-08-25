@@ -57,7 +57,7 @@ CANONICAL_LINKED_SHA256 = {
     "asian_genuine_strip_cv_price_delta_8_diag":
         "8a5040007c54ea1b0e30d8cc5f3add50b020056ad5385b14f8e76d2eda06acbd",
     LEAF:
-        "d31f2ec6c63ea8a6485eef16cb948afabb3edf20149e1e9e2b3a0a62b176eaaa",
+        "ebec03f2a24dd64fddc192def3ed2e25405eaaf83dcd4fb825be02b8bc220d41",
 }
 
 REGISTER_RE = re.compile(
@@ -279,9 +279,9 @@ def audit(binary):
             constant_offsets.append(int(match.group(1), 16) if match.group(1) else 0)
     one_exp_offsets = [0,4,8,44,40,36,32,28,24,20,16,12]
     expected_route = [
-        "mov", "mov", "kmovq", "mov", "movzx", "movzx", "movzx", "movzx",
-        "shl", "shl", "shl", "shl", "vmovdqa32", "vmovdqa32",
-        "vmovdqa32", "vmovdqa32", "vpermd", "vpermd", "kmovq",
+        "mov", "mov", "kmovq", "mov", "movzx", "movzx", "shl", "mov",
+        "xor", "vmovdqa32", "vmovdqa32", "vpbroadcastd", "vpxord",
+        "vpxord", "vmovdqa32", "vmovdqa32", "vpermd", "vpermd", "kmovq",
         "vmovdqa32", "vmovdqa32", "vpermd", "vpermd", "vmulps", "vmulps",
         "vaddps", "vaddps", "vfmadd231ps", "vfmadd231ps", "add", "dec", "jne"]
     failures = []

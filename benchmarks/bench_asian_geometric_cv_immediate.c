@@ -203,7 +203,7 @@ static int prepare_cell(uint32_t k,enum workload workload,uint64_t expected[2])
        asian_geometric_cv_packet_local_strip_prepare_padded(bench_strip,100.0,
          .03,0.0,.20,1.0,active_n,0u,0.0,0.0,fixed,k,&padded)!=0||
        padded!=(k==1u?1u:4u)||
-       asian_geometric_cv_packet_local_prepare(b.context,b.routes,active_n,
+       asian_geometric_cv_packet_local_prepare(b.context,b.meta_routes,active_n,
          100.0f,b.x,32768u,b.growth,32768u,bench_strip,
          b.q,16384u,b.g,16384u)!=0||
        asian_geometric_cv_immediate_prepare(bench_immediate,b.context,

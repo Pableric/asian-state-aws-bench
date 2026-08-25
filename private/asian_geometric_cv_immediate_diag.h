@@ -25,7 +25,7 @@ enum asian_geometric_cv_immediate_status {
 typedef struct __attribute__((aligned(64))) {
     const float *d1_x;
     const float *d1_growth;
-    const asian_genuine_route_t *routes_d2;
+    const asian_meta_affine_route_t *routes_d2;
     uint32_t fixing_count;
     float s0;
     uint32_t d1_weight_bits;

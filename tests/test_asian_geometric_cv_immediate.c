@@ -64,7 +64,7 @@ static int prepare_terminal(fixture_t *f,const market_t *market,uint32_t future,
     asian_genuine_strip_l_to_g_diag(f->baseline->l,strip,f->baseline_g);
     memset(f->q_storage,0xa5,PATHS*4u+2u*GUARD);
     memset(f->g_storage,0xa5,PATHS*4u+2u*GUARD);
-    if(asian_geometric_cv_packet_local_prepare(f->context,f->routes,future,
+    if(asian_geometric_cv_packet_local_prepare(f->context,f->meta_routes,future,
          100.0f,f->x,2u*PATHS*4u,f->growth,2u*PATHS*4u,strip,
          f->q,PATHS*4u,f->g,PATHS*4u)!=0){free(strip);return-1;}
     asian_geometric_cv_packet_local_qg_diag(f->context);
@@ -96,6 +96,8 @@ static int check_immediate_shape(fixture_t *f,const market_t *market,
       strip,sizeof(*strip));
     const uint64_t route_hash=hash_bytes(UINT64_C(1469598103934665603),
       f->routes,future*sizeof(*f->routes));
+    const uint64_t meta_route_hash=hash_bytes(UINT64_C(1469598103934665603),
+      f->meta_routes,future*sizeof(*f->meta_routes));
     const uint64_t map_hash=hash_bytes(UINT64_C(1469598103934665603),
       f->maps,future*sizeof(*f->maps));
     const uint64_t x_hash=hash_bytes(UINT64_C(1469598103934665603),
@@ -118,7 +120,7 @@ static int check_immediate_shape(fixture_t *f,const market_t *market,
     qualified.g_out=(float *)(uintptr_t)UINT64_C(0x2222222222222222);
     if(asian_geometric_cv_immediate_prepare(immediate,&qualified,strip)!=
          ASIAN_GEOMETRIC_CV_IMMEDIATE_OK||
-       immediate->d1_weight_bits!=f->routes[0].weight_bits||
+       immediate->d1_weight_bits!=f->meta_routes[0].weight_bits||
        immediate->terminal_log_base_bits!=fbits(strip->log_base))goto fail;
     const uint64_t immediate_hash=hash_bytes(UINT64_C(1469598103934665603),
       immediate,sizeof(*immediate));
@@ -136,6 +138,8 @@ static int check_immediate_shape(fixture_t *f,const market_t *market,
        strip_hash!=hash_bytes(UINT64_C(1469598103934665603),strip,sizeof(*strip))||
        route_hash!=hash_bytes(UINT64_C(1469598103934665603),f->routes,
           future*sizeof(*f->routes))||
+       meta_route_hash!=hash_bytes(UINT64_C(1469598103934665603),
+          f->meta_routes,future*sizeof(*f->meta_routes))||
        map_hash!=hash_bytes(UINT64_C(1469598103934665603),f->maps,
           future*sizeof(*f->maps))||
        x_hash!=hash_bytes(UINT64_C(1469598103934665603),f->x,2u*PATHS*4u)||

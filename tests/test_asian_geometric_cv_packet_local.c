@@ -26,6 +26,8 @@ typedef struct {
     float *x,*growth,*baseline_g;
     fragment_map_t *maps;
     asian_genuine_route_t *routes;
+    asian_meta_affine_plan_t *meta_plan;
+    asian_meta_affine_route_t *meta_routes;
     asian_genuine_state_t *baseline;
     unsigned char *q_storage,*g_storage;
     float *q,*g;
@@ -65,6 +67,17 @@ static uint32_t selected_source(const asian_genuine_route_t *route,uint32_t path
     return (uint32_t)map->select[packet][half]*16u+map->patterns[pattern][lane];
 }
 
+static uint32_t meta_selected_source(const asian_meta_affine_route_t *route,
+                                     uint32_t path)
+{
+    const asian_meta_dim_affine_ctx_t *map=route->map;
+    const uint32_t packet=path>>5u,half=(path>>4u)&1u,lane=path&15u;
+    const uint32_t line=(uint32_t)map->sel2[packet][0]^half;
+    const uint32_t control=map->base_control[lane]^
+      (uint32_t)map->sel2[packet][1]^(half?map->half_delta[lane]:0u);
+    return line*16u+control;
+}
+
 static int load_directions(fixture_t *f)
 {
     FILE *in=fopen("direction_numbers/joe_kuo_6_21201.bin","rb");
@@ -85,14 +98,17 @@ static int fixture_init(fixture_t *f)
     f->growth=a64(2u*PATHS*4u);f->baseline_g=a64(PATHS*4u);
     f->maps=a64(MAX_N*sizeof(*f->maps));
     f->routes=a64(MAX_N*sizeof(*f->routes));
+    f->meta_routes=a64(MAX_N*sizeof(*f->meta_routes));
     f->baseline=a64(sizeof(*f->baseline));f->context=a64(sizeof(*f->context));
     f->trace=a64(sizeof(*f->trace));
     f->q_storage=a64(PATHS*4u+2u*GUARD);f->g_storage=a64(PATHS*4u+2u*GUARD);
     if(!f->words[0]||!f->words[1]||!f->target||!f->x||!f->growth||
-       !f->baseline_g||!f->maps||!f->routes||!f->baseline||!f->context||
+       !f->baseline_g||!f->maps||!f->routes||!f->meta_routes||
+       !f->baseline||!f->context||
        !f->trace||!f->q_storage||!f->g_storage)return-1;
     f->q=(float *)(f->q_storage+GUARD);f->g=(float *)(f->g_storage+GUARD);
-    if(load_directions(f)!=0)return-1;
+    if(load_directions(f)!=0||asian_meta_affine_plan_create(&f->meta_plan)!=0)
+        return-1;
     for(uint32_t path=0;path<PATHS;++path){
         f->words[0][path]=sobol(8192u+path,f->directions[0]);
         f->words[1][path]=sobol(12288u+path,f->directions[0]);
@@ -103,7 +119,9 @@ static int fixture_init(fixture_t *f)
 static void fixture_release(fixture_t *f)
 {
     free(f->g_storage);free(f->q_storage);free(f->trace);free(f->context);
-    free(f->baseline);free(f->routes);free(f->maps);free(f->baseline_g);
+    asian_meta_affine_plan_destroy(f->meta_plan);
+    free(f->baseline);free(f->meta_routes);free(f->routes);free(f->maps);
+    free(f->baseline_g);
     free(f->growth);free(f->x);free(f->target);free(f->words[1]);free(f->words[0]);
     memset(f,0,sizeof(*f));
 }
@@ -124,6 +142,15 @@ static int prepare_shared_routes(fixture_t *f,uint32_t future,uint32_t total)
             if(f->words[f->routes[fixing].x_base==x[1]][source]!=f->target[path])
                 return-1;
         }
+        const size_t donor_offset=(size_t)f->meta_plan->donor_region[fixing]*PATHS;
+        f->meta_routes[fixing].x_base=f->x+donor_offset;
+        f->meta_routes[fixing].growth_base=f->growth+donor_offset;
+        f->meta_routes[fixing].map=&f->meta_plan->contexts[fixing];
+        f->meta_routes[fixing].weight_bits=f->routes[fixing].weight_bits;
+        f->meta_routes[fixing].fixing_index=fixing;
+        for(uint32_t path=0;path<PATHS;++path)
+            if(meta_selected_source(&f->meta_routes[fixing],path)!=
+               selected_source(&f->routes[fixing],path))return-1;
     }
     return 0;
 }
@@ -223,8 +250,8 @@ static int check_trace(fixture_t *f,uint32_t packet)
     for(uint32_t lane=0;lane<32u;++lane){
         const uint32_t path=packet*32u+lane;float s=100.0f,q=0.0f,l=0.0f;
         for(uint32_t fixing=0;fixing<f->context->fixing_count;++fixing){
-            const asian_genuine_route_t *route=&f->routes[fixing];
-            const uint32_t source=selected_source(route,path);
+            const asian_meta_affine_route_t *route=&f->meta_routes[fixing];
+            const uint32_t source=meta_selected_source(route,path);
             float weight;memcpy(&weight,&route->weight_bits,4u);
             s=rmul(s,route->growth_base[source]);q=radd(q,s);
             l=fmaf(weight,route->x_base[source],l);
@@ -250,6 +277,8 @@ static int evolve_compare(fixture_t *f,const market_t *market,uint32_t future,
     initial_state(f->baseline);
     const uint64_t route_hash=hash_bytes(UINT64_C(1469598103934665603),
       f->routes,future*sizeof(*f->routes));
+    const uint64_t meta_route_hash=hash_bytes(UINT64_C(1469598103934665603),
+      f->meta_routes,future*sizeof(*f->meta_routes));
     const uint64_t map_hash=hash_bytes(UINT64_C(1469598103934665603),
       f->maps,future*sizeof(*f->maps));
     const uint64_t x_hash=hash_bytes(UINT64_C(1469598103934665603),f->x,2u*PATHS*4u);
@@ -258,10 +287,10 @@ static int evolve_compare(fixture_t *f,const market_t *market,uint32_t future,
     asian_genuine_sql_dual_control_diag(f->routes,future,f->baseline);
     if(asian_genuine_strip_exp_preflight(strip,f->baseline->l,NULL,NULL)!=0){free(strip);return-1;}
     asian_genuine_strip_l_to_g_diag(f->baseline->l,strip,f->baseline_g);
-    if(asian_geometric_cv_packet_local_prepare(f->context,f->routes,future,
+    if(asian_geometric_cv_packet_local_prepare(f->context,f->meta_routes,future,
          100.0f,f->x,2u*PATHS*4u,f->growth,2u*PATHS*4u,strip,
          f->q,PATHS*4u,f->g,PATHS*4u)!=0){free(strip);return-1;}
-    if(f->context->d1_weight_bits!=f->routes[0].weight_bits||
+    if(f->context->d1_weight_bits!=f->meta_routes[0].weight_bits||
        f->context->terminal_log_base_bits!=fbits(strip->log_base)){free(strip);return-1;}
     const uint64_t context_hash=hash_bytes(UINT64_C(1469598103934665603),
       f->context,sizeof(*f->context));
@@ -286,6 +315,8 @@ static int evolve_compare(fixture_t *f,const market_t *market,uint32_t future,
          future*sizeof(*f->routes))||
        map_hash!=hash_bytes(UINT64_C(1469598103934665603),f->maps,
          future*sizeof(*f->maps))||
+       meta_route_hash!=hash_bytes(UINT64_C(1469598103934665603),
+         f->meta_routes,future*sizeof(*f->meta_routes))||
        x_hash!=hash_bytes(UINT64_C(1469598103934665603),f->x,2u*PATHS*4u)||
        growth_hash!=hash_bytes(UINT64_C(1469598103934665603),f->growth,2u*PATHS*4u)||
        context_hash!=hash_bytes(UINT64_C(1469598103934665603),f->context,
@@ -304,23 +335,23 @@ static int negative_tests(fixture_t *f)
     if(!strip||asian_genuine_strip_prepare(strip,100,.03,0,.20,1,2,0,0,0,
        strikes,32u)!=0)return-1;
 #define REJECT(call,want) do{if((call)!=(want)){free(strip);return-1;}}while(0)
-    REJECT(asian_geometric_cv_packet_local_prepare(NULL,f->routes,2,100,f->x,
+    REJECT(asian_geometric_cv_packet_local_prepare(NULL,f->meta_routes,2,100,f->x,
       32768,f->growth,32768,strip,f->q,16384,f->g,16384),
       ASIAN_GEOMETRIC_CV_PACKET_LOCAL_INVALID);
-    REJECT(asian_geometric_cv_packet_local_prepare(f->context,f->routes,1,100,
+    REJECT(asian_geometric_cv_packet_local_prepare(f->context,f->meta_routes,1,100,
       f->x,32768,f->growth,32768,strip,f->q,16384,f->g,16384),
       ASIAN_GEOMETRIC_CV_PACKET_LOCAL_FIXINGS_UNSUPPORTED);
-    REJECT(asian_geometric_cv_packet_local_prepare(f->context,f->routes,257,100,
+    REJECT(asian_geometric_cv_packet_local_prepare(f->context,f->meta_routes,257,100,
       f->x,32768,f->growth,32768,strip,f->q,16384,f->g,16384),
       ASIAN_GEOMETRIC_CV_PACKET_LOCAL_FIXINGS_UNSUPPORTED);
-    REJECT(asian_geometric_cv_packet_local_prepare(f->context,f->routes,2,100,
+    REJECT(asian_geometric_cv_packet_local_prepare(f->context,f->meta_routes,2,100,
       f->x,32768,f->growth,32768,strip,(float *)((char *)f->q+4),16384,f->g,16384),
       ASIAN_GEOMETRIC_CV_PACKET_LOCAL_ALIGNMENT);
-    REJECT(asian_geometric_cv_packet_local_prepare(f->context,f->routes,2,100,
+    REJECT(asian_geometric_cv_packet_local_prepare(f->context,f->meta_routes,2,100,
       f->x,32768,f->growth,32768,strip,f->q,16384,f->q,16384),
       ASIAN_GEOMETRIC_CV_PACKET_LOCAL_ALIAS);
     const float saved=f->growth[0];f->growth[0]=0.0f;
-    REJECT(asian_geometric_cv_packet_local_prepare(f->context,f->routes,2,100,
+    REJECT(asian_geometric_cv_packet_local_prepare(f->context,f->meta_routes,2,100,
       f->x,32768,f->growth,32768,strip,f->q,16384,f->g,16384),
       ASIAN_GEOMETRIC_CV_PACKET_LOCAL_DOMAIN);f->growth[0]=saved;
 #undef REJECT

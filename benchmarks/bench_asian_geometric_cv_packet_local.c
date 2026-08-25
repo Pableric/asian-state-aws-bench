@@ -150,7 +150,7 @@ static int prepare_n(uint32_t n)
     if(asian_genuine_strip_fixed_strikes(32u,fixed)!=0||
        asian_genuine_strip_prepare(strip,100.0,.03,0.0,.20,1.0,n,0,0,0,
          fixed,32u)!=0)return-1;
-    return asian_geometric_cv_packet_local_prepare(b.context,b.routes,n,100.0f,
+    return asian_geometric_cv_packet_local_prepare(b.context,b.meta_routes,n,100.0f,
       b.x,32768u,b.growth,32768u,strip,b.q,16384u,b.g,16384u);
 }
 
@@ -160,7 +160,7 @@ static int prepare_cell(uint32_t k,enum workload workload,uint64_t expected[2])
     if(asian_genuine_strip_fixed_strikes(k,fixed)!=0||
        asian_genuine_strip_prepare(strip,100.0,.03,0.0,.20,1.0,active_n,0,0,0,
          fixed,k)!=0||
-       asian_geometric_cv_packet_local_prepare(b.context,b.routes,active_n,100.0f,
+       asian_geometric_cv_packet_local_prepare(b.context,b.meta_routes,active_n,100.0f,
          b.x,32768u,b.growth,32768u,strip,b.q,16384u,b.g,16384u)!=0)return-1;
     for(uint32_t c=0;c<2u;++c){
         if(c==MATERIALIZED_SQL)initial_state(b.baseline);

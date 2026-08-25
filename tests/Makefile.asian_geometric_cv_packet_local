@@ -15,6 +15,8 @@ COMMON_SOURCES := \
 	asian_genuine_price_delta_strip_setup.c \
 	asian_genuine_price_delta_strip_avx512.s \
 	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	private/asian_meta_direction_descriptors.c \
+	private/asian_meta_direction_affine_route.c \
 	asian_geometric_cv_packet_local_setup.c \
 	asian_geometric_cv_packet_local_avx512.s
 

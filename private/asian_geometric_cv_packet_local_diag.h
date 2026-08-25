@@ -4,8 +4,8 @@
 #include <stddef.h>
 #include <stdint.h>
 
-#include "asian_genuine_permute.h"
 #include "asian_genuine_price_delta_strip_diag.h"
+#include "asian_meta_direction_affine_route.h"
 
 #define ASIAN_GEOMETRIC_CV_PACKET_LOCAL_MAGIC UINT32_C(0x47514c50)
 #define ASIAN_GEOMETRIC_CV_PACKET_LOCAL_ABI_VERSION UINT16_C(1)
@@ -37,7 +37,7 @@ enum asian_geometric_cv_packet_local_status {
 typedef struct __attribute__((aligned(64))) {
     const float *d1_x;
     const float *d1_growth;
-    const asian_genuine_route_t *routes_d2;
+    const asian_meta_affine_route_t *routes_d2;
     float *q_out;
     float *g_out;
     uint32_t fixing_count;
@@ -79,7 +79,7 @@ typedef struct __attribute__((aligned(64))) {
 
 int asian_geometric_cv_packet_local_prepare(
     asian_geometric_cv_packet_local_context_t *out,
-    const asian_genuine_route_t *qualified_routes, uint32_t fixing_count,
+    const asian_meta_affine_route_t *qualified_routes, uint32_t fixing_count,
     float s0, const float *x_donors, size_t x_donor_bytes,
     const float *growth_donors, size_t growth_donor_bytes,
     const asian_genuine_strip_context_t *qualified_strip,

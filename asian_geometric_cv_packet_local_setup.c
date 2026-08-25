@@ -19,21 +19,21 @@ static int overlap(const void *a,size_t a_bytes,const void *b,size_t b_bytes)
     return af<bl&&bf<al;
 }
 
-static int map_source(const fragment_map_t *map,uint32_t path,uint32_t *source)
+static int map_source(const asian_meta_dim_affine_ctx_t *map,uint32_t path,
+                      uint32_t *source)
 {
     const uint32_t packet=path>>5,half=(path>>4)&1u,lane=path&15u;
-    const uint32_t pattern=map->select[packet][2u+half];
-    if(map->pattern_count==0u||map->pattern_count>FRAG_MAX_PATTERNS||
-       pattern>=map->pattern_count)return-1;
-    const uint32_t control=map->patterns[pattern][lane];
-    if(control>=FRAG_LANES)return-1;
-    *source=(uint32_t)map->select[packet][half]*FRAG_LANES+control;
-    return *source<FRAG_BLOCK_VALUES?0:-1;
+    const uint32_t line=(uint32_t)map->sel2[packet][0]^half;
+    const uint32_t control=map->base_control[lane]^
+      (uint32_t)map->sel2[packet][1]^(half?map->half_delta[lane]:0u);
+    if(control>=16u||line>=256u)return-1;
+    *source=line*16u+control;
+    return *source<ASIAN_META_PATHS?0:-1;
 }
 
-static int identity_map(const fragment_map_t *map)
+static int identity_map(const asian_meta_dim_affine_ctx_t *map)
 {
-    for(uint32_t path=0;path<FRAG_BLOCK_VALUES;++path){
+    for(uint32_t path=0;path<ASIAN_META_PATHS;++path){
         uint32_t source;if(map_source(map,path,&source)!=0||source!=path)return 0;
     }
     return 1;
@@ -41,7 +41,7 @@ static int identity_map(const fragment_map_t *map)
 
 int asian_geometric_cv_packet_local_prepare(
     asian_geometric_cv_packet_local_context_t *out,
-    const asian_genuine_route_t *routes,uint32_t n,float s0,
+    const asian_meta_affine_route_t *routes,uint32_t n,float s0,
     const float *x_donors,size_t x_bytes,
     const float *growth_donors,size_t growth_bytes,
     const asian_genuine_strip_context_t *strip,
@@ -91,7 +91,7 @@ int asian_geometric_cv_packet_local_prepare(
             return ASIAN_GEOMETRIC_CV_PACKET_LOCAL_DOMAIN;
 
     for(uint32_t fixing=0;fixing<n;++fixing){
-        const asian_genuine_route_t *route=&routes[fixing];
+        const asian_meta_affine_route_t *route=&routes[fixing];
         float weight;memcpy(&weight,&route->weight_bits,sizeof(weight));
         if(route->x_base!=x_donors&&route->x_base!=x_donors+4096u)
             return ASIAN_GEOMETRIC_CV_PACKET_LOCAL_ROUTE_INVALID;
@@ -101,8 +101,7 @@ int asian_geometric_cv_packet_local_prepare(
         if((route->x_base-x_donors)!=(route->growth_base-growth_donors))
             return ASIAN_GEOMETRIC_CV_PACKET_LOCAL_ROUTE_INVALID;
         if(route->map==NULL||((uintptr_t)route->map&63u)||
-           route->map->dimension!=fixing+1u||route->fixing_index!=fixing||
-           !isfinite(weight))
+           route->fixing_index!=fixing||!isfinite(weight))
             return ASIAN_GEOMETRIC_CV_PACKET_LOCAL_ROUTE_INVALID;
         if(overlap(q_out,q_bytes,route->map,sizeof(*route->map))||
            overlap(g_out,g_bytes,route->map,sizeof(*route->map))||
@@ -268,7 +267,7 @@ void asian_geometric_cv_packet_local_packet_probe_diag(
         float l=fmaf(d1_weight,context->d1_x[path],0.0f);
         trace->s[0][lane]=s;trace->q[0][lane]=q;trace->l[0][lane]=l;
         for(uint32_t fixing=1;fixing<context->fixing_count;++fixing){
-            const asian_genuine_route_t *route=&context->routes_d2[fixing-1u];
+            const asian_meta_affine_route_t *route=&context->routes_d2[fixing-1u];
             uint32_t source=0u;(void)map_source(route->map,path,&source);
             float weight;memcpy(&weight,&route->weight_bits,4u);
             s=rounded_mul(s,route->growth_base[source]);

@@ -1,5 +1,8 @@
 .extern asian_genuine_arithmetic_fused_exp_constants
 
+.equ META_AFF_BASE,320
+.equ META_AFF_DELTA,384
+
 .macro PACKET_LOCAL_EXP input, output, exponent, reduced
     vmulps asian_genuine_arithmetic_fused_exp_constants(%rip){1to16}, %zmm\input, %zmm\exponent
     vrndscaleps $0, %zmm\exponent, %zmm\exponent
@@ -67,23 +70,23 @@ asian_geometric_cv_packet_local_qg_diag:
     movq 8(%rdi),%rsi
     kmovq %rsi,%k0
     movq 16(%rdi),%r9
-    movzbq 0(%r9,%rcx,4),%r11
-    movzbq 1(%r9,%rcx,4),%rsi
-    movzbq 2(%r9,%rcx,4),%rdx
-    movzbq 3(%r9,%rcx,4),%r10
+    movzbl 0(%r9,%rcx,2),%r11d
+    movzbl 1(%r9,%rcx,2),%esi
     shlq $6,%r11
-    shlq $6,%rsi
-    shlq $6,%rdx
-    shlq $6,%r10
+    movl %r11d,%r10d
+    xorl $64,%r10d
+    vmovdqa32 META_AFF_BASE(%r9),%zmm18
+    vmovdqa32 META_AFF_DELTA(%r9),%zmm19
+    vpbroadcastd %esi,%zmm2
+    vpxord %zmm2,%zmm18,%zmm18
+    vpxord %zmm18,%zmm19,%zmm19
     vmovdqa32 0(%r8,%r11),%zmm2
-    vmovdqa32 0(%r8,%rsi),%zmm3
-    vmovdqa32 576(%r9,%rdx),%zmm18
-    vmovdqa32 576(%r9,%r10),%zmm19
+    vmovdqa32 0(%r8,%r10),%zmm3
     vpermd %zmm2,%zmm18,%zmm0
     vpermd %zmm3,%zmm19,%zmm1
     kmovq %k0,%r8
     vmovdqa32 0(%r8,%r11),%zmm14
-    vmovdqa32 0(%r8,%rsi),%zmm15
+    vmovdqa32 0(%r8,%r10),%zmm15
     vpermd %zmm14,%zmm18,%zmm12
     vpermd %zmm15,%zmm19,%zmm13
     vmulps %zmm12,%zmm4,%zmm4
