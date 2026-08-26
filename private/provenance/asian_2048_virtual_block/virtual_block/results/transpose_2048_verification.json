@@ -1,0 +1,14 @@
+{
+  "GLOBAL_2048_TRANSPOSE": "YES",
+  "identical_transpose_all_dimensions": true,
+  "tile_unique_paths": 2048,
+  "bijection": true,
+  "D1_D256_inverse_restores_original_words": true,
+  "no_duplicate_or_omitted_path": true,
+  "each_tile_donors": 2048,
+  "not_both_complete_4096_regions": true,
+  "variable_blocks_0_15_same_transpose": true,
+  "region2_count": 130,
+  "region3_count": 126,
+  "swap_count": 133
+}

@@ -1,0 +1,19 @@
+{
+  "GLOBAL_2048_TRANSPOSE": "YES",
+  "input_hashes": {
+    "d1_gf2_workbench/c/joe_kuo_v_1_256.h": "b2800b5cf2e261575649f508c683b45721da9b2700b43059c7d66f441bfada66",
+    "d1_gf2_workbench/data/new-joe-kuo-6.21201": "68eedd2a4e3b659b9695e7aff0f8ac68718bcf620730fc3d3a8c65df2a067441",
+    "virtual_block/virtual_block.c": "ec316bfa896457475816e6bcfa4df60a1b2217863dbb22365fe6b709832547a2",
+    "virtual_block/export_2048_transpose.c": "4c76ae614d63833618028106117b946811c9cadb158f7ae2f80114294849c47b"
+  },
+  "output_hashes": {
+    "transpose_4096_to_2x2048.bin": "6b0751ba5e64fc9c13ddfb44778fa7d6a1f7d7aa9d6a5e38a1f0a1502c3fb9e3",
+    "inverse_transpose_4096_to_2x2048.bin": "6b0751ba5e64fc9c13ddfb44778fa7d6a1f7d7aa9d6a5e38a1f0a1502c3fb9e3",
+    "transpose_4096_to_2x2048.json": "35a0d836b42b7179bd88a7ebaea648f0ee97e32f21326f2fdeb720462e350d11",
+    "transpose_2048_verification.json": "6328c269d36ff9dba6854d29fc8a7374c074ce41fb53dace85bcad6098b4afe7"
+  },
+  "output_bytes": {
+    "transpose_4096_to_2x2048.bin": 16384,
+    "inverse_transpose_4096_to_2x2048.bin": 16384
+  }
+}

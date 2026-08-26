@@ -1,0 +1,6005 @@
+{
+  "GLOBAL_2048_ROUTE_CLOSURE": "YES",
+  "universe": {
+    "target_paths": 4096,
+    "target_indices": [
+      8192,
+      12287
+    ],
+    "dimensions": "D1\u2013D256",
+    "donor_region_2": [
+      8192,
+      12287
+    ],
+    "donor_region_3": [
+      12288,
+      16383
+    ],
+    "scrambling": false,
+    "digital_shift": false
+  },
+  "generator_source": {
+    "direction_numbers": "d1_gf2_workbench/c/joe_kuo_v_1_256.h (Joe\u2013Kuo new-joe-kuo-6.21201, D1 van der Corput)",
+    "word": "virtual_block.c vb_sobol_word: X(i)=XOR gray-bits of V[j]",
+    "donor_index": "virtual_block.c vb_d1_index_from_word: bitrev Gray inverse",
+    "table_file": "d1_gf2_workbench/data/new-joe-kuo-6.21201",
+    "prover": "virtual_block/prove_global_2048.c"
+  },
+  "global_target_partition": {
+    "kind": "GF2 hyperplane bit 11 of dest offset k in 0..4095",
+    "linear_mask": "0x800",
+    "affine_bit": 0,
+    "P0": {
+      "offsets": [
+        0,
+        2047
+      ],
+      "indices": [
+        8192,
+        10239
+      ],
+      "count": 2048
+    },
+    "P1": {
+      "offsets": [
+        2048,
+        4095
+      ],
+      "indices": [
+        10240,
+        12287
+      ],
+      "count": 2048
+    },
+    "path_identity": "chronological Sobol index; same P0/P1 for every dimension (not a per-dim path permute)"
+  },
+  "fixed_donor_half_partition": {
+    "kind": "same offsets inside whichever 4096-point D1 region the dimension uses",
+    "H0": {
+      "offsets": [
+        0,
+        2047
+      ],
+      "region2": [
+        8192,
+        10239
+      ],
+      "region3": [
+        12288,
+        14335
+      ]
+    },
+    "H1": {
+      "offsets": [
+        2048,
+        4095
+      ],
+      "region2": [
+        10240,
+        12287
+      ],
+      "region3": [
+        14336,
+        16383
+      ]
+    },
+    "working_set_per_active_half": {
+      "x_bytes": 8192,
+      "growth_bytes": 8192
+    }
+  },
+  "per_dimension": [
+    {
+      "dimension": 1,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 2,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 3,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 4,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 5,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 6,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 7,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 8,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 9,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 10,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 11,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 12,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 13,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 14,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 15,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 16,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 17,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 18,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 19,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 20,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 21,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 22,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 23,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 24,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 25,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 26,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 27,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 28,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 29,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 30,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 31,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 32,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 33,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 34,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 35,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 36,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 37,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 38,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 39,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 40,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 41,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 42,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 43,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 44,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 45,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 46,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 47,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 48,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 49,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 50,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 51,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 52,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 53,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 54,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 55,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 56,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 57,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 58,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 59,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 60,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 61,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 62,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 63,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 64,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 65,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 66,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 67,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 68,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 69,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 70,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 71,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 72,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 73,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 74,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 75,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 76,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 77,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 78,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 79,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 80,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 81,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 82,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 83,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 84,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 85,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 86,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 87,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 88,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 89,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 90,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 91,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 92,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 93,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 94,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 95,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 96,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 97,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 98,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 99,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 100,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 101,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 102,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 103,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 104,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 105,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 106,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 107,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 108,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 109,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 110,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 111,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 112,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 113,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 114,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 115,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 116,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 117,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 118,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 119,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 120,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 121,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 122,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 123,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 124,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 125,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 126,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 127,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 128,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 129,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 130,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 131,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 132,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 133,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 134,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 135,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 136,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 137,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 138,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 139,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 140,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 141,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 142,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 143,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 144,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 145,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 146,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 147,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 148,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 149,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 150,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 151,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 152,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 153,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 154,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 155,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 156,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 157,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 158,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 159,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 160,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 161,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 162,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 163,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 164,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 165,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 166,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 167,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 168,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 169,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 170,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 171,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 172,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 173,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 174,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 175,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 176,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 177,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 178,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 179,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 180,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 181,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 182,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 183,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 184,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 185,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 186,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 187,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 188,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 189,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 190,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 191,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 192,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 193,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 194,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 195,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 196,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 197,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 198,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 199,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 200,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 201,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 202,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 203,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 204,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 205,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 206,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 207,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 208,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 209,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 210,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 211,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 212,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 213,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 214,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 215,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 216,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 217,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 218,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 219,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 220,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 221,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 222,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 223,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 224,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 225,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 226,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 227,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 228,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 229,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 230,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 231,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 232,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 233,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 234,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 235,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 236,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 237,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 238,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 239,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 240,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 241,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 242,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 243,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 244,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 245,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 246,
+      "donor_region": 3,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 12288,
+      "tile1_donor_base": 14336,
+      "tile0_donor": [
+        12288,
+        14335
+      ],
+      "tile1_donor": [
+        14336,
+        16383
+      ]
+    },
+    {
+      "dimension": 247,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 248,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 249,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 250,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 251,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 252,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 253,
+      "donor_region": 2,
+      "swap": 0,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 8192,
+      "tile1_donor_base": 10240,
+      "tile0_donor": [
+        8192,
+        10239
+      ],
+      "tile1_donor": [
+        10240,
+        12287
+      ]
+    },
+    {
+      "dimension": 254,
+      "donor_region": 2,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 10240,
+      "tile1_donor_base": 8192,
+      "tile0_donor": [
+        10240,
+        12287
+      ],
+      "tile1_donor": [
+        8192,
+        10239
+      ]
+    },
+    {
+      "dimension": 255,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    },
+    {
+      "dimension": 256,
+      "donor_region": 3,
+      "swap": 1,
+      "tile0_dest": [
+        8192,
+        10239
+      ],
+      "tile1_dest": [
+        10240,
+        12287
+      ],
+      "tile0_donor_base": 14336,
+      "tile1_donor_base": 12288,
+      "tile0_donor": [
+        14336,
+        16383
+      ],
+      "tile1_donor": [
+        12288,
+        14335
+      ]
+    }
+  ],
+  "region_counts": {
+    "2": 130,
+    "3": 126
+  },
+  "variable_sobol_blocks_0_15": {
+    "same_bit11_partition": "YES for every dest_base in {0,4096,...,61440}",
+    "note": "Twelve affine columns shared; only the GF2 base changes. Donor window is dest_block or dest_block XOR (swap?); not restricted to regions 2\u20133. Blocks 0 and 1 land in donor regions 0/1, which the 8192-universe request does not use."
+  },
+  "verification": {
+    "D1_D256": true,
+    "every_target_path": true,
+    "both_donor_regions": true,
+    "exact_2048_bijection": true,
+    "no_duplicate_or_missing_donor_offsets": true,
+    "identical_cross_dimensional_path_pairing": true,
+    "contiguous_dest_0_2047_equals_P0": true
+  },
+  "hashes": {
+    "joe_kuo_v_1_256.h": "b2800b5cf2e261575649f508c683b45721da9b2700b43059c7d66f441bfada66",
+    "new-joe-kuo-6.21201": "68eedd2a4e3b659b9695e7aff0f8ac68718bcf620730fc3d3a8c65df2a067441",
+    "virtual_block.c": "ec316bfa896457475816e6bcfa4df60a1b2217863dbb22365fe6b709832547a2",
+    "prove_global_2048.c": "ac2a60bc6aaebe3814ab0168f2f254687b53b312d8cb01b7c0cb091505362cc9"
+  },
+  "prover_stdout": "dest_base=8192 affine_on_binary_offset=1 region2=130 region3=126\nGLOBAL_2048_ROUTE_CLOSURE=YES\nlinear_mask=0x800 affine_bit=0 zeros=2048\nswap_bits=0101001110100100101101101000011111100000101111111100110000101100111111000010110101001111000110100101100000111011011010110011010001110000111100111000110000111101001111011011010001101100110011001000111101101001010010010100100011111100001010011010000111100111\nregions=2333222223232323232323233222232333233233333322322232223223233332232323223222222332222223232233233222332322232323232232323232323332333233232223232232332322332233233222333323323333323332333333233222333232232323232232233222222232233322332333332222332322222233\ncontiguous_dest_0_2047_ok=1 first_fail_dim=0 inter_low=0 region=0\nbit11_variable_blocks= 0:YES 1:YES 2:YES 3:YES 4:YES 5:YES 6:YES 7:YES 8:YES 9:YES 10:YES 11:YES 12:YES 13:YES 14:YES 15:YES\nwhy 2=two_donor_4096_windows 3=duplicate 4=mixed_halves"
+}
