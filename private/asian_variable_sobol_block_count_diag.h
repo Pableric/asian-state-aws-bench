@@ -161,6 +161,18 @@ typedef struct __attribute__((aligned(64))) {
     } value;
 } asian_variable_output_t;
 
+typedef struct {
+    size_t logical_unique_bytes_read;
+    size_t persistent_bytes_written;
+    size_t selected_block_bytes_written;
+    size_t route_prefix_bytes_written;
+    size_t route_suffix_bytes_written;
+    size_t unused_block_bytes_written;
+    size_t request_capacity_bytes;
+    uint32_t selected_blocks;
+    uint32_t selected_fixings;
+} asian_variable_b1_request_footprint_t;
+
 int asian_variable_block_count_valid(uint32_t block_count);
 uint32_t asian_variable_required_donor_regions(uint32_t block_count);
 size_t asian_variable_carrier_bytes(uint32_t block_count,
@@ -205,6 +217,12 @@ int asian_variable_sobol_price(const void *prepared_request,
                                asian_variable_output_t *output);
 
 /* Test/audit helpers; never called from a pricing lifecycle. */
+int asian_variable_b1_request_footprint(
+    const asian_variable_engine_t *engine,
+    const asian_variable_carrier_t *carrier,
+    const asian_affine_family_request_input_t *input,
+    enum asian_variable_family family,
+    asian_variable_b1_request_footprint_t *footprint);
 int asian_variable_structural_check(void);
 uint64_t asian_variable_phase1_invocations(void);
 void asian_variable_phase1_invocations_reset(void);

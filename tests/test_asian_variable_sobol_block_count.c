@@ -7,6 +7,9 @@
 #include <stdlib.h>
 #include <string.h>
 
+void asian_variable_b1_leaf_audit_reset(void);
+uint64_t asian_variable_b1_leaf_audit_count(void);
+
 static void *a64(size_t bytes)
 {
     void *out = NULL;
@@ -26,6 +29,189 @@ static int same_strip(const asian_variable_output_t *a,
     return a->family == b->family && a->strike_count == b->strike_count &&
         memcmp(a->value.strip.values, b->value.strip.values,
                strikes * sizeof(a->value.strip.values[0])) == 0;
+}
+
+static size_t output_write_footprint(void *request)
+{
+    asian_variable_output_t *a = a64(sizeof(*a));
+    asian_variable_output_t *b = a64(sizeof(*b));
+    if (a == NULL || b == NULL) { free(b); free(a); return 0u; }
+    memset(a, 0xa5, sizeof(*a));
+    memset(b, 0x5a, sizeof(*b));
+    asian_variable_b1_leaf_audit_reset();
+    if (asian_variable_sobol_price(request, 1u, a) != 0 ||
+        asian_variable_sobol_price(request, 1u, b) != 0 ||
+        asian_variable_b1_leaf_audit_count() != 2u) {
+        free(b); free(a); return 0u;
+    }
+    const unsigned char *aa = (const unsigned char *)(const void *)a;
+    const unsigned char *bb = (const unsigned char *)(const void *)b;
+    size_t changed = 0u;
+    for (size_t i = 0; i < sizeof(*a); ++i)
+        if (aa[i] != 0xa5u || bb[i] != 0x5au) ++changed;
+    free(b); free(a);
+    return changed;
+}
+
+static int b1_lifecycle_audit(asian_variable_engine_t *engine)
+{
+    asian_affine_family_engine_t *parent = a64(sizeof(*parent));
+    if (parent == NULL || asian_affine_family_engine_create(parent) != 0)
+        return -1;
+    const float strike = 100.0f;
+    const asian_affine_family_carrier_input_t market = {
+        .rate=0.03,.dividend_yield=0.0,.sigma=0.20,.maturity=1.0,
+        .future_fixings=64u,
+    };
+    const asian_affine_family_request_input_t input = {
+        .s0=100.0,.rate=market.rate,.dividend_yield=market.dividend_yield,
+        .sigma=market.sigma,.maturity=market.maturity,.future_fixings=64u,
+        .completed_fixings=0u,.initial_arithmetic_sum=0.0,.past_log_sum=0.0,
+        .strikes=&strike,.strike_count=1u,.workload=ASIAN_AFFINE_FAMILY_PRICE,
+    };
+    static const char *stage_names[] = {
+        "market_prepare", "request_prepare", "prepared_price",
+        "reused_total", "fresh_total",
+    };
+    for (uint32_t family_index = 0; family_index < 2u; ++family_index) {
+        const enum asian_variable_family family = family_index == 0u ?
+            ASIAN_VARIABLE_ARITHMETIC : ASIAN_VARIABLE_GEOCV;
+        const enum asian_variable_carrier_capability cap = family_index == 0u ?
+            ASIAN_VARIABLE_GROWTH_ONLY : ASIAN_VARIABLE_X_GROWTH;
+        const char *family_name = family_index == 0u ? "ARITHMETIC" : "GEOCV";
+        asian_variable_carrier_t *carrier = NULL, *scratch_carrier = NULL;
+        asian_variable_strip_request_t *request = a64(sizeof(*request));
+        asian_variable_strip_request_t *scratch_request =
+            a64(sizeof(*scratch_request));
+        asian_variable_output_t *output = a64(sizeof(*output));
+        asian_genuine_strip_output_t *parent_output =
+            a64(sizeof(*parent_output));
+        asian_affine_family_growth_carrier_t *parent_growth = NULL;
+        asian_affine_family_arithmetic_request_t *parent_arithmetic = NULL;
+        asian_affine_family_xgrowth_carrier_t *parent_xgrowth = NULL;
+        asian_affine_family_geocv_request_t *parent_geocv = NULL;
+        if (asian_variable_carrier_create(1u, cap, &carrier) != 0 ||
+            asian_variable_carrier_create(1u, cap, &scratch_carrier) != 0 ||
+            request == NULL || scratch_request == NULL || output == NULL ||
+            parent_output == NULL)
+            return -1;
+        if (family == ASIAN_VARIABLE_ARITHMETIC) {
+            parent_growth = a64(sizeof(*parent_growth));
+            parent_arithmetic = a64(sizeof(*parent_arithmetic));
+            if (parent_growth == NULL || parent_arithmetic == NULL ||
+                asian_affine_family_growth_carrier_prepare(parent, &market,
+                    parent_growth) != 0 ||
+                asian_affine_family_arithmetic_request_prepare_growth(parent,
+                    NULL, parent_growth, &input, ASIAN_AFFINE_FAMILY_AFFINE,
+                    parent_arithmetic) != 0 ||
+                asian_affine_family_arithmetic_prepared_price(parent_arithmetic,
+                    parent_output) != 0)
+                return -1;
+        } else {
+            parent_xgrowth = a64(sizeof(*parent_xgrowth));
+            parent_geocv = a64(sizeof(*parent_geocv));
+            if (parent_xgrowth == NULL || parent_geocv == NULL ||
+                asian_affine_family_xgrowth_carrier_prepare(parent, &market,
+                    parent_xgrowth) != 0 ||
+                asian_affine_family_geocv_request_prepare(parent, NULL,
+                    parent_xgrowth, &input, ASIAN_AFFINE_FAMILY_AFFINE,
+                    parent_geocv) != 0 ||
+                asian_affine_family_geocv_prepared_price(parent_geocv,
+                    parent_output) != 0)
+                return -1;
+        }
+        if (asian_variable_carrier_prepare(engine, 1u, &market, carrier) != 0 ||
+            asian_variable_strip_request_prepare(engine, carrier, &input,
+                family, ASIAN_AFFINE_FAMILY_AFFINE, request) != 0 ||
+            asian_variable_sobol_price(request, 1u, output) != 0 ||
+            memcmp(parent_output, &output->value.strip,
+                   sizeof(*parent_output)) != 0)
+            return -1;
+        if (family == ASIAN_VARIABLE_ARITHMETIC) {
+            if (memcmp(parent_growth->growth, carrier->growth,
+                       ASIAN_AFFINE_FAMILY_DONOR_VALUES * sizeof(float)) != 0)
+                return -1;
+        } else if (memcmp(parent_xgrowth->x, carrier->x,
+                          ASIAN_AFFINE_FAMILY_DONOR_VALUES * sizeof(float)) != 0 ||
+                   memcmp(parent_xgrowth->growth, carrier->growth,
+                          ASIAN_AFFINE_FAMILY_DONOR_VALUES * sizeof(float)) != 0) {
+            return -1;
+        }
+        asian_variable_b1_request_footprint_t footprint;
+        if (asian_variable_b1_request_footprint(engine, carrier, &input,
+                family, &footprint) != 0 ||
+            footprint.selected_blocks != 1u ||
+            footprint.selected_fixings != 64u ||
+            footprint.route_suffix_bytes_written != 0u ||
+            footprint.unused_block_bytes_written != 0u)
+            return -1;
+        const size_t output_bytes = output_write_footprint(request);
+        if (output_bytes == 0u) return -1;
+        printf("B1_REQUEST_FOOTPRINT family=%s N=64 "
+               "logical_unique_read_bytes=%zu persistent_write_bytes=%zu "
+               "selected_block_write_bytes=%zu route_prefix_write_bytes=%zu "
+               "route_suffix_write_bytes=%zu unused_block_write_bytes=%zu "
+               "request_capacity_bytes=%zu\n", family_name,
+               footprint.logical_unique_bytes_read,
+               footprint.persistent_bytes_written,
+               footprint.selected_block_bytes_written,
+               footprint.route_prefix_bytes_written,
+               footprint.route_suffix_bytes_written,
+               footprint.unused_block_bytes_written,
+               footprint.request_capacity_bytes);
+        printf("B1_OUTPUT_FOOTPRINT family=%s output_capacity_bytes=%zu "
+               "output_bytes_written=%zu whole_capacity_clear=%s\n",
+               family_name, sizeof(*output), output_bytes,
+               output_bytes == sizeof(*output) ? "YES" : "NO");
+        for (uint32_t stage = 0; stage < 5u; ++stage) {
+            asian_variable_b1_leaf_audit_reset();
+            int status = 0;
+            if (stage == 0u) {
+                status = asian_variable_carrier_prepare(engine, 1u, &market,
+                    scratch_carrier);
+            } else if (stage == 1u) {
+                status = asian_variable_strip_request_prepare(engine, carrier,
+                    &input, family, ASIAN_AFFINE_FAMILY_AFFINE,
+                    scratch_request);
+            } else if (stage == 2u) {
+                status = asian_variable_sobol_price(request, 1u, output);
+            } else if (stage == 3u) {
+                status = asian_variable_strip_request_prepare(engine, carrier,
+                    &input, family, ASIAN_AFFINE_FAMILY_AFFINE,
+                    scratch_request);
+                if (status == 0)
+                    status = asian_variable_sobol_price(scratch_request, 1u,
+                        output);
+            } else {
+                status = asian_variable_carrier_prepare(engine, 1u, &market,
+                    scratch_carrier);
+                if (status == 0)
+                    status = asian_variable_strip_request_prepare(engine,
+                        scratch_carrier, &input, family,
+                        ASIAN_AFFINE_FAMILY_AFFINE, scratch_request);
+                if (status == 0)
+                    status = asian_variable_sobol_price(scratch_request, 1u,
+                        output);
+            }
+            const uint64_t leaves = asian_variable_b1_leaf_audit_count();
+            const uint64_t expected = stage < 2u ? 0u : 1u;
+            printf("B1_LIFECYCLE_AUDIT family=%s stage=%s "
+                   "pricing_leaf_invocations=%llu expected=%llu %s\n",
+                   family_name, stage_names[stage],
+                   (unsigned long long)leaves,
+                   (unsigned long long)expected,
+                   status == 0 && leaves == expected ? "PASS" : "FAIL");
+            if (status != 0 || leaves != expected) return -1;
+        }
+        free(parent_geocv); free(parent_xgrowth);
+        free(parent_arithmetic); free(parent_growth);
+        free(parent_output); free(output); free(scratch_request); free(request);
+        asian_variable_carrier_destroy(scratch_carrier);
+        asian_variable_carrier_destroy(carrier);
+    }
+    asian_affine_family_engine_destroy(parent);
+    free(parent);
+    return 0;
 }
 
 static int run_strip_case(asian_variable_engine_t *engine,
@@ -330,6 +516,7 @@ int main(int argc, char **argv)
     if (engine == NULL || asian_variable_engine_create(engine, 1) != 0)
         return 1;
     if (main_accuracy(engine) != 0 ||
+        b1_lifecycle_audit(engine) != 0 ||
         (full_sde && bounded_sde(engine) != 0)) {
         fputs("variable_block_correctness FAIL\n", stderr);
         return 1;

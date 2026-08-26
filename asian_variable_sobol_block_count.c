@@ -408,6 +408,7 @@ static int prepare_arithmetic_block(
     const asian_affine_family_request_input_t *input,
     enum asian_affine_family_provider provider, uint32_t block,
     const asian_genuine_strip_context_t *strip,
+    int copy_strip,
     asian_affine_family_arithmetic_request_t *request)
 {
     const uint32_t total = input->future_fixings + input->completed_fixings;
@@ -422,7 +423,7 @@ static int prepare_arithmetic_block(
             request->routes.generic);
     }
     if (status != 0) return -1;
-    request->strip = *strip;
+    if (copy_strip) request->strip = *strip;
     memset(&request->growth, 0, sizeof(request->growth));
     if (provider == ASIAN_AFFINE_FAMILY_AFFINE) {
         request->growth.affine.d1_growth =
@@ -462,6 +463,7 @@ static int prepare_geocv_block(
     const asian_affine_family_request_input_t *input,
     enum asian_affine_family_provider provider, uint32_t block,
     const asian_genuine_strip_context_t *strip,
+    int copy_strip,
     asian_affine_family_geocv_request_t *request)
 {
     const uint32_t total = input->future_fixings + input->completed_fixings;
@@ -476,7 +478,7 @@ static int prepare_geocv_block(
             request->routes.generic);
     }
     if (status != 0) return -1;
-    request->strip = *strip;
+    if (copy_strip) request->strip = *strip;
     request->leaf = selected_leaf(input->strike_count, input->future_fixings);
     uint32_t log_bits;
     memcpy(&log_bits, &request->strip.log_base, sizeof(log_bits));
@@ -562,19 +564,19 @@ int asian_variable_strip_request_prepare(
         (family == ASIAN_VARIABLE_GEOCV &&
          carrier->capability != ASIAN_VARIABLE_X_GROWTH))
         return ASIAN_AFFINE_FAMILY_INVALID;
-    memset(request, 0, sizeof(*request));
-    asian_genuine_strip_context_t strip __attribute__((aligned(64)));
+    asian_genuine_strip_context_t *strip = family == ASIAN_VARIABLE_ARITHMETIC ?
+        &request->block[0].arithmetic.strip : &request->block[0].geocv.strip;
     uint32_t padded = 0u;
     int status;
     if (family == ASIAN_VARIABLE_ARITHMETIC) {
         status = asian_genuine_arithmetic_growth_only_strip_prepare_padded(
-            &strip, input->s0, input->rate, input->dividend_yield,
+            strip, input->s0, input->rate, input->dividend_yield,
             input->sigma, input->maturity, input->future_fixings,
             input->completed_fixings, input->initial_arithmetic_sum,
             input->past_log_sum, input->strikes, input->strike_count, &padded);
     } else {
         status = asian_geometric_cv_packet_local_strip_prepare_padded(
-            &strip, input->s0, input->rate, input->dividend_yield,
+            strip, input->s0, input->rate, input->dividend_yield,
             input->sigma, input->maturity, input->future_fixings,
             input->completed_fixings, input->initial_arithmetic_sum,
             input->past_log_sum, input->strikes, input->strike_count, &padded);
@@ -585,9 +587,9 @@ int asian_variable_strip_request_prepare(
     for (uint32_t block = 0; block < blocks; ++block) {
         status = family == ASIAN_VARIABLE_ARITHMETIC ?
             prepare_arithmetic_block(engine, carrier, input, provider, block,
-                &strip, &request->block[block].arithmetic) :
+                strip, block != 0u, &request->block[block].arithmetic) :
             prepare_geocv_block(engine, carrier, input, provider, block,
-                &strip, &request->block[block].geocv);
+                strip, block != 0u, &request->block[block].geocv);
         if (status != 0) return ASIAN_AFFINE_FAMILY_INVALID;
     }
     request->block_count = (uint8_t)blocks;
@@ -595,6 +597,90 @@ int asian_variable_strip_request_prepare(
     request->provider = (uint8_t)provider;
     request->strike_count = input->strike_count;
     request->magic = ASIAN_VARIABLE_STRIP_REQUEST_MAGIC;
+    return ASIAN_AFFINE_FAMILY_OK;
+}
+
+static size_t b1_logical_unique_read_bytes(enum asian_variable_family family,
+                                           uint32_t fixing_count,
+                                           uint32_t strike_count)
+{
+    /* This is semantic source-byte accounting, not a claim about cache-line
+       traffic or compiler load width.  Count every unique public-input field,
+       the pointed-to strikes, the engine magic/selected plan pointer, the
+       carrier fields consumed by request preparation, and the selected plan's
+       one-byte donor prefix. */
+    const size_t engine_bytes = sizeof(uint32_t) + sizeof(void *);
+    const size_t market_bytes = 4u * sizeof(double) + sizeof(uint32_t);
+    const size_t carrier_bytes = sizeof(void *) + market_bytes +
+        sizeof(uint32_t) + 2u * sizeof(uint8_t) +
+        (family == ASIAN_VARIABLE_GEOCV ? sizeof(void *) : 0u);
+    return sizeof(asian_affine_family_request_input_t) +
+        (size_t)strike_count * sizeof(float) + engine_bytes + carrier_bytes +
+        (size_t)fixing_count * sizeof(uint8_t);
+}
+
+int asian_variable_b1_request_footprint(
+    const asian_variable_engine_t *engine,
+    const asian_variable_carrier_t *carrier,
+    const asian_affine_family_request_input_t *input,
+    enum asian_variable_family family,
+    asian_variable_b1_request_footprint_t *footprint)
+{
+    if (engine == NULL || carrier == NULL || input == NULL ||
+        footprint == NULL || carrier->prepared_block_count != 1u ||
+        input->future_fixings != 64u || input->strike_count != 1u ||
+        (family != ASIAN_VARIABLE_ARITHMETIC &&
+         family != ASIAN_VARIABLE_GEOCV))
+        return ASIAN_AFFINE_FAMILY_INVALID;
+    asian_variable_strip_request_t *first = NULL, *second = NULL;
+    if (posix_memalign((void **)&first, 64u, sizeof(*first)) != 0 ||
+        posix_memalign((void **)&second, 64u, sizeof(*second)) != 0) {
+        free(second); free(first);
+        return ASIAN_AFFINE_FAMILY_INVALID;
+    }
+    memset(first, 0xa5, sizeof(*first));
+    memset(second, 0x5a, sizeof(*second));
+    int status = asian_variable_strip_request_prepare(engine, carrier, input,
+        family, ASIAN_AFFINE_FAMILY_AFFINE, first);
+    if (status == ASIAN_AFFINE_FAMILY_OK)
+        status = asian_variable_strip_request_prepare(engine, carrier, input,
+            family, ASIAN_AFFINE_FAMILY_AFFINE, second);
+    if (status != ASIAN_AFFINE_FAMILY_OK) {
+        free(second); free(first);
+        return status;
+    }
+    memset(footprint, 0, sizeof(*footprint));
+    footprint->logical_unique_bytes_read = b1_logical_unique_read_bytes(
+        family, input->future_fixings, input->strike_count);
+    footprint->request_capacity_bytes = sizeof(*first);
+    footprint->selected_blocks = 1u;
+    footprint->selected_fixings = input->future_fixings;
+    const unsigned char *a = (const unsigned char *)(const void *)first;
+    const unsigned char *b = (const unsigned char *)(const void *)second;
+    const size_t block0_begin = offsetof(asian_variable_strip_request_t, block);
+    const size_t block0_end = block0_begin + sizeof(first->block[0]);
+    const size_t unused_begin = block0_end;
+    const unsigned char *route0 = family == ASIAN_VARIABLE_ARITHMETIC ?
+        (const unsigned char *)(const void *)first->block[0].arithmetic.routes.affine :
+        (const unsigned char *)(const void *)first->block[0].geocv.routes.affine;
+    const size_t routes_begin = (size_t)(route0 - a);
+    const size_t route_prefix_end = routes_begin + input->future_fixings *
+        sizeof(first->block[0].arithmetic.routes.affine[0]);
+    const size_t routes_end = routes_begin + ASIAN_META_DIRECTIONS *
+        sizeof(first->block[0].arithmetic.routes.affine[0]);
+    for (size_t offset = 0; offset < sizeof(*first); ++offset) {
+        if (a[offset] == 0xa5u && b[offset] == 0x5au) continue;
+        ++footprint->persistent_bytes_written;
+        if (offset >= block0_begin && offset < block0_end)
+            ++footprint->selected_block_bytes_written;
+        if (offset >= routes_begin && offset < route_prefix_end)
+            ++footprint->route_prefix_bytes_written;
+        if (offset >= route_prefix_end && offset < routes_end)
+            ++footprint->route_suffix_bytes_written;
+        if (offset >= unused_begin)
+            ++footprint->unused_block_bytes_written;
+    }
+    free(second); free(first);
     return ASIAN_AFFINE_FAMILY_OK;
 }
 

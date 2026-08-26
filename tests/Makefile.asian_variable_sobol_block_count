@@ -46,8 +46,12 @@ COMMON_OBJECTS := $(COMMON_OBJECTS:.c=.o)
 COMMON_OBJECTS := $(COMMON_OBJECTS:.s=.o)
 COMMON_OBJECTS := $(COMMON_OBJECTS:.S=.o)
 TEST_OBJECTS := $(OBJDIR)/tests/test_asian_variable_sobol_block_count.o \
-	$(OBJDIR)/tests/asian_variable_structural_check.o
+	$(OBJDIR)/tests/asian_variable_structural_check.o \
+	$(OBJDIR)/tests/asian_variable_b1_leaf_audit_wrap.o
 BENCH_OBJECT := $(OBJDIR)/benchmarks/bench_asian_variable_sobol_block_count.o
+TEST_LDFLAGS := \
+	-Wl,--wrap=asian_affine_family_arithmetic_prepared_price \
+	-Wl,--wrap=asian_geometric_cv_immediate_invoke_price_1
 
 .DELETE_ON_ERROR:
 .PHONY: check audit benchmark-native
@@ -66,7 +70,7 @@ $(OBJDIR)/%.o: %.S private/asian_variable_sobol_signed_z.bin \
 	@$(CC) $(CFLAGS) -c $< -o $@
 
 $(TEST): $(TEST_OBJECTS) $(COMMON_OBJECTS)
-	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+	@$(CC) $(CFLAGS) $^ $(TEST_LDFLAGS) $(LDFLAGS) -o $@
 
 $(BENCH): $(BENCH_OBJECT) $(COMMON_OBJECTS)
 	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@

@@ -122,6 +122,16 @@ def main():
     if contaminated:
         raise RuntimeError(f"request call graph contamination {contaminated}")
 
+    strip_request_calls = calls(binary, "asian_variable_strip_request_prepare")
+    pricing_names = re.compile(
+        r"prepared_price|sobol_price|price_[124]_diag|price_delta_[124]_diag",
+        re.I)
+    hidden_pricing = [name for name in strip_request_calls
+                      if pricing_names.search(name)]
+    if hidden_pricing:
+        raise RuntimeError(f"pricing leaf entered from request preparation "
+                           f"{hidden_pricing}")
+
     pricing = "\n".join(body(binary, name) for name in (
         "asian_variable_sobol_price", "price_strip", "price_full_risk"))
     if "asian_variable_signed_z_bank" in pricing or \
@@ -152,6 +162,40 @@ def main():
         raise RuntimeError(f"peak ZMM liveness {peak_zmm}")
 
     source = (root / "asian_variable_sobol_block_count.c").read_text()
+    strip_prepare_source = source[
+        source.index("int asian_variable_strip_request_prepare("):
+        source.index("static void geocv_immediate_block")]
+    if "memset(request, 0, sizeof(*request))" in strip_prepare_source or \
+       "block != 0u" not in strip_prepare_source or \
+       "asian_variable_b1_request_footprint" not in source:
+        raise RuntimeError("B1 selected-block request preparation audit drift")
+    benchmark_source = (
+        root / "benchmarks/bench_asian_variable_sobol_block_count.c").read_text()
+    for token in (
+            "b1_measure_pair", "b1_block_invoke_audited",
+            "asian_affine_family_growth_carrier_prepare",
+            "asian_affine_family_xgrowth_carrier_prepare",
+            "asian_affine_family_arithmetic_request_prepare_growth",
+            "asian_affine_family_geocv_request_prepare",
+            "B1_PARENT_COMPARISON"):
+        if token not in benchmark_source:
+            raise RuntimeError(f"missing B1 parent lifecycle token {token}")
+    if "for(uint32_t observation=0;observation<4u;++observation)" not in \
+            benchmark_source:
+        raise RuntimeError("B1 comparison is not interleaved in quartets")
+    wrapper_source = (
+        root / "tests/asian_variable_b1_leaf_audit_wrap.c").read_text()
+    makefile_source = (
+        root / "tests/Makefile.asian_variable_sobol_block_count").read_text()
+    for token in (
+            "__wrap_asian_affine_family_arithmetic_prepared_price",
+            "__wrap_asian_geometric_cv_immediate_invoke_price_1"):
+        if token not in wrapper_source:
+            raise RuntimeError(f"missing dynamic B1 leaf wrapper {token}")
+    if "TEST_LDFLAGS" not in makefile_source or \
+       "$(TEST_LDFLAGS) $(LDFLAGS)" not in makefile_source or \
+       "$(BENCH_OBJECT) $(COMMON_OBJECTS)" not in makefile_source:
+        raise RuntimeError("B1 leaf instrumentation leaked into native benchmark")
     price_source = source[source.index("static int price_full_risk"):]
     if "++phase1_counter" not in price_source or \
        "4096.0 * (double)block_count" not in price_source:
@@ -160,6 +204,11 @@ def main():
     print("variable_sobol_block_audit PASS "
           "ordered_d1_special_meta_columns=YES ordinary_d1_substitution=NO "
           "block_zero_replay=NO block_count_one_exact=YES "
+          "b1_request_whole_capacity_memset=NO "
+          "b1_selected_blocks=1 b1_selected_fixings=64 "
+          "b1_route_suffix_writes=0 b1_unused_block_writes=0 "
+          "b1_whole_output_clear=YES_QUALIFIED_PARENT_BEHAVIOR "
+          "b1_lifecycle_leaf_audit=PASS b1_parent_interleaved=YES "
           "plan_build_in_request=NO carrier_regeneration_in_reused_path=NO "
           "phase1_leaves_per_block=1 existing_4096_leaves_unchanged=YES "
           "pricing_signed_z_reads=0 runtime_joe_kuo_access=NO "
