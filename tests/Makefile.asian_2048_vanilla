@@ -1,0 +1,69 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .asian_2048_vanilla_objects
+TEST := test_asian_2048_vanilla
+BENCH := bench_asian_2048_vanilla
+
+COMMON_SOURCES := \
+	asian_arithmetic_joe_kuo_256.s \
+	private/asian_variable_sobol_signed_z_avx512.S \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	private/asian_meta_direction_descriptors.c \
+	private/asian_meta_direction_affine_route.c \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_arithmetic_growth_only_strip_adapter.c \
+	asian_genuine_arithmetic_growth_only_setup.c \
+	asian_genuine_arithmetic_growth_only_q_avx512.s \
+	private/asian_meta_arithmetic_growth_only_q_avx512.s \
+	asian_affine_route_family.c \
+	asian_2048_vanilla.c \
+	private/asian_2048_vanilla_price_avx512.s
+
+COMMON_OBJECTS := $(addprefix $(OBJDIR)/,$(COMMON_SOURCES))
+COMMON_OBJECTS := $(COMMON_OBJECTS:.c=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.s=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.S=.o)
+TEST_OBJECT := $(OBJDIR)/tests/test_asian_2048_vanilla.o
+BENCH_OBJECT := $(OBJDIR)/benchmarks/bench_asian_2048_vanilla.o
+TEST_LDFLAGS := -Wl,--wrap=asian_2048_affine_price_1_diag
+
+.DELETE_ON_ERROR:
+.PHONY: check audit benchmark-native
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S private/asian_variable_sobol_signed_z.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(TEST): $(TEST_OBJECT) $(COMMON_OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(TEST_LDFLAGS) $(LDFLAGS) -o $@
+
+$(BENCH): $(BENCH_OBJECT) $(COMMON_OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(TEST) $(BENCH)
+	@python3 tests/check_asian_2048_provenance.py
+	@$(MAKE) -s -C private/provenance/asian_2048_virtual_block/virtual_block test
+	@$(MAKE) -s -C private/provenance/asian_2048_virtual_block/virtual_block clean
+	@/opt/intel-sde/sde64 -spr -- ./$(TEST)
+
+audit: $(BENCH)
+	@python3 tests/audit_asian_2048_vanilla.py --binary ./$(BENCH)
+
+benchmark-native: $(TEST) $(BENCH)
+	@test "$(CPU)" = "0" || (echo "CPU=0 is required" >&2; exit 2)
+	@./$(BENCH) --check-host --cpu $(CPU)
+	@./$(TEST) >/dev/null
+	@python3 tests/audit_asian_2048_vanilla.py --binary ./$(BENCH)
+	@./$(BENCH) --cpu $(CPU)
