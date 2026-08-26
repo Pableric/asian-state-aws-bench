@@ -1,0 +1,102 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .asian_variable_sobol_block_count_objects
+TEST := test_asian_variable_sobol_block_count
+BENCH := bench_asian_variable_sobol_block_count
+
+COMMON_SOURCES := \
+	asian_arithmetic_joe_kuo_256.s \
+	asian_genuine_permute_setup.c \
+	asian_genuine_multistrike_full_risk_setup.c \
+	asian_genuine_multistrike_full_risk_avx512.s \
+	asian_genuine_multistrike_full_risk_hybrid_dispatch.c \
+	asian_genuine_fixed_block_source_setup.c \
+	private/asian_variable_sobol_signed_z_avx512.S \
+	asian_geometric_cv_payoff_avx512.s \
+	asian_genuine_price_delta_strip_setup.c \
+	asian_genuine_price_delta_strip_avx512.s \
+	asian_genuine_arithmetic_growth_only_setup.c \
+	asian_genuine_arithmetic_growth_only_strip_adapter.c \
+	asian_genuine_arithmetic_growth_only_q_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_setup.c \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	private/asian_meta_direction_descriptors.c \
+	private/asian_meta_direction_affine_route.c \
+	private/asian_meta_direction_qsort_control.c \
+	private/asian_meta_arithmetic_growth_only_q_avx512.s \
+	asian_geometric_cv_packet_local_setup.c \
+	asian_geometric_cv_packet_local_avx512.s \
+	asian_geometric_cv_immediate_setup.c \
+	asian_geometric_cv_immediate_avx512.s \
+	private/asian_affine_route_family_generic_immediate_avx512.S \
+	private/asian_affine_route_family_generic_packet_avx512.s \
+	asian_affine_route_family.c \
+	asian_genuine_aad_phase1_setup.c \
+	asian_genuine_aad_phase1_avx512.s \
+	private/asian_commercial_full_risk_affine_phase1_avx512.S \
+	asian_affine_family_full_risk_k1.c \
+	private/asian_variable_sobol_block_metadata.c \
+	asian_variable_sobol_block_count.c
+
+COMMON_OBJECTS := $(addprefix $(OBJDIR)/,$(COMMON_SOURCES))
+COMMON_OBJECTS := $(COMMON_OBJECTS:.c=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.s=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.S=.o)
+TEST_OBJECTS := $(OBJDIR)/tests/test_asian_variable_sobol_block_count.o \
+	$(OBJDIR)/tests/asian_variable_structural_check.o
+BENCH_OBJECT := $(OBJDIR)/benchmarks/bench_asian_variable_sobol_block_count.o
+
+.DELETE_ON_ERROR:
+.PHONY: check audit benchmark-native
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S private/asian_variable_sobol_signed_z.bin \
+		asian_genuine_aad_phase1_avx512.s
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(TEST): $(TEST_OBJECTS) $(COMMON_OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+$(BENCH): $(BENCH_OBJECT) $(COMMON_OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(TEST) $(BENCH)
+	@$(CC) -O2 -std=c11 tests/generate_asian_variable_signed_z.c \
+		-lmpfr -lgmp -lm -o $(OBJDIR)/regenerate_signed_z
+	@$(OBJDIR)/regenerate_signed_z private/asian_genuine_fixed_block_signed_z.bin \
+		$(OBJDIR)/regenerated_signed_z.bin direction_numbers/joe_kuo_6_21201.bin
+	@cmp $(OBJDIR)/regenerated_signed_z.bin private/asian_variable_sobol_signed_z.bin
+	@python3 tests/generate_asian_variable_sobol_metadata.py \
+		--joe-kuo direction_numbers/joe_kuo_6_21201.bin \
+		--descriptors private/asian_meta_direction_descriptors.c \
+		--output $(OBJDIR)/regenerated_metadata.c
+	@cmp $(OBJDIR)/regenerated_metadata.c private/asian_variable_sobol_block_metadata.c
+	@rm -f $(OBJDIR)/regenerate_signed_z $(OBJDIR)/regenerated_signed_z.bin \
+		$(OBJDIR)/regenerated_metadata.c
+	@cmp -n 32768 private/asian_variable_sobol_signed_z.bin \
+		private/asian_genuine_fixed_block_signed_z.bin
+	@test "$$(head -c 32768 private/asian_variable_sobol_signed_z.bin | sha256sum | cut -d' ' -f1)" = \
+		"ecf3bb854e98bedcf724d0743438457ccf8b600e1264cb537741ce0b9d90d98d"
+	@test "$$(sha256sum private/asian_variable_sobol_signed_z.bin | cut -d' ' -f1)" = \
+		"f8098bba7c3cbb4fc406389ba29bac37c2991306f3598b373d1bd7b5f89c99cc"
+	@/opt/intel-sde/sde64 -spr -- ./$(TEST) --sde
+
+audit: $(BENCH)
+	@python3 tests/audit_asian_variable_sobol_block_count.py --binary ./$(BENCH)
+
+benchmark-native: $(TEST) $(BENCH)
+	@test "$(CPU)" = "0" || (echo "CPU=0 is required" >&2; exit 2)
+	@./$(TEST) >/dev/null
+	@python3 tests/audit_asian_variable_sobol_block_count.py --binary ./$(BENCH)
+	@./$(BENCH) --cpu $(CPU)
