@@ -1,0 +1,78 @@
+CC ?= gcc
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .asian_affine_discrete_barrier_lifecycle_objects
+TEST := test_asian_affine_discrete_barrier_lifecycle
+BENCH := bench_asian_affine_discrete_barrier_lifecycle
+
+COMMON_SOURCES := \
+	asian_arithmetic_joe_kuo_256.s \
+	asian_genuine_permute_setup.c \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	private/asian_meta_direction_descriptors.c \
+	private/asian_meta_direction_affine_route.c \
+	private/asian_meta_direction_qsort_control.c \
+	asian_genuine_discrete_barrier_setup.c \
+	asian_genuine_discrete_barrier_avx512.s \
+	private/asian_affine_discrete_barrier_avx512.S \
+	asian_affine_discrete_barrier_lifecycle.c
+
+COMMON_OBJECTS := $(addprefix $(OBJDIR)/,$(COMMON_SOURCES))
+COMMON_OBJECTS := $(COMMON_OBJECTS:.c=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.s=.o)
+COMMON_OBJECTS := $(COMMON_OBJECTS:.S=.o)
+TEST_OBJECTS := $(OBJDIR)/tests/test_asian_affine_discrete_barrier_lifecycle.o \
+	$(OBJDIR)/tests/asian_affine_discrete_barrier_leaf_wrap.o
+BENCH_OBJECT := $(OBJDIR)/benchmarks/bench_asian_affine_discrete_barrier_lifecycle.o
+
+WRAPS := \
+	-Wl,--wrap=asian_affine_barrier_vanilla_call_interleaved_diag \
+	-Wl,--wrap=asian_affine_barrier_vanilla_put_interleaved_diag \
+	-Wl,--wrap=asian_affine_barrier_down_call_self_interleaved_diag \
+	-Wl,--wrap=asian_affine_barrier_down_put_self_interleaved_diag \
+	-Wl,--wrap=asian_affine_barrier_vanilla_call_grouped_diag \
+	-Wl,--wrap=asian_affine_barrier_vanilla_put_grouped_diag \
+	-Wl,--wrap=asian_affine_barrier_up_call_self_grouped_diag \
+	-Wl,--wrap=asian_affine_barrier_up_put_self_grouped_diag
+
+.DELETE_ON_ERROR:
+.PHONY: check audit benchmark-native
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(TEST): $(TEST_OBJECTS) $(COMMON_OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(WRAPS) $(LDFLAGS) -o $@
+
+$(BENCH): $(BENCH_OBJECT) $(COMMON_OBJECTS)
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(TEST) $(BENCH)
+	@/opt/intel-sde/sde64 -spr -- ./$(TEST)
+	@/opt/intel-sde/sde64 -spr -- ./$(BENCH) --check
+
+audit: $(BENCH)
+	@python3 tests/audit_asian_affine_discrete_barrier_lifecycle.py \
+		--binary ./$(BENCH)
+
+benchmark-native: $(TEST) $(BENCH)
+	@test "$(CPU)" = "0" || \
+		(echo "CPU=0 on Sapphire Rapids is required" >&2; exit 2)
+	@./$(BENCH) --native-check --cpu $(CPU) >/dev/null
+	@python3 tests/audit_asian_affine_discrete_barrier_lifecycle.py \
+		--binary ./$(BENCH)
+	@./$(BENCH) --timing --cpu $(CPU)
