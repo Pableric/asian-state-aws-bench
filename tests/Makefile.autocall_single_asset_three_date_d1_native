@@ -1,0 +1,91 @@
+CC ?= gcc
+CXX ?= g++
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-ffp-contract=off -fno-fast-math -Wall -Wextra -Werror -I.
+OBJDIR := .autocall_single_asset_three_date_d1_native_objects
+MATH := test_autocall_single_asset_three_date_d1_native_math
+TEST := test_autocall_single_asset_three_date_d1_native
+REFERENCE := reference_autocall_single_asset_three_date_d1_native
+BENCH := bench_autocall_single_asset_three_date_d1_native
+CXXFLAGS := -std=c++17 -O2 -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+PORTABLE_CFLAGS := -std=c11 -O2 -march=x86-64 -mtune=generic \
+	-ffp-contract=off -fno-fast-math -Wall -Wextra -Werror -I.
+COMMON := \
+	$(OBJDIR)/private/asian_meta_direction_descriptors.o \
+	$(OBJDIR)/private/asian_meta_direction_affine_route.o \
+	$(OBJDIR)/asian_genuine_fixed_block_source_avx512.o \
+	$(OBJDIR)/autocall_single_asset_three_date_greeks.o \
+	$(OBJDIR)/autocall_single_asset_three_date_d1_native.o \
+	$(OBJDIR)/private/autocall_single_asset_three_date_d1_native_avx512.o
+RAW_COMMON := \
+	$(OBJDIR)/asian_genuine_arithmetic_fused_source_exp_avx512.o \
+	$(OBJDIR)/private/autocall_single_asset_three_date_raw_avx512.o \
+	$(OBJDIR)/autocall_single_asset_three_date_raw.o
+
+.PHONY: check audit benchmark-native clean
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S private/asian_exp_p8_18diag.inc
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/portable/autocall_single_asset_three_date_greeks.o: \
+	autocall_single_asset_three_date_greeks.c
+	@mkdir -p $(@D)
+	@$(CC) $(PORTABLE_CFLAGS) -c $< -o $@
+
+$(MATH): $(OBJDIR)/tests/test_autocall_single_asset_three_date_d1_native_math.o \
+	$(OBJDIR)/private/autocall_single_asset_three_date_d1_native_math_avx512.o
+	@$(CC) $(CFLAGS) $^ -lm -o $@
+
+$(TEST): $(OBJDIR)/tests/test_autocall_single_asset_three_date_d1_native.o \
+	$(OBJDIR)/tests/autocall_single_asset_three_date_d1_native_leaf_wrap.o $(COMMON)
+	@$(CC) $(CFLAGS) $^ -Wl,--wrap=autocall_d1_native_price5_leaf -lm -o $@
+
+$(REFERENCE): $(OBJDIR)/tests/reference_autocall_single_asset_three_date_d1_native.o \
+	$(OBJDIR)/asian_arithmetic_joe_kuo_256.o \
+	$(OBJDIR)/portable/autocall_single_asset_three_date_greeks.o
+	@$(CXX) $(CXXFLAGS) $^ -lm -o $@
+
+$(OBJDIR)/benchmarks/bench_autocall_single_asset_three_date_d1_native.o: \
+	tests/reference_autocall_single_asset_three_date_d1_native.cpp \
+	tests/reference_autocall_single_asset_three_date_greeks.cpp
+
+$(BENCH): $(OBJDIR)/benchmarks/bench_autocall_single_asset_three_date_d1_native.o \
+	$(OBJDIR)/asian_arithmetic_joe_kuo_256.o $(COMMON) $(RAW_COMMON)
+	@$(CXX) $(CXXFLAGS) $^ -lm -o $@
+
+check: $(MATH) $(TEST) $(REFERENCE) $(BENCH)
+	@/opt/intel-sde/sde64 -spr -- ./$(MATH)
+	@/opt/intel-sde/sde64 -spr -- ./$(TEST)
+	@./$(REFERENCE) --manifest
+	@./$(REFERENCE) --selection
+	@$(MAKE) -f tests/Makefile.autocall_single_asset_three_date_greeks check
+
+audit: $(MATH) $(TEST) $(REFERENCE) $(BENCH)
+	@python3 tests/audit_autocall_single_asset_three_date_d1_native.py \
+		--math ./$(MATH) --test ./$(TEST) --reference ./$(REFERENCE) \
+		--benchmark ./$(BENCH)
+
+benchmark-native: $(MATH) $(TEST) $(REFERENCE) $(BENCH)
+	@test "$(CPU)" = "0" || \
+		(echo "CPU=0 on Sapphire Rapids is required" >&2; exit 2)
+	@./$(MATH) >/dev/null
+	@./$(TEST) >/dev/null
+	@$(MAKE) -f tests/Makefile.autocall_single_asset_three_date_d1_native audit
+	@./$(BENCH) --cpu $(CPU)
+
+clean:
+	@rm -rf $(OBJDIR) $(MATH) $(TEST) $(REFERENCE) $(BENCH)
