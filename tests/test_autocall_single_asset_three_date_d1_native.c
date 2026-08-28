@@ -1,6 +1,7 @@
 #define _POSIX_C_SOURCE 200112L
 #include "private/autocall_single_asset_three_date_d1_native_diag.h"
 #include "tests/autocall_single_asset_three_date_greek_cases.h"
+#include "tests/autocall_single_asset_three_date_d1_native_selection.h"
 
 #include <immintrin.h>
 #include <math.h>
@@ -169,6 +170,19 @@ static double combine3(const autocall_3date_greek_coefficients_t *c,
 
 int main(void)
 {
+    {
+        const double score[7]={90.0,70.0,50.0,30.0,20.0,10.0,1.0};
+        const uint32_t global_mask=(UINT32_C(1)<<3)|(UINT32_C(1)<<4)|
+                                   (UINT32_C(1)<<5);
+        const uint32_t self_mask=global_mask|(UINT32_C(1)<<6);
+        const int selected=autocall_d1_native_select_best_global(
+            global_mask,score,sizeof(score)/sizeof(score[0]));
+        if((self_mask&(UINT32_C(1)<<6))==0u||
+           (global_mask&(UINT32_C(1)<<6))!=0u||selected!=5)return 1;
+        printf("D1_NATIVE_SELECTION_CONTROL PASS selected_index=%d "
+               "selected_paths=2048 terminal_self=PASS terminal_global=NO\n",
+               selected);
+    }
     autocall_d1_native_engine_t engine __attribute__((aligned(64)));
     autocall_d1_native_test_leaf_calls_reset();
     if(autocall_d1_native_engine_create(&engine))return 1;

@@ -18,6 +18,7 @@ NEW = {
     "tests/Makefile.autocall_single_asset_three_date_d1_native",
     "tests/audit_autocall_single_asset_three_date_d1_native.py",
     "tests/autocall_single_asset_three_date_d1_native_leaf_wrap.c",
+    "tests/autocall_single_asset_three_date_d1_native_selection.h",
     "tests/reference_autocall_single_asset_three_date_d1_native.cpp",
     "tests/test_autocall_single_asset_three_date_d1_native.c",
     "tests/test_autocall_single_asset_three_date_d1_native_math.c",
@@ -178,6 +179,18 @@ def main():
         raise RuntimeError(f"runtime dependencies {unexpected}")
     benchmark_source = (root /
         "benchmarks/bench_autocall_single_asset_three_date_d1_native.cpp").read_text()
+    selection_source = (root /
+        "tests/autocall_single_asset_three_date_d1_native_selection.h").read_text()
+    correctness_source = (root /
+        "tests/test_autocall_single_asset_three_date_d1_native.c").read_text()
+    if "autocall_d1_native_select_best_global" not in benchmark_source or \
+       "accuracy.global[pi]" not in benchmark_source or \
+       "primary_score[i] < best" not in selection_source or \
+       "selected!=5" not in correctness_source or \
+       "terminal_global=NO" not in correctness_source:
+        raise RuntimeError("global-only path-count selection regression missing")
+    if "accuracy.self[pi]&&score_median[pi]<best" in benchmark_source:
+        raise RuntimeError("self-only provisional selector remains")
     if "family==6u&&model==143u" not in benchmark_source or \
        "std::strcmp(argv[2],\"0\")" not in benchmark_source:
         raise RuntimeError("SPR/CPU-zero refusal missing")

@@ -61,7 +61,11 @@ $(REFERENCE): $(OBJDIR)/tests/reference_autocall_single_asset_three_date_d1_nati
 
 $(OBJDIR)/benchmarks/bench_autocall_single_asset_three_date_d1_native.o: \
 	tests/reference_autocall_single_asset_three_date_d1_native.cpp \
-	tests/reference_autocall_single_asset_three_date_greeks.cpp
+	tests/reference_autocall_single_asset_three_date_greeks.cpp \
+	tests/autocall_single_asset_three_date_d1_native_selection.h
+
+$(OBJDIR)/tests/test_autocall_single_asset_three_date_d1_native.o: \
+	tests/autocall_single_asset_three_date_d1_native_selection.h
 
 $(BENCH): $(OBJDIR)/benchmarks/bench_autocall_single_asset_three_date_d1_native.o \
 	$(OBJDIR)/asian_arithmetic_joe_kuo_256.o $(COMMON) $(RAW_COMMON)

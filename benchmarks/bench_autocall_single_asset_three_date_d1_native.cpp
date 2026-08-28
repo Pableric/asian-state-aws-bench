@@ -9,6 +9,7 @@ extern "C" {
 #undef AUTOCALL_D1_NATIVE_REFERENCE_ENTRY
 
 #include "private/autocall_single_asset_three_date_d1_native_diag.h"
+#include "tests/autocall_single_asset_three_date_d1_native_selection.h"
 
 #include <algorithm>
 #include <array>
@@ -391,7 +392,6 @@ int main(int argc,char **argv)
 
     std::array<double,7> fresh_latency{};
     std::array<double,7> score_median{},score_p90{},score_worst{};
-    int provisional=-1;double best=INFINITY;
     for(unsigned pi=0;pi<PATHS.size();++pi) {
         std::vector<double> latency;for(const auto &v:warm[pi])latency.push_back(v.fw);
         fresh_latency[pi]=percentile(latency,.5);
@@ -403,7 +403,6 @@ int main(int argc,char **argv)
             "p90_bp2_ns=%.9g worst_bp2_ns=%.9g self=%s global=%s\n",PATHS[pi],
             fresh_latency[pi],score_median[pi],score_p90[pi],score_worst[pi],
             accuracy.self[pi]?"PASS":"FAIL",accuracy.global[pi]?"YES":"NO");
-        if(accuracy.self[pi]&&score_median[pi]<best){best=score_median[pi];provisional=int(pi);}
     }
     for(unsigned pi=0;pi<PATHS.size();++pi) {
         const double raw_latency=percentile(five_raw_fresh[pi],.5);
@@ -424,8 +423,11 @@ int main(int argc,char **argv)
             percentile(portable_improvement,.5),percentile(portable_improvement,.1));
     }
 
-    int selected=(provisional>=0&&provisional<6&&accuracy.global[provisional])?
-                 provisional:-1;
+    uint32_t global_mask=0;
+    for(unsigned pi=0;pi<PATHS.size();++pi)
+        if(accuracy.global[pi]) global_mask|=UINT32_C(1)<<pi;
+    const int selected=autocall_d1_native_select_best_global(
+        global_mask,score_median.data(),score_median.size());
     bool holdout=false;
     if(selected>=0) {
         const std::vector<unsigned> two{unsigned(selected),unsigned(selected+1)};
