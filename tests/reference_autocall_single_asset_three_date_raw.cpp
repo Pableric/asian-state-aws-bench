@@ -1,8 +1,5 @@
 #include "tests/autocall_single_asset_three_date_cases.h"
 
-#include <boost/math/distributions/normal.hpp>
-#include <boost/math/quadrature/gauss_kronrod.hpp>
-
 #include <algorithm>
 #include <array>
 #include <cmath>
@@ -17,11 +14,101 @@ extern "C" const unsigned char asian_arithmetic_joe_kuo_256_records[];
 namespace {
 
 constexpr double SQRT_TWO_PI = 2.506628274631000502415765284811;
+constexpr long double PI = 3.141592653589793238462643383279502884L;
 
 double pdf(double x) { return std::exp(-0.5*x*x) / SQRT_TWO_PI; }
 double cdf(double x) { return 0.5 * std::erfc(-x / std::sqrt(2.0)); }
 
 struct ValueError { double value; double error; };
+
+/*
+ * Test-only Acklam inverse-normal approximation.  The coefficients, tail
+ * split and evaluation order are copied from the repository's qualified
+ * Asian scalar oracles, notably
+ * tests/test_asian_genuine_aad_phase1_vector.c::inverse_normal.
+ */
+double inverse_normal_acklam(double p)
+{
+    static constexpr double a[] = {
+        -39.69683028665376, 220.9460984245205, -275.9285104469687,
+        138.3577518672690, -30.66479806614716, 2.506628277459239};
+    static constexpr double c[] = {
+        -0.007784894002430293, -0.3223964580411365,
+        -2.400758277161838, -2.549732539343734,
+        4.374664141464968, 2.938163982698783};
+    static constexpr double d[] = {
+        0.007784695709041462, 0.3224671290700398,
+        2.445134137142996, 3.754408661907416};
+    static constexpr double denominator[] = {
+        -54.47609879822406, 161.5858368580409, -155.6989798598866,
+        66.80131188771972, -13.28068155288572};
+    if (p < 0.02425) {
+        const double q = std::sqrt(-2.0*std::log(p));
+        return (((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+               ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0);
+    }
+    if (p > 0.97575) {
+        const double q = std::sqrt(-2.0*std::log(1.0-p));
+        return -(((((c[0]*q+c[1])*q+c[2])*q+c[3])*q+c[4])*q+c[5]) /
+                ((((d[0]*q+d[1])*q+d[2])*q+d[3])*q+1.0);
+    }
+    const double q = p-0.5, r = q*q;
+    return (((((a[0]*r+a[1])*r+a[2])*r+a[3])*r+a[4])*r+a[5])*q /
+           (((((denominator[0]*r+denominator[1])*r+denominator[2])*r+
+               denominator[3])*r+denominator[4])*r+1.0);
+}
+
+/* Deterministic standard-C++ paired fixed Gauss-Legendre quadrature. */
+template<std::size_t N>
+struct GaussLegendreRule {
+    std::array<double,N> node{};
+    std::array<double,N> weight{};
+
+    GaussLegendreRule()
+    {
+        constexpr std::size_t half = (N+1)/2;
+        for (std::size_t i=0;i<half;++i) {
+            long double z = std::cos(PI*(static_cast<long double>(i)+0.75L)/
+                                     (static_cast<long double>(N)+0.5L));
+            long double previous, derivative = 0.0L;
+            do {
+                long double p0=1.0L, p1=z;
+                for (std::size_t degree=2;degree<=N;++degree) {
+                    const long double p2=((2.0L*degree-1.0L)*z*p1-
+                        (degree-1.0L)*p0)/degree;
+                    p0=p1; p1=p2;
+                }
+                derivative=N*(z*p1-p0)/(z*z-1.0L);
+                previous=z;
+                z=previous-p1/derivative;
+            } while (std::fabs(z-previous) >
+                     8.0L*std::numeric_limits<long double>::epsilon());
+            const long double w=2.0L/((1.0L-z*z)*derivative*derivative);
+            node[i]=static_cast<double>(-z);
+            node[N-1-i]=static_cast<double>(z);
+            weight[i]=weight[N-1-i]=static_cast<double>(w);
+        }
+    }
+};
+
+template<std::size_t N, class F>
+double gauss_legendre(const F &function, double a, double b)
+{
+    static const GaussLegendreRule<N> rule;
+    const double midpoint=0.5*(a+b), half=0.5*(b-a);
+    double sum=0.0;
+    for (std::size_t i=0;i<N;++i)
+        sum+=rule.weight[i]*function(midpoint+half*rule.node[i]);
+    return half*sum;
+}
+
+template<class F>
+ValueError paired_integrate(const F &function, double a, double b)
+{
+    const double coarse=gauss_legendre<64>(function,a,b);
+    const double fine=gauss_legendre<128>(function,a,b);
+    return {fine,std::fabs(fine-coarse)};
+}
 
 struct Decomposition {
     std::array<double,3> call{};
@@ -80,10 +167,8 @@ struct GaussianOracle {
                 cdf((upper3-m3)/sd3c);
             return pdf(z)*p1*p3;
         };
-        double error = 0.0;
-        const double value = boost::math::quadrature::gauss_kronrod<
-            double,61>::integrate(integrand,-12.0,zupper,10,2e-13,&error);
-        return {value, error + cdf(-12.0)};
+        const ValueError integral=paired_integrate(integrand,-12.0,zupper);
+        return {integral.value, integral.error+cdf(-12.0)};
     }
 
     ValueError rect2(double upper1, double upper2,
@@ -201,10 +286,9 @@ struct DirectIntegrator {
             const double a=std::max(lo,cuts[i-1]);
             const double b=std::min(hi,cuts[i]);
             if (!(b>a)) continue;
-            double local=0.0;
-            total+=boost::math::quadrature::gauss_kronrod<double,61>::integrate(
-                function,a,b,8,2e-12,&local);
-            total_error+=local;
+            const ValueError local=paired_integrate(function,a,b);
+            total+=local.value;
+            total_error+=local.error;
         }
         *error+=total_error;
         return total;
@@ -271,7 +355,6 @@ double mathematical_qmc(const autocall_frozen_case_t &c)
 {
     uint32_t directions[3][32];
     for (unsigned d=0;d<3;++d) direction_row(d,directions[d]);
-    boost::math::normal_distribution<double> normal;
     const double dt=c.maturity/3.0;
     const double drift=(c.rate-c.dividend-0.5*c.sigma*c.sigma)*dt;
     const double diffusion=c.sigma*std::sqrt(dt);
@@ -282,7 +365,7 @@ double mathematical_qmc(const autocall_frozen_case_t &c)
         for (unsigned d=0;d<3;++d) {
             const uint32_t word=sobol_word(8192u+p,directions[d]);
             const double uniform=(static_cast<double>(word)+0.5)/4294967296.0;
-            const double z=boost::math::quantile(normal,uniform);
+            const double z=inverse_normal_acklam(uniform);
             spot*=std::exp(drift+diffusion*z);
             const double observation=c.maturity*(d+1.0)/3.0;
             const double payment=observation+c.payment_lag_fraction*c.maturity;

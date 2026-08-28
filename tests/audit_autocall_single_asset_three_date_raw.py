@@ -9,6 +9,7 @@ import sys
 from pathlib import Path
 
 PARENT = "1dfeca0e5c704efddc427d3c38bbdcae562d87bd"
+FIX_PARENT = "abe28959f6066216a741fe160ab42269423846cb"
 NEW_FILES = {
     "autocall_single_asset_three_date_raw.c",
     "benchmarks/bench_autocall_single_asset_three_date_raw.c",
@@ -69,16 +70,51 @@ def import_liveness(root):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--binary", required=True, type=Path)
+    parser.add_argument("--reference", required=True, type=Path)
     args = parser.parse_args()
     root = Path(__file__).resolve().parent.parent
     if not args.binary.is_file():
         raise RuntimeError("benchmark binary missing")
+    if not args.reference.is_file():
+        raise RuntimeError("reference binary missing")
 
     changed = set(filter(None, run(
         "git", "diff", "--name-only", PARENT, "--").splitlines()))
     unexpected = changed - NEW_FILES
     if unexpected:
         raise RuntimeError(f"parent blob drift {sorted(unexpected)}")
+    fix_changes = set(filter(None, run(
+        "git", "diff", "--name-only", FIX_PARENT, "--").splitlines()))
+    permitted_fix = {
+        "tests/Makefile.autocall_single_asset_three_date_raw",
+        "tests/audit_autocall_single_asset_three_date_raw.py",
+        "tests/reference_autocall_single_asset_three_date_raw.cpp",
+    }
+    if fix_changes - permitted_fix:
+        raise RuntimeError(f"engine drift from fix parent {sorted(fix_changes)}")
+
+    reference_source = (root /
+        "tests/reference_autocall_single_asset_three_date_raw.cpp").read_text()
+    make_source = (root /
+        "tests/Makefile.autocall_single_asset_three_date_raw").read_text()
+    if re.search(r"boost[/:]", reference_source, re.I) or \
+       re.search(r"boost", make_source, re.I):
+        raise RuntimeError("Boost header or build dependency remains")
+    reference_symbols = run("nm", "-C", str(args.reference)).lower()
+    if "boost::" in reference_symbols:
+        raise RuntimeError("Boost symbol remains in reference executable")
+    linked = run("ldd", str(args.reference))
+    dependencies = set(re.findall(r"(?:=>\s+)?(/?[^\s]*lib[^\s]+\.so(?:\.\d+)*)",
+                                  linked))
+    allowed = ("libstdc++.so", "libm.so", "libgcc_s.so", "libc.so",
+               "ld-linux")
+    unexpected_dependencies = [item for item in dependencies
+                               if not any(name in item for name in allowed)]
+    if unexpected_dependencies:
+        raise RuntimeError(
+            f"unexpected reference runtime dependencies {unexpected_dependencies}")
+    if re.search(r"\b(?:apt|apt-get|yum|dnf|pacman|pkg-config)\b", make_source):
+        raise RuntimeError("benchmark-native contains package installation")
 
     symbols = run("nm", "-a", str(args.binary))
     strings = run("strings", str(args.binary)).lower()
@@ -167,6 +203,9 @@ def main():
           "dynamic_payload_vpermd=512 x_loads=0 date_loop=NO route_loop=NO "
           "path_branches=0 calls=0 spills=0 gathers=0 scatters=0 "
           "generic_oracle_before_timing=YES generic_in_timed_closure=NO "
+          "boost_headers=0 boost_symbols=0 "
+          "reference_runtime_dependencies=libstdc++,libm,libgcc_s,libc "
+          "package_installation_required=NO engine_unchanged_from_fix_parent=YES "
           f"peak_zmm={peak} parent_blobs_unchanged=YES")
 
 
