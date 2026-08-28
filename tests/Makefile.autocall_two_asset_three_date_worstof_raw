@@ -1,0 +1,98 @@
+CC ?= gcc
+CXX ?= g++
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+CXXFLAGS := -std=c++17 -O3 -D_Static_assert=static_assert \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I. -pthread
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .autocall_two_asset_three_date_worstof_raw_objects
+TEST := test_autocall_two_asset_three_date_worstof_raw
+REFERENCE := reference_autocall_two_asset_three_date_worstof_raw
+BENCH := bench_autocall_two_asset_three_date_worstof_raw
+
+NORMAL_SOURCES := \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	private/asian_meta_direction_descriptors.c \
+	private/asian_meta_direction_affine_route.c \
+	private/autocall_single_asset_three_date_raw_avx512.S \
+	autocall_single_asset_three_date_raw.c \
+	private/autocall_two_asset_three_date_worstof_raw_avx512.S \
+	autocall_two_asset_three_date_worstof_raw.c \
+	tests/autocall_two_asset_three_date_worstof_cases.c
+NORMAL_OBJECTS := $(addprefix $(OBJDIR)/,$(NORMAL_SOURCES))
+NORMAL_OBJECTS := $(NORMAL_OBJECTS:.c=.o)
+NORMAL_OBJECTS := $(NORMAL_OBJECTS:.s=.o)
+NORMAL_OBJECTS := $(NORMAL_OBJECTS:.S=.o)
+DIAGNOSTIC_OBJECTS := \
+	$(OBJDIR)/asian_arithmetic_joe_kuo_256.o \
+	$(OBJDIR)/asian_genuine_permute_setup.o \
+	$(OBJDIR)/private/asian_meta_direction_qsort_control.o
+TEST_OBJECTS := \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_worstof_leaf_wrap.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_worstof_generic_avx512.o \
+	$(OBJDIR)/tests/test_autocall_two_asset_three_date_worstof_raw.o
+REFERENCE_OBJECTS := \
+	$(OBJDIR)/tests/reference_autocall_two_asset_three_date_worstof_raw.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_worstof_cases.o \
+	$(OBJDIR)/asian_arithmetic_joe_kuo_256.o
+BENCH_OBJECT := \
+	$(OBJDIR)/benchmarks/bench_autocall_two_asset_three_date_worstof_raw.o
+
+.DELETE_ON_ERROR:
+.PHONY: check audit benchmark-native
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(TEST): $(NORMAL_OBJECTS) $(DIAGNOSTIC_OBJECTS) $(TEST_OBJECTS)
+	@$(CC) $(CFLAGS) $^ \
+		-Wl,--wrap=autocall_worstof_prepared_leaf \
+		-Wl,--wrap=autocall_worstof_inline_leaf $(LDFLAGS) -o $@
+
+$(REFERENCE): $(REFERENCE_OBJECTS)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+$(BENCH): $(NORMAL_OBJECTS) $(DIAGNOSTIC_OBJECTS) $(BENCH_OBJECT)
+	@$(CC) $(CFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(TEST) $(REFERENCE) $(BENCH)
+	@/opt/intel-sde/sde64 -spr -- ./$(TEST) | \
+		python3 tests/compare_autocall_two_asset_three_date_worstof_raw.py \
+		--engine-stdin
+	@/opt/intel-sde/sde64 -spr -- ./$(BENCH) --check
+	@$(MAKE) -f tests/Makefile.autocall_single_asset_three_date_raw dedicated-check
+	@$(MAKE) -f tests/Makefile.asian_meta_direction_affine_route check
+	@$(MAKE) -f tests/Makefile.asian_affine_discrete_barrier_lifecycle check
+	@$(MAKE) test-ordered-d1-sde
+
+audit: $(BENCH) $(REFERENCE)
+	@python3 tests/audit_autocall_two_asset_three_date_worstof_raw.py \
+		--binary ./$(BENCH) --reference ./$(REFERENCE)
+
+benchmark-native: $(TEST) $(REFERENCE) $(BENCH)
+	@test "$(CPU)" = "0" || \
+		(echo "CPU=0 on Sapphire Rapids is required" >&2; exit 2)
+	@./$(TEST) | \
+		python3 tests/compare_autocall_two_asset_three_date_worstof_raw.py \
+		--engine-stdin
+	@python3 tests/audit_autocall_two_asset_three_date_worstof_raw.py \
+		--binary ./$(BENCH) --reference ./$(REFERENCE)
+	@./$(BENCH) --native-check --cpu $(CPU)
+	@./$(BENCH) --timing --cpu $(CPU)
