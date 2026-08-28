@@ -1,0 +1,93 @@
+CC ?= gcc
+CXX ?= g++
+CFLAGS := -std=c11 -O3 -march=skylake-avx512 -mavx512bw -mfma \
+	-fno-tree-vectorize -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+CXXFLAGS := -std=c++17 -O2 -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+LDFLAGS := -Wl,--gc-sections -lm
+OBJDIR := .autocall_single_asset_three_date_greeks_objects
+TEST := test_autocall_single_asset_three_date_greeks
+REFERENCE := reference_autocall_single_asset_three_date_greeks
+BENCH := bench_autocall_single_asset_three_date_greeks
+
+NORMAL_SOURCES := \
+	asian_genuine_fixed_block_source_avx512.s \
+	asian_genuine_arithmetic_fused_source_exp_avx512.s \
+	private/asian_meta_direction_descriptors.c \
+	private/asian_meta_direction_affine_route.c \
+	private/autocall_single_asset_three_date_raw_avx512.S \
+	autocall_single_asset_three_date_raw.c
+NORMAL_OBJECTS := $(addprefix $(OBJDIR)/,$(NORMAL_SOURCES))
+NORMAL_OBJECTS := $(NORMAL_OBJECTS:.c=.o)
+NORMAL_OBJECTS := $(NORMAL_OBJECTS:.s=.o)
+NORMAL_OBJECTS := $(NORMAL_OBJECTS:.S=.o)
+JOE_OBJECT := $(OBJDIR)/asian_arithmetic_joe_kuo_256.o
+GREEK_COMMON_OBJECT := $(OBJDIR)/autocall_single_asset_three_date_greeks.o
+TEST_OBJECTS := $(OBJDIR)/tests/test_autocall_single_asset_three_date_greeks.o \
+	$(OBJDIR)/tests/autocall_single_asset_three_date_leaf_wrap.o
+REFERENCE_OBJECT := \
+	$(OBJDIR)/tests/reference_autocall_single_asset_three_date_greeks.o
+BENCH_OBJECT := \
+	$(OBJDIR)/benchmarks/bench_autocall_single_asset_three_date_greeks.o
+
+.DELETE_ON_ERROR:
+.PHONY: check audit benchmark-native clean
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(REFERENCE_OBJECT): tests/reference_autocall_single_asset_three_date_raw.cpp \
+		tests/autocall_single_asset_three_date_greek_cases.h \
+		private/autocall_single_asset_three_date_greeks_diag.h
+
+$(BENCH_OBJECT): tests/reference_autocall_single_asset_three_date_greeks.cpp \
+		tests/reference_autocall_single_asset_three_date_raw.cpp \
+		tests/autocall_single_asset_three_date_greek_cases.h \
+		private/autocall_single_asset_three_date_greeks_diag.h
+
+$(OBJDIR)/%.o: %.s private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S private/asian_genuine_fixed_block_signed_z.bin \
+		direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(TEST): $(NORMAL_OBJECTS) $(GREEK_COMMON_OBJECT) $(TEST_OBJECTS)
+	@$(CC) $(CFLAGS) $^ -Wl,--wrap=autocall_3date_affine_price_leaf \
+		$(LDFLAGS) -o $@
+
+$(REFERENCE): $(REFERENCE_OBJECT) $(JOE_OBJECT) $(GREEK_COMMON_OBJECT)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+$(BENCH): $(BENCH_OBJECT) $(JOE_OBJECT) $(GREEK_COMMON_OBJECT)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(TEST) $(REFERENCE)
+	@python3 tests/compare_autocall_single_asset_three_date_greeks.py
+	@$(MAKE) -f tests/Makefile.autocall_single_asset_three_date_raw dedicated-check
+	@$(MAKE) -f tests/Makefile.asian_meta_direction_affine_route check
+	@$(MAKE) test-ordered-d1-sde
+
+audit: $(TEST) $(REFERENCE) $(BENCH)
+	@python3 tests/audit_autocall_single_asset_three_date_greeks.py \
+		--test ./$(TEST) --reference ./$(REFERENCE) --benchmark ./$(BENCH)
+
+benchmark-native: $(TEST) $(REFERENCE) $(BENCH)
+	@test "$(CPU)" = "0" || \
+		(echo "CPU=0 on Sapphire Rapids is required" >&2; exit 2)
+	@./$(TEST) >/dev/null
+	@./$(REFERENCE) >/dev/null; status=$$?; test $$status -eq 3
+	@$(MAKE) -f tests/Makefile.autocall_single_asset_three_date_greeks audit
+	@./$(BENCH) --cpu $(CPU)
+
+clean:
+	@rm -rf $(OBJDIR) $(TEST) $(REFERENCE) $(BENCH)
