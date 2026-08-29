@@ -1,0 +1,46 @@
+CC ?= gcc
+CXX ?= g++
+CFLAGS := -std=c11 -O3 -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+CXXFLAGS := -std=c++17 -O3 -D_Static_assert=static_assert \
+	-ffp-contract=off -fno-fast-math -ffunction-sections -fdata-sections \
+	-Wall -Wextra -Werror -I. -pthread
+LDFLAGS := -Wl,--gc-sections -pthread -lm
+OBJDIR := .autocall_two_asset_three_date_common_factor_objects
+PORTABLE := reference_autocall_two_asset_three_date_common_factor
+PORTABLE_OBJECTS := \
+	$(OBJDIR)/tests/reference_autocall_two_asset_three_date_common_factor.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_worstof_cases.o \
+	$(OBJDIR)/asian_arithmetic_joe_kuo_256.o
+
+.DELETE_ON_ERROR:
+.PHONY: check audit benchmark-native clean
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(PORTABLE): $(PORTABLE_OBJECTS)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(PORTABLE)
+	@./$(PORTABLE)
+
+audit: $(PORTABLE)
+	@python3 tests/audit_autocall_two_asset_three_date_common_factor.py \
+		--portable ./$(PORTABLE)
+
+benchmark-native:
+	@echo "native challenger not built before portable qualification" >&2
+	@exit 1
+
+clean:
+	@rm -rf $(OBJDIR) $(PORTABLE)
