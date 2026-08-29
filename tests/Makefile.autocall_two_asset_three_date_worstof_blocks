@@ -1,0 +1,39 @@
+CC ?= gcc
+CXX ?= g++
+CFLAGS := -std=c11 -O3 -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+CXXFLAGS := -std=c++17 -O3 -D_Static_assert=static_assert \
+	-ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I. -pthread
+LDFLAGS := -Wl,--gc-sections -pthread -lm
+OBJDIR := .autocall_two_asset_three_date_worstof_blocks_objects
+REFERENCE := reference_autocall_two_asset_three_date_worstof_blocks
+OBJECTS := \
+	$(OBJDIR)/tests/reference_autocall_two_asset_three_date_worstof_blocks.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_worstof_cases.o \
+	$(OBJDIR)/asian_arithmetic_joe_kuo_256.o
+
+.DELETE_ON_ERROR:
+.PHONY: check audit
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.s direction_numbers/joe_kuo_6_21201.bin
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(REFERENCE): $(OBJECTS)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(REFERENCE)
+	@./$(REFERENCE)
+
+audit: $(REFERENCE)
+	@python3 tests/audit_autocall_two_asset_three_date_worstof_blocks.py \
+		--binary ./$(REFERENCE)
