@@ -1,0 +1,121 @@
+CC ?= gcc
+CXX ?= g++
+PYTHON ?= python3
+
+CFLAGS := -std=c11 -O3 -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+CXXFLAGS := -std=c++20 -O3 -D_Static_assert=static_assert \
+	-ffp-contract=off -fno-fast-math -ffunction-sections -fdata-sections \
+	-Wall -Wextra -Werror -I.
+NATIVE_CXXFLAGS := $(CXXFLAGS) -march=skylake-avx512 -mavx512dq -mfma \
+	-fno-unroll-loops -fno-unroll-all-loops
+LDFLAGS := -Wl,--gc-sections -lm
+
+OBJDIR := .autocall_two_asset_three_date_mvn_program_objects
+REFERENCE := reference_autocall_two_asset_three_date_mvn_program
+COMPONENT_PROBE := probe_autocall_two_asset_three_date_mvn_components
+F64_MATH_PROBE := probe_autocall_two_asset_three_date_mvn_f64_math
+PHI2_PROBE := probe_autocall_two_asset_three_date_mvn_phi2
+PHI46_PROBE := probe_autocall_two_asset_three_date_mvn_phi46
+
+REFERENCE_OBJECTS := \
+	$(OBJDIR)/tests/reference_autocall_two_asset_three_date_mvn_program.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_reference_math.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_program_cases.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_worstof_cases.o
+
+COMPONENT_PROBE_OBJECTS := \
+	$(OBJDIR)/tests/probe_autocall_two_asset_three_date_mvn_components.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_reference_math.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_program_cases.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_worstof_cases.o
+
+F64_MATH_PROBE_OBJECTS := \
+	$(OBJDIR)/tests/probe_autocall_two_asset_three_date_mvn_f64_math.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_f64_math.o
+
+PHI2_PROBE_OBJECTS := \
+	$(OBJDIR)/tests/probe_autocall_two_asset_three_date_mvn_phi2.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_f64_math.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_phi2_avx512.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_reference_math.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_program_cases.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_worstof_cases.o
+
+PHI46_PROBE_OBJECTS := \
+	$(OBJDIR)/tests/probe_autocall_two_asset_three_date_mvn_phi46.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_f64_math.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_phi46_avx512.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_reference_math.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_program_cases.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_worstof_cases.o
+
+.DELETE_ON_ERROR:
+.PHONY: check audit benchmark-native clean
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/private/autocall_two_asset_three_date_mvn_f64_math.o: \
+		private/autocall_two_asset_three_date_mvn_f64_math.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(NATIVE_CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/private/autocall_two_asset_three_date_mvn_phi46_avx512.o: \
+		private/autocall_two_asset_three_date_mvn_phi46_avx512.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(NATIVE_CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S
+	@mkdir -p $(@D)
+	@$(CC) -c -march=skylake-avx512 -mavx512dq -mfma $< -o $@
+
+$(REFERENCE): $(REFERENCE_OBJECTS)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+$(COMPONENT_PROBE): $(COMPONENT_PROBE_OBJECTS)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+$(F64_MATH_PROBE): $(F64_MATH_PROBE_OBJECTS)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+$(PHI2_PROBE): $(PHI2_PROBE_OBJECTS)
+	@$(CXX) $(NATIVE_CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+$(PHI46_PROBE): $(PHI46_PROBE_OBJECTS)
+	@$(CXX) $(NATIVE_CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(REFERENCE) $(COMPONENT_PROBE) $(F64_MATH_PROBE) $(PHI2_PROBE) \
+		$(PHI46_PROBE)
+	@./$(REFERENCE) --manifest-integrity
+	@./$(REFERENCE) --reference
+	@./$(REFERENCE) --selection-smoke
+	@./$(COMPONENT_PROBE) --phi2
+	@./$(COMPONENT_PROBE) --phi6-central
+	@./$(COMPONENT_PROBE) --near-one
+	@./$(COMPONENT_PROBE) --near-neg-one
+	@/opt/intel-sde/sde64 -spr -- ./$(F64_MATH_PROBE)
+	@/opt/intel-sde/sde64 -spr -- ./$(PHI2_PROBE)
+	@/opt/intel-sde/sde64 -spr -- ./$(PHI46_PROBE)
+	@echo "MVN_NATIVE_MATH_NOT_QUALIFIED"
+
+audit: $(REFERENCE) $(F64_MATH_PROBE) $(PHI2_PROBE) $(PHI46_PROBE)
+	@$(PYTHON) tests/audit_autocall_two_asset_three_date_mvn_program.py \
+		--reference ./$(REFERENCE) --f64-math-probe ./$(F64_MATH_PROBE) \
+		--phi2-probe ./$(PHI2_PROBE) --phi46-probe ./$(PHI46_PROBE)
+
+benchmark-native:
+	@if [ "$(CPU)" != "0" ]; then echo "CPU=0 required" >&2; exit 2; fi
+	@if ! grep -q 'vendor_id.*GenuineIntel' /proc/cpuinfo || \
+	    ! grep -q 'model[[:space:]]*: 143' /proc/cpuinfo; then \
+		echo "Sapphire Rapids family-6/model-143 required" >&2; exit 2; fi
+	@echo "MVN_NATIVE_MATH_NOT_QUALIFIED"
+
+clean:
+	@rm -rf $(OBJDIR) $(REFERENCE) $(COMPONENT_PROBE) $(F64_MATH_PROBE) \
+		$(PHI2_PROBE) $(PHI46_PROBE)
