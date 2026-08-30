@@ -15,6 +15,7 @@ OBJDIR := .autocall_two_asset_three_date_mvn_coefficient_scheduling_objects
 COMPONENT := probe_autocall_two_asset_three_date_mvn_components
 F64_MATH := probe_autocall_two_asset_three_date_mvn_f64_math
 COEFFSCHED := probe_autocall_two_asset_three_date_mvn_phi46_coeffsched
+BENCHMARK := $(OBJDIR)/benchmark_autocall_two_asset_three_date_mvn_coefficient_scheduling
 
 COMMON_REFERENCE_OBJECTS := \
 	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_reference_math.o \
@@ -36,8 +37,15 @@ COEFFSCHED_OBJECTS := \
 	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_phi46_coeffsched_avx512.o \
 	$(COMMON_REFERENCE_OBJECTS)
 
+BENCHMARK_OBJECTS := \
+	$(OBJDIR)/tests/benchmark_autocall_two_asset_three_date_mvn_coefficient_scheduling.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_f64_math.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_phi46_avx512.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_phi46_coeffsched_avx512.o \
+	$(COMMON_REFERENCE_OBJECTS)
+
 .DELETE_ON_ERROR:
-.PHONY: check audit clean
+.PHONY: check audit benchmark-native clean
 
 $(OBJDIR)/%.o: %.cpp
 	@mkdir -p $(@D)
@@ -57,6 +65,11 @@ $(OBJDIR)/private/autocall_two_asset_three_date_mvn_phi46_avx512.o: \
 	@mkdir -p $(@D)
 	@$(CXX) $(NATIVE_CXXFLAGS) -c $< -o $@
 
+$(OBJDIR)/tests/benchmark_autocall_two_asset_three_date_mvn_coefficient_scheduling.o: \
+		tests/probe_autocall_two_asset_three_date_mvn_phi46_coeffsched.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(NATIVE_CXXFLAGS) -DMVN_COEFFSCHED_BENCHMARK -c $< -o $@
+
 $(OBJDIR)/%.o: %.S
 	@mkdir -p $(@D)
 	@$(CC) -c -march=skylake-avx512 -mavx512dq -mfma $< -o $@
@@ -70,6 +83,9 @@ $(F64_MATH): $(F64_MATH_OBJECTS)
 $(COEFFSCHED): $(COEFFSCHED_OBJECTS)
 	@$(CXX) $(NATIVE_CXXFLAGS) $^ $(LDFLAGS) -o $@
 
+$(BENCHMARK): $(BENCHMARK_OBJECTS)
+	@$(CXX) $(NATIVE_CXXFLAGS) $^ $(LDFLAGS) -o $@
+
 check: $(COMPONENT) $(F64_MATH) $(COEFFSCHED)
 	@./$(COMPONENT) --phi6-central
 	@/opt/intel-sde/sde64 -spr -- ./$(F64_MATH)
@@ -79,5 +95,27 @@ audit: $(COEFFSCHED)
 	@$(PYTHON) tests/audit_autocall_two_asset_three_date_mvn_coefficient_scheduling.py \
 		--binary ./$(COEFFSCHED)
 
+benchmark-native: $(COEFFSCHED) $(BENCHMARK)
+	@if [ "$(CPU)" != "0" ]; then \
+		echo "MVN_COEFFICIENT_SCHEDULING_NATIVE_REFUSED reason=CPU_0_REQUIRED"; \
+		exit 2; \
+	fi
+	@probe_path="$$(realpath ./$(COEFFSCHED))"; \
+	phi4_hash="$$(LC_ALL=C objdump -d -Mintel --no-show-raw-insn \
+		--disassemble=mvn_phi4_batch8_tensor40_coeffsched_asm \
+		"$$probe_path" | sha256sum | cut -d' ' -f1)"; \
+	phi6_hash="$$(LC_ALL=C objdump -d -Mintel --no-show-raw-insn \
+		--disassemble=mvn_phi6_batch8_bridge40_coeffsched_asm \
+		"$$probe_path" | sha256sum | cut -d' ' -f1)"; \
+	if [ "$$phi4_hash" != \
+		"675ab4335ae5c9d4593cca784cf9c01e017c66bcf864c8f58f1708f10002918a" ] || \
+	   [ "$$phi6_hash" != \
+		"48dccfc9ecb328970edb34c003a8f09e4ae96271dedbec4af38595f46b0b4e22" ]; then \
+		echo "MVN_COEFFICIENT_SCHEDULING_DISASSEMBLY_HASH_MISMATCH"; \
+		exit 1; \
+	fi; \
+	echo "COEFFICIENT_SCHEDULING_DISASSEMBLY_HASHES phi4=$$phi4_hash phi6=$$phi6_hash status=PASS"
+	@./$(BENCHMARK) --cpu $(CPU)
+
 clean:
-	@rm -rf $(OBJDIR) $(COMPONENT) $(F64_MATH) $(COEFFSCHED)
+	@rm -rf $(OBJDIR) $(COMPONENT) $(F64_MATH) $(COEFFSCHED) $(BENCHMARK)
