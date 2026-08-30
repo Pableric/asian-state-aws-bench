@@ -1,0 +1,83 @@
+CC ?= gcc
+CXX ?= g++
+PYTHON ?= python3
+
+CFLAGS := -std=c11 -O3 -ffp-contract=off -fno-fast-math \
+	-ffunction-sections -fdata-sections -Wall -Wextra -Werror -I.
+CXXFLAGS := -std=c++20 -O3 -D_Static_assert=static_assert \
+	-ffp-contract=off -fno-fast-math -ffunction-sections -fdata-sections \
+	-Wall -Wextra -Werror -I.
+NATIVE_CXXFLAGS := $(CXXFLAGS) -march=skylake-avx512 -mavx512dq -mfma \
+	-fno-unroll-loops -fno-unroll-all-loops
+LDFLAGS := -Wl,--gc-sections -lm
+
+OBJDIR := .autocall_two_asset_three_date_mvn_coefficient_scheduling_objects
+COMPONENT := probe_autocall_two_asset_three_date_mvn_components
+F64_MATH := probe_autocall_two_asset_three_date_mvn_f64_math
+COEFFSCHED := probe_autocall_two_asset_three_date_mvn_phi46_coeffsched
+
+COMMON_REFERENCE_OBJECTS := \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_reference_math.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_mvn_program_cases.o \
+	$(OBJDIR)/tests/autocall_two_asset_three_date_worstof_cases.o
+
+COMPONENT_OBJECTS := \
+	$(OBJDIR)/tests/probe_autocall_two_asset_three_date_mvn_components.o \
+	$(COMMON_REFERENCE_OBJECTS)
+
+F64_MATH_OBJECTS := \
+	$(OBJDIR)/tests/probe_autocall_two_asset_three_date_mvn_f64_math.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_f64_math.o
+
+COEFFSCHED_OBJECTS := \
+	$(OBJDIR)/tests/probe_autocall_two_asset_three_date_mvn_phi46_coeffsched.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_f64_math.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_phi46_avx512.o \
+	$(OBJDIR)/private/autocall_two_asset_three_date_mvn_phi46_coeffsched_avx512.o \
+	$(COMMON_REFERENCE_OBJECTS)
+
+.DELETE_ON_ERROR:
+.PHONY: check audit clean
+
+$(OBJDIR)/%.o: %.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.c
+	@mkdir -p $(@D)
+	@$(CC) $(CFLAGS) -c $< -o $@
+
+$(OBJDIR)/private/autocall_two_asset_three_date_mvn_f64_math.o: \
+		private/autocall_two_asset_three_date_mvn_f64_math.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(NATIVE_CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/private/autocall_two_asset_three_date_mvn_phi46_avx512.o: \
+		private/autocall_two_asset_three_date_mvn_phi46_avx512.cpp
+	@mkdir -p $(@D)
+	@$(CXX) $(NATIVE_CXXFLAGS) -c $< -o $@
+
+$(OBJDIR)/%.o: %.S
+	@mkdir -p $(@D)
+	@$(CC) -c -march=skylake-avx512 -mavx512dq -mfma $< -o $@
+
+$(COMPONENT): $(COMPONENT_OBJECTS)
+	@$(CXX) $(CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+$(F64_MATH): $(F64_MATH_OBJECTS)
+	@$(CXX) $(NATIVE_CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+$(COEFFSCHED): $(COEFFSCHED_OBJECTS)
+	@$(CXX) $(NATIVE_CXXFLAGS) $^ $(LDFLAGS) -o $@
+
+check: $(COMPONENT) $(F64_MATH) $(COEFFSCHED)
+	@./$(COMPONENT) --phi6-central
+	@/opt/intel-sde/sde64 -spr -- ./$(F64_MATH)
+	@/opt/intel-sde/sde64 -spr -- ./$(COEFFSCHED)
+
+audit: $(COEFFSCHED)
+	@$(PYTHON) tests/audit_autocall_two_asset_three_date_mvn_coefficient_scheduling.py \
+		--binary ./$(COEFFSCHED)
+
+clean:
+	@rm -rf $(OBJDIR) $(COMPONENT) $(F64_MATH) $(COEFFSCHED)
