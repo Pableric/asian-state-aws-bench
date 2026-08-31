@@ -1,0 +1,2888 @@
+ Sinc Approximation of Multidimensional Hilbert Transform and
+                       Its Applications∗
+                Jie Chen†          Liaoyuan Fan‡                 Lingfei Li§               Gongqiu Zhang¶
+
+                                               February 15, 2021
+
+
+
+                                                     Abstract
+              Many science and engineering applications require computing Hilbert transform. Sinc
+          approximation is an efficient algorithm for computing one-dimensional (1D) Hilbert trans-
+          form. In this paper, we develop Sinc approximation for computing multidimensional Hilbert
+          transform and analyze its convergence rate. We apply our method to two applications: de-
+          tecting edges of 2D images, and pricing discretely monitored barrier options and calculating
+          survival probabilities in two-asset/three-asset models where the prices follow exponential
+          Lévy processes. Extensive numerical experiments confirm the efficiency of Sinc approxima-
+          tion for computing 2D and 3D Hilbert transforms in these applications.
+
+
+         Key Words: Hilbert transform, Sinc approximation, image analysis, Lévy processes,
+                    barrier options, survival probability.
+
+
+1        Introduction
+        The Hilbert transform for an n-variable function f (x1 , · · · , xn ) is defined as
+                                                            Z                            n
+                                                   1                                     Y       dxj
+                        Hn f (ξ1 , · · · , ξn ) := n P.V.         f (x1 , · · · , xn )                  ,
+                                                  π         Rn                                 ξj − x j
+                                                                                         j=1
+
+where P.V. refers to the Cauchy principle value integration (c.f. Eq.(15.26) of King (2009)).
+Hilbert transform is an important transform that finds itself useful in many areas such as signal
+processing (King (2009)), image analysis (Kohlmann (1996), Lorenzo-Ginori (2007)), financial
+engineering (Feng and Linetsky (2008a, 2009) and Feng and Lin (2013b) ) and simulation (Chen
+et al. (2012) and Feng and Lin (2013a)). In these applications, efficiently computing the Hilbert
+transform is required. For n = 1, a well-known method is Sinc approximation, which converges
+rapidly (Stenger (1993)). This method approximates a one-variable function f (x) with some
+properties by Sinc expansion as
+                               ∞
+                               X                                                  sin(π(x − kh)/h)
+                     f (x) ≈          f (kh)S(k, h)(x),         S(k, h)(x) =                       ,        (1.1)
+                                                                                     π(x − kh)/h
+                               k=−∞
+    ∗
+     This research was supported by Hong Kong Research Grant Council General Research Fund Grant No.
+14203418.
+   †
+     Department of Systems Engineering and Engineering Management, The Chinese University of Hong Kong,
+HKSAR. Email: chenjie@se.cuhk.edu.hk.
+   ‡
+     JP Morgan, Singapore. Email: fanly5173@gmail.com.
+   §
+     Corresponding author. Department of Systems Engineering and Engineering Management, The Chinese
+University of Hong Kong, HKSAR. Email: lfli@se.cuhk.edu.hk.
+   ¶
+     School of Science and Engineering, The Chinese University of Hong Kong, Shenzhen, China. Email: zhang-
+gongqiu@cuhk.edu.cn.
+
+
+                                                            1
+
+                       Electronic copy available at: https://ssrn.com/abstract=3091664
+where S(k, h)(x) is a Sinc function. Utilizing this approximation yields the approximation for
+the Hilbert transform of f as
+                                     ∞
+                                     X               1 − cos[π(ξ − kh)/h]
+                          Hf (ξ) ≈          f (kh)                        .
+                                                         π(ξ − kh)/h
+                                     k=−∞
+
+To compute the infinite series, one can truncate it at an appropriate level. A complete conver-
+gence theory of Sinc approximation in the one-dimensional case is developed in Stenger (1993).
+    In this paper, we generalize Sinc approximation for computing Hilbert transform in an
+arbitrary dimension and obtain its convergence rate. We then establish the efficiency of this
+method for n = 2 or 3 by considering two applications.
+    (1) The first application is detecting edges of two-dimensional images, which are represented
+by two-variable functions. The edge points of an image are given by the local extrema of
+the two-dimensional (2D) Hilbert transform of the function representing it. We utilize Sinc
+approximation to compute the 2D Hilbert transform and compare it with the standard discrete
+Hilbert transform method considered in Kohlmann (1996).
+    (2) The second application is pricing discretely monitored two-asset or three-asset barrier
+options and calculating joint survival probability for two or three firms when the asset prices
+follow exponential Lévy models, which are a popular class of models in finance. In this ap-
+plication, we need to solve a backward recursion problem. We carry out the recursion in the
+Fourier space for the value function, where Hilbert transform appears in each recursion step
+and it is calculated by Sinc approximation. We develop efficient implementation of the recur-
+sive procedure, analyze how the approximation error propogates as the number of recursion
+steps grows and compare our method with finite difference, Monte Carlo simulation and Fourier
+cosine expansion method which are standard methods in the literature for this problem.
+
+1.1   Related Literature on Barrier Option Pricing and Survival Probability
+      Calculation
+    Barrier options are among the most popular path-dependent options in financial markets
+and their payoffs depend on whether the price of the underlying asset crosses some pre-specified
+barriers over the monitoring period. In practice, most barrier options are monitored over a
+discrete set of dates. Another important financial problem that involves barrier crossing is
+calculating the survival or default probability of firms. In structural credit risk models, the
+default of a firm occurs when its asset value falls below some pre-determined default barrier
+(Black and Cox (1976)). The problem of computing the firm’s survival probability can thus be
+formulated as pricing a down-and-out option written on the firm’s asset value with unit payoff.
+    There exist a large number of works on pricing single-asset barrier options and calculating
+a single firm’s survival probability which we list below.
+    (1) For specific exponential Lévy models: Wiener-Hopf technique (Fusai et al. (2006)) for
+the Black-Scholes model and fast Gauss transform (Broadie and Yamamoto (2005)) for models
+where the return distribution is a mixture of Gaussians.
+    (2) For general exponential Lévy models: finite difference (Cont and Voltchkova (2005)) and
+finite element (Feng and Linetsky (2008b)) schemes for solving the associated partial integro-
+differential equation (PIDE) (these schemes can be adapted by enforcing barrier checking only
+on monitoring dates), the Laplace transfrom approach based on Spitzer’s identity (Petrella and
+Kou (2004)), the Fourier cosine method (Fang and Oosterlee (2009)), the fast Hilbert transform
+approach (Feng and Linetsky (2008a)), piecewise polynomial interpolation with Fourier inver-
+sion (De Innocentis and Levendorskiĭ (2013)), a combined approach of Hilbert and z-transform
+(Fusai et al. (2016)) and the local basis method (Kirkby (2017, 2018)).
+    (3) Outside the class of Lévy processes: numerical quadrature for the CEV diffusion (Fu-
+sai and Recchioni (2007)), an eigenfunction expansion approach (Li and Linetsky (2015)) for
+
+                                                 2
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+Markov models with discrete spectra and Markov chain approximation (Mijatovic and Pistorius
+(2013), Li and Zhang (2018), Zhang and Li (2019)) for general Markov models.
+    Despite the extensive literature on the single-asset case, the study for the multi-asset case
+is rather scarce. In fact, multi-asset discretely monitored barrier options are quite popular
+products in especially equity and foreign exchange markets. For example, a common type of
+multi-currency knock-out options (with the two or three currencies being the most common)
+delivers a payoff that depends on the value of one or all currencies on the maturity date if none
+of the currencies breach their individual barriers during the monitoring period. Furthermore,
+knowledge of the joint survival probability is important for managing credit portfolios and
+valuation adjustments (Lando (2009), Kou and Zhong (2016), Lipton and Savescu (2013, 2014)).
+Thus, the multi-asset case is practically important and it deserves more research.
+    There are several standard computational methods that can be used for the multi-asset case.
+(1) Monte Carlo simulation is free of the curse of dimensionality (e.g., Giles and Xia (2017),
+Gobet (2000)), but for low dimensions other methods can be significantly faster for obtaining
+the same level of accuracy. (2) Numerical schemes for solving PIDEs discretize both time and
+space, and their convergence rate is typically algebraic in the time step and mesh size. This can
+be too slow when high levels of accuracy are demanded. (3) For the multivariate Black-Scholes
+model, an efficient method using quadrature rules was developed in Andricopoulos et al. (2007).
+However, it cannot be applied to general models in which the joint transition density of the
+underlying assets is unknown.
+    Our method is applicable to multivariate exponential Lévy models, which are standard
+choices for modelling asset prices in a variety of markets (Cont and Tankov (2004), Schoutens
+(2003)) as well as firms’ asset values (Schoutens and Cariboni (2010)). This general class of
+models includes the multivariate Black-Scholes model as well as many classical jump models as
+special cases. The joint transition density of many multivariate Lévy processes is not known.
+Our method can be applied as long as the joint characteristic function of the multivariate
+Lévy process is known, which is given by the Lévy-Khintchine formula, and for many model
+specifications it has a closed-form expression. In particualr, it can be applied to multivariate
+Lévy models with different marginals if the joint characteristic function is known.
+    The convergence speed of our method depends on the type of the Lévy model under consid-
+eration. In general, our method converges rapidly when there is a Brownian motion component
+in the Lévy process, i.e., for the multidimensional Black-Scholes model and jump-diffusions. As
+these models are often used for fitting the data of multiple assets, our method would perform
+well in many practical applications. When the process is a pure-jump one, the convergence
+speed hinges on the decay rate of the joint characteristic function, which for some models, like
+the Variance Gamma (VG) model, is unfortunately slow. Spectral filters have been successfully
+applied in Phelan et al. (2018) to accelerate convergence of the Hilbert transform method of
+Feng and Linetsky (2008a) for the one-dimensional VG model. In this paper, we show that
+multivariate spectral filters can also hasten convergence of our method for the multidimensional
+VG model if the horizon of the problem is not too long.
+Remark 1.1. After our paper was completed, we learned the work on using 2D Hilbert transform
+for pricing two-asset barrier options in the dissertation of Lin (2010). There are several major
+differences between this paper and his work. First, we deal with an arbitrary dimension whereas
+Lin (2010) only considers the 2D case. Second, Lin (2010) analyzes discrete approximation error
+for the 2D Hilbert transform of the Fourier transform of some function only, whereas our analysis
+deals with multidimensional Hilbert transform of general functions. Third, Lin (2010) does not
+provide analysis of the aggregate error for the recursive algorithm for pricing two-asset barrier
+options. Fourth, Lin (2010) does not discuss how to implement the approximation formula for
+computing 2D Hilbert transform. As our discussions show, efficient implementation is key to
+the performance of the algorithm. Fifth, there are no numerical examples in Lin (2010) to
+evaluate the performance of the method for different models.
+
+
+                                                3
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+Remark 1.2. Kou and Zhong (2016) and Lipton and Savescu (2014) study continuously moni-
+tored first passage problem of 2D and 3D correlated Brownian motions, respectively to obtain
+joint survival or default probabilities. They deal with the associated PDEs and in the 2D case,
+Kou and Zhong (2016) found a closed-form solution while for the 3D case, Lipton and Savescu
+(2014) applied the eigenfunction expansion approach to obtain the Green’s function with eigen-
+values and eigenfunctions computed by the finite element method. Our focus in this paper is on
+the discretely monitored problem, but we can use the solution with high monitoring frequencies
+to approximate the continuously monitored solution if the latter is wanted.
+
+1.2    Some Notations
+    Throughout the paper bold letters denote column vectors and matrices, while 0 represents
+transpose. We use ◦ for pointwise multiplication and ∗ for matrix multiplication. For an n-
+variable function f (x1 , · · · , xn ), we will simply write it as f (x ) with x = (x1 , · · · , xn )0 . In
+addition, dx should be understood as dx1 · · · dxn . For an n-dimensional vector, | · | denotes its
+Euclidian norm. The following shorthand notations are also adopted.
+                                      n                                n
+                     1(l ,∞) (x ) =          1(lp ,∞) (xp ), xα =             α
+                                      Y                                Y
+                                                                             xp p ,
+                                      p=1                              p=1
+
+                     S /K = (S1 /K1 , · · · , Sn /Kn ) , ln S = (ln S1 , · · · , ln Sn )0 .
+                                                             0
+
+
+For two vectors, α ≤ (<)β means αp ≤ (<)βp for all 1 ≤ p ≤ n. We write 0 , 1 as the
+vector of all 0s, 1s, respectively. In addition, for an n-dimensional vector ξ = (ξ1 , · · · , ξn ) and
+β ∈ {0, 1}n (the set of n-dimensional vectors with each entry either 0 or 1), we define ξ β to
+be a n-dimensional
+         Pn             vector whose p-th coordinate equals to ξp if βp = 1 and 0 if βp = 0,Pand
+|ξ |1 =    p=1 |ξ p |. In particular, ξ β = 0 if β = 0 and ξ β = ξ if β = 1 . We also use            to
+                                                Pβ
+denote summation with all dimensions and             for summation over all dimensions with βp = 1.
+Finally, Lp (Rn ) and Lp (Rn , C) refer to the Lp space of real-valued and complex-valued functions,
+respectively.
+     The rest of the paper is organized as follows. Section 2 develops Sinc approximation of
+multidimensional Hilbert transform, estimates its convergence rate and shows how to implement
+it. Section 3 applies the method to the edge detection problem for 2D images. Section 4 develops
+a recursive algorithm based on Sinc approximation to price barrier options and calculate survival
+probabilities in multivariate Lévy models. We also estimate its aggregate error and develop an
+efficient implementation. Section 5 presents various numerical examples and Section 6 concludes.
+The online companion provides supplementary materials including all proofs.
+
+
+2     Sinc Approximation of Multidimensional Hilbert Transform
+    We approximate an n-variable function f (x ) as
+                                                                   
+                                   X            Yn
+                          f (x ) ≈     f (kh)      S(kj , hj )(xj ) ,                              (2.1)
+                                              k ∈Zn              j=1
+
+where S(k, h)(·) is the Sinc function defined in (1.1), and k ∈Zn = ∞
+                                                            P          P              P∞
+                                                                         k1 =−∞ · · ·  kn =−∞ . Using
+this expansion and interchanging integration and summation, we obtain an approximation for
+the Hilbert transform:
+                                                                             
+                                               n
+                                  X           Y   1 − cos[π(ξj − kj hj )/hj ] 
+                      Hn f (ξ ) ≈     f (kh)                                   .                (2.2)
+                                    n
+                                                       π(ξj − kj hj )/hj
+                                      k ∈Z             j=1
+
+Calculating a multiple series can be computationally expensive, but for low dimensions (two or
+three) our method could perform well.
+
+                                                             4
+
+                    Electronic copy available at: https://ssrn.com/abstract=3091664
+2.1       Convergence Rate of Sinc Approximation
+   The multimensional Hilbert transform Hn f is well-defined almost everywhere for f ∈ Lp (Rn )
+with p ≥ 1 (Section 15.1, King (2009)). To analyze the convergence rate of Sinc approximation,
+we will consider square-integrable f and assume the behavior of the Fourier transform of f .
+Recall that the n-dimensional Fourier transform and inverse Fourier transform are defined as
+                       Z                                                  Z
+                                    0                                 1               0
+           Fn f (ξ ) =     f (x )eiξ x dx (ξ ∈ Rn ), Fn−1 f (x ) :=     n
+                                                                            f (ξ )e−iξ x dξ ,
+                        Rn                                          (2π) Rn
+
+respectively, provided that these integrals exist. Throughout the paper, we also write fˆ(ξ ) for
+Fn f (ξ ). Let E(f, h )(x ) and EH (f, h )(ξ ) be the approximation error in (2.1) and (2.2).
+
+Theorem 2.1. Let f ∈ L2 (Rn ), and there is a positive constant d such that
+
+                                          |fˆ(ξξ )| = O(e−d|ξ | ), |ξξ | → ∞,
+
+then as |h | → 0,
+                                                                             
+                                     n    πd                            n    πd
+                                     Y  −√                              Y  −√
+                |E(f, h )(x )| = O    e nhj  , |EH (f, h )(ξ )| = O    e nhj  .
+                                          j=1                                       j=1
+
+                                                                                                    Q              
+                                                                                                         n
+If |fˆ(ξ )| = O (|ξ |−α ) , α > 1, then the convergence order in the above becomes O                          α−1
+                                                                                                         j=1 hj         .
+
+    The theorem shows that convergence rate of Sinc approximation is determined by the decay
+rate of the Fourier transform of f if f is square-integrable. Exponential (polynomial) decay
+of the Fourier transform leads to exponential (polynomial) convergence of Sinc approximation.
+The result generalizes Theorem 1.3.2 in Stenger (2011).
+    We will apply Theorem 2.1 for the edge dection problem, but for the pricing of barrier options
+and calculation of survival probabilities, the functions involved do not fulfill the conditions in
+the theorem. In the following, we consider another class of functions which are analytic in a
+tube domain and show that Sinc approximation converges exponentially for them.
+    Let’s first recall the class of one-variable analytic functions considered in Stenger (1993).
+For a positive constant d, define
+
+                                           Dd := {z ∈ C : |Imz| < d} ,
+
+which is a strip containing the real axis. Let H 1 (Dd ) denote the family of all complex-valued
+                                    Rd
+functions analytic in Dd , such that −d f (x + iy)dy → 0 as x → ±∞ and
+      Z                       Z                                    Z                          Z
+                   −                            −
+          |f (x + id )|dx +        |f (x − id )|dx := lim              |f (x + iy)|dx + lim       |f (x − iy)|dx
+      R                        R                            y→d−   R                  y→d−    R
+
+is finite. Now we consider the multivariate case. We recall Hartogs’ theorem which states that
+a P -variable complex function f (z1 , · · · , zP ) is analytic in S1 × · · · × SP if and only if for each
+1 ≤ p ≤ P , f as a function of zp is analytic in Sp for any given value of zq ∈ Sq (q 6= p,
+1 ≤ q ≤ P ). We define H 1 (Dd ) (d > 0 ), a class of n-variable complex functions, which consists
+of f (z ) that is analytic in the tube domain Dd = Dd1 × · · · × Ddn and for any β ∈ {0, 1}n , β 6= 0,
+                      Z
+                                f (xβ ± idβ− + z 1 −β ) dxβ ≤ C,                                      (2.3)
+                         |β
+                        R 1 |
+                                      Z
+                              lim                         f (xβ + iy β + z 1 −β )dy β = 0.            (2.4)
+                        xj →±∞, βj =1  Q
+                                            {j:βj =1} (−dj ,dj )
+
+
+
+
+                                                              5
+
+                       Electronic copy available at: https://ssrn.com/abstract=3091664
+with x = (x1 , · · · , xn )0 , xj = Re(zj ) for j = 1, · · · , n and C is a positive constant, independent
+of z := (z1 , · · · , zn )0 ∈ Dd . In the following discussion, we will also need the integral of f
+on Rn , which we approximate by the multidimensional rectangle rule below derived from Sinc
+expansion:                                                     
+                                    Z                 Y n         X
+                                        f (x )dx ≈          hj      f (kh).
+                                    Rn                     j=1         k ∈Zn
+
+The approximation error is denoted by EI (f, h ). The next theorem provides estimates of these
+errors, which are counterparts of the 1D estimates in Theorems 3.1.3, 3.2.1 and 3.4.4 of Stenger
+(1993) for a general dimension.
+Theorem 2.2. Consider f (z ) ∈ H1 (Dd ). For zj = xj + iyj ∈ Ddj , j = 1, · · · , n,
+                                                                                             
+                                X                  Y e−π(dp −|yp |)/hp (1 + e−2π|yp |/hp )
+          |E(f, h )(z )| ≤                  Cβ
+                                                                                  −2πdp /hp )
+                                                                                              ,                (2.5)
+                                                             (d p −  |y p |)(1 − e
+                           β ∈{0,1}n ,β 6=0     {p:βp =1}
+                                                                            
+                                X                  Y        e −2πd p /h p
+            |EI (f, h)| ≤                   Cβ                              ,                                 (2.6)
+                                   n
+                                                          1 − e−2πdp /hp
+                           β ∈{0,1} ,β 6=0      {p:βp =1}
+                                                                               
+                                X                  Y           e −πd p /h p
+        |EH (f, h )(ξ )| ≤                  Cβ
+                                                                    −πdp /hp )
+                                                                                .                              (2.7)
+                                   n
+                                                          dp (1 −  e
+                           β   β ∈{0,1} ,β 6=0
+                                      β 0               {p:βp =1}
+
+For any β , the positive constant Cβ is independent of h , z and ξ .
+
+2.2    Implementation of Sinc Approximation of Hilbert transform
+   For an n-variable function f (x ), we compute its Hilbert transform Hn f (ξ ) by Sinc Approx-
+imation (2.2). As the series in (2.2) is infinite, we truncate each kj at level −Mj and Mj and
+compute Hn f (ξ ) for ξ on a grid {kh, −Mj ≤ kj ≤ Mj , 1 ≤ j ≤ n}.
+   Define
+                                      1 − (−1)k−m
+                          c(k, m) :=                , k 6= m, c(k, k) := 0.                (2.8)
+                                        π(k − m)
+Then,
+                                                                    
+                         XM1         XMn              Yn
+          Hn f (k h ) ≈         ···         f (mh)       c(kj , mj )
+                          m1 =−M1        mn =−Mn                 j=1
+                            Mn
+                            X                             M2
+                                                          X                         M1
+                                                                                    X
+                      =             c(kn , mn ) · · ·               c(k2 , m2 )             c(k1 , m1 )f (mh)
+                          mn =−Mn                       m2 =−M2                   m1 =−M1
+                                                                  q
+    For each q ∈ {1, · · · , n}, construct a matrix T q with Tkm    = c(k, m) (−Mq ≤ kq , mq ≤ Mq ).
+          q
+Each T is a Toeplitz matrix and we can utilize fractional FFT to efficiently implement Toeplitz
+matrix-vector multiplication which costs O(M log2 M ) if the size of the matrix is M . We refer
+readers to Feng and Linetsky (2008a) Appendix B for details on this implementation. Let
+u0 (kh) = f (kh) and we calculate uq recursively from q = 1 to n as follows. For every tuple
+(k1 h1 , · · · , kq−1 hq−1 , kq+1 hq+1 , · · · , kn hn ), compute
+                      uq (k1 h1 , · · · , kq−1 hq−1 , :, kq+1 hq+1 , · · · , kn hn )
+                       = T q ∗ uq−1 (k1 h1 , · · · , kq−1 hq−1 , :, kq+1 hq+1 , · · · , kn hn )
+by using fractional FFT for the Toeplitz matrix-vector multiplication.
+   Suppose M1 = · · · = Mn = M . The computational cost of the algorithm is O(nM n log2 M )
+and the space requirement is O(M n ) as we need to store uq for the current q. As we will show,
+the algorithm works well for 2D and 3D problems.
+
+                                                            6
+
+                    Electronic copy available at: https://ssrn.com/abstract=3091664
+3    Edge Detection in 2D Images
+   A 2D image is represented by a two-variable function f (x1 , x2 ). Kohlmann (1996) shows
+that the edge points of a 2D image correspond to the local extrema of the Hilbert transform of
+the image function. To compute the 2D Hilbert transform, the Kohlmann method is based on
+the equation
+                         Hd                                         ˆ
+                           2 f (ξ1 , ξ2 ) = (−isgn(ξ1 ))(−isgn(ξ2 ))f (ξ1 , ξ2 )
+
+where the Fourier transform of the Hilbert transform equals the Fourier transform of the original
+function multiplied with some sign functions. The Kohlmann method employs discretization to
+calculate fˆ via fractional FFT (fast Fourier Transform) and then invert the Fourier transform
+(again via fractional FFT) to recover the Hilbert transform. We compare this approach with
+Sinc approximation by way of an example. Consider a function given in Kohlmann (1996) where
+f (x1 , x2 ) = 1(20,40) (x1 )1(20,40) (x2 ) and
+
+                                               1      ξ1 − 20    ξ2 − 20
+                           H2 f (ξ1 , ξ2 ) =     2
+                                                   ln         ln         ,
+                                               π      ξ1 − 40    ξ2 − 40
+
+which has four sigularities: (20, 20), (20, 40), (40, 20) and (40, 40).
+     This is a toy problem but it suffices to demonstrate the essential difference between the two
+methods. Moreover, the analytical formula for the Hilbert transform makes it easy to obtain
+an accurate benchmark. For both methods, we descretize over the region (0, 50) × (0, 50) for
+(ξ1 , ξ2 ) and set M = 210 .
+     The left plot in Figure 1 shows the value of the Hilbert transform over a range for ξ1 with
+ξ2 = 19 when the same M is used for both methods. Our method is much more accurate than
+the Fourier transform approach especially when ξ1 is away from the peak and trough. The
+right plot displays the maximum error of the two methods taken over a bounded range for
+(ξ1 , ξ2 ) (except a small neighborhood around 20 and 40) as the number of terms increases. The
+plot shows that our method converges uniformly in contrast to the Fourier transform approach,
+which still converges at each point of the domain, but it requires a different number of terms to
+reach the same accuracy level at a different point because convergence is not uniform. Uniform
+convergence is unequivocally desirable, which is an advantage of our approach.
+     From the right plot, we observe that Sinc approximation for Hilbert transform converges
+at first order (the slope of the regression line is estimated to be -0.98), which is in line with
+the theoretical estimate in Theorem 2.1. To see this, note that f is square-integrable and its
+Fourier transform is given by
+                                    1  i40ξ1                       
+                        fˆ(ξ ) = −       e    − ei20ξ1 ei40ξ2 − ei20ξ2 ,
+                                   ξ1 ξ2
+
+with |fˆ(ξ )| = O |ξ |−2 . Thus, Theorem 2.1 implies the convergence order of Since approxima-
+                        
+
+tion is one.
+    Although in this example Sinc approximation only attains polynomial convergence, it can
+converge exponentially for functions such as those whose Fourier transform decays exponentially
+or those that are analytic in a tube domain. By contrast, the Fourier transform approach can
+only converge polynomially.
+
+
+4    Barrier Options and Survival Probabilities
+    The asset price processes Stj , 1 ≤ j ≤ n are assumed to follow
+                                               j
+                              Stj = Kj eXt , with X0j = ln(S0j /Kj ).                        (4.1)
+
+
+                                                    7
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+Figure 1: Hilbert transform with ξ2 = 19 computed by the analytical formula, Sinc approx-
+imation and K. Kohlmann method (left) and convergence of the maximum error of the two
+approximation methods (right).
+
+
+where Kj are positive constants chosen for convenience and (Xt1 , · · · , Xtn ) is an n-dimensional
+Lévy process. A review of multidimensional Lévy process can be found in Appendix A. We
+need the joint characteristic function of X t − x , which is given by
+                               h              i
+                   φt (ξ ) := E eihξ ,X t −x i = e−tψ(ξ ) ,
+                                                Z
+                             1                              0
+                   ψ(ξ ) = ξ 0Σξ − iµ 0ξ +          (1 − eiξ y + iξ 0y 1{|y |≤1} )Π(dy ),
+                             2                   R2
+
+where ψ(ξ ) is the characteristic exponent of X . We also consider
+                                  (         Z                      )
+                                                          0
+                           IX :=   α ∈ Rn :            e−α y Π(dy ) < ∞ .
+                                              |y |>1
+
+Theorem 25.17 in Sato (1999) shows that IX is a convex set that contains the origin and α ∈ IX
+                      0
+if and only if Ex [e−α X t ] is finite for all t > 0.
+
+4.1   Problem Formulation
+    We consider pricing a discretely monitored multi-asset down-and-out barrier option moni-
+tored over dates {t1 , · · · , tN = T } (tj > 0 for 1 ≤ j ≤ N and we set t0 = 0). Our method can
+deal with arbitrary time increments, but for notational convenience, in the following, we simply
+assume tj = j∆. The terminal payoff function is h(x ), which is paid out if knock-out does not
+happen by T . Here, we assume that monitoring of knock-out is done separately for each asset.
+This case holds for many multi-asset barrier options and the joint survival probability problem.
+    Throughout this paper, as the discount factor is a constant, we only consider the un-
+discounted barrier option price at time 0, which is given by
+                                                                    
+                                           N
+                                             1(l ,∞) (X j∆ )h(X N ∆ ) .
+                                          Y
+                                     Ex 
+                                      j=1
+
+To keep notations simple, we also assume the barriers are time-independent. In general, they
+can be time-varying. Our method can be easily extended to handle this case.
+
+
+
+                                                8
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+Remark 4.1 (Other knock-out types). In general, for each asset, we can have three knock-out
+situations: down-and-out, up-and-out and double barrier. Thus, for multi-asset barrier options,
+we have a total of 3n combinations. We can solve all these problems using the multidimensional
+Hilbert transform. However, as it would be tedious to write down results for all the cases, we
+will only present our approach for the case in which all assets are down-and-out. It is also the
+setting for the calculation of joint survival probabilities in structural credit risk models. For
+formulas in the other cases, please refer to the thesis of Fan (2018).
+Remark 4.2 (Typical payoffs). In practice, typical payoffs for multi-asset barrier options in-
+clude call/put payoff on a single asset as well as call/put payoff on the sum of two assets, i.e.,
+P              +                      +
+    n    j                     Pn      j
+       S
+    j=1 T  − K     and    K  −       S
+                                 j=1 T      . Without loss of generality, we assume the weight of
+each asset in the portfolio is one. The general positive weight case can be reduced to this case
+by absorbing the weights into the starting points. The joint survival probability can be thought
+as a down-and-out option with h(x ) ≡ 1.
+
+4.2    Fourier Representation of Operators
+    Consider the transition operator of X t , which is defined as Pt f (x ) = Ex [f (X t )]. We wish to
+represent Pt f (x ) as a Fourier integral to make use of the analytical knowledge of the character-
+istic function. For the applications considered in this paper, f is not in L1 (Rn ) := L1 (Rn , dx             x)
+and neither is Pt f . Therefore, we cannot directly compute the Fourier transform of Pt f . To
+overcome this difficulty, we apply the ideas of exponential damping and Esscher transform in a
+multidimensional setting (see e.g., Cont and Tankov (2004) and Boyarchenko and Levendorskii
+(2002a)). Previously these ideas were applied to 1D problems.
+                                                                 0                                        0
+    For a multidimensional vector α, define fα (x       x) := eα x f (x
+                                                                      x), and let Lα1 (Rn ) := L1 (Rn , eα x dx
+                                                                                                              x).
+                  1    n             1    n
+The norm of L (R ) and of Lα (R ) are denoted by k · kL1 (Rn ) and k · kLα1 (Rn ) , respectively.
+                                          0
+Suppose α ∈ IX . Let Ztα := e−α X t +tψ(iα ) . The integrability of Ztα is guaranteed by Sato
+(1999), Theorem 25.17. Then, it is easy to see that Ztα is an exponential martingale. Consider
+                                                              0
+                                                                            h    0
+                                                                                             i
+                   Ptα f (x ) := Ex [(Ztα /Z0α )f (X t )] = eα x +tψ(iα ) Ex e−α X t f (X t ) .             (4.2)
+
+Here, Ztα /Z0α is a unit martingale and it introduces a new probability measure through the
+multidimensional Esscher transform with Ptα as the transition operator under it. From (4.2),
+                                                        0
+                                      Pt f (x ) = e−α x −tψ(iα ) Ptα fα (x ).                              (4.3)
+
+As {Ptα , t ≥ 0} is a strongly continuous contraction semigroup on L1 (Rn ) (Applebaum (2009),
+Theorem 3.4.2), we immediately obtain the following result.
+Proposition 4.1. For every α ∈ IX , {Pt , t ≥ 0} is a strongly continuous semigroup on Lα1 (Rn ),
+and {etψ(iα ) Pt , t ≥ 0} is a strongly continuous contraction semigroup on Lα1 (Rn ). In particular,
+
+                                    kPt f kLα1 (Rn ) ≤ e−tψ(iα ) kf kLα1 (Rn ) .                           (4.4)
+
+  A Fourier integral representation for Pt f (x ) can be derived under an additional condition.
+We can further discretize the integral to compute the expected value of f .
+Proposition 4.2. Suppose α ∈ IX , fα (x ) ∈ L1 (Rn ) and for some t > 0,
+                               Z
+                                   |φαt (−ξ )fˆα (ξ )|dξ < ∞,                                              (4.5)
+                                          Rn
+
+where fˆα (ξ ) is the multidimensional Fourier transform of fα (x ) and
+                                                            φt (ξ + iα )
+                                               φαt (ξ ) =                                                  (4.6)
+                                                              φt (iα )
+
+                                                            9
+
+                     Electronic copy available at: https://ssrn.com/abstract=3091664
+is the characteristic function of Xt under the new probability measure introduced by Ztα /Z0α .
+Then, for all t > 0,
+                                                         Z
+                                    1     −α 0x −tψ(iα )         0
+                      Pt f (x ) =     n
+                                        e                    e−iξ x φαt (−ξ )fˆα (ξ )dξ . (4.7)
+                                  (2π)                    Rn
+
+Remark 4.3. When fα (x ) ∈ L1 (Rn ), fˆα (ξ ) is bounded. Therefore, φαt (ξ ) ∈ L1 (Rn , C) is a
+sufficient condition for (4.5) to hold.
+
+4.3   Important Identities for Multidimensional Hilbert Transform
+   To price barrier options, we need to calculate Fn 1(l ,∞) (x )f (x ) (ξ ), which would involve the
+                                                                       
+
+partial Fourier transform and the partial Hilbert transform defined as follows. For β ∈ {0, 1}n ,
+                                           Z          Y
+                   Fβ (f )(ξβ + x1 −β ) :=     f (x )        eiξp xp dxp ,
+                                              R|β |1          {p:βp =1}
+                                                              Z
+                                                 1                                 Y           dxp
+                   Hβ (f )(ξβ + x1 −β ) :=       |β |
+                                                      P.V.              f (x )                       .
+                                             π       1
+                                                               R|β |1                        ξp − xp
+                                                                                 {p:βp =1}
+
+The operators F0 and H0 are identity maps. The meaning of ξβ and x1 −β are explained in
+Section 1.2. Their sum indicates that only those dimensions j with βj = 1 are transformed in
+the above.
+   To calculate Fn 1(l ,∞) (x )f (x ) (ξ ), we first recall a result from King (2009) (Eq.(15.60)).
+                                     
+
+For f ∈ Lp (Rn ) with p > 1, we have
+                                                  
+                                Y n
+                          Fn        sgn(xj )f (x ) (ξ ) = in Hn (Fn f )(ξ ).                (4.8)
+                                     j=1
+
+
+where sgn(x) is the sign function. In our problem, we need to deal with f ∈ L1 (Rn ). For this
+case, an additional condition is needed for (4.8) to hold. We also need to consider a general
+situation where the sign function is only applied for part of the dimensions. The following gives
+the result required for our problem.
+
+Proposition 4.3. For f ∈ L1 (Rn ), if Fn f ∈ L1 (Rn , C), then for β ∈ {0, 1}n , we have
+                                          
+                       Y
+                Fn          sgn(xp )f (x ) (ξ ) = i|β |1 Hβ (fˆ(ηβ + ξ 1 −β ))(ξ ).                         (4.9)
+                         {p:βp =1}
+
+
+Here fˆ is the nD Fourier transform of f , i.e., Fnf .
+    Based on (4.9), we obtain Fn 1(l ,∞) (x )f (x ) (ξ ) as in (4.10), which is the key identity for
+calculating the Fourier transform of the value function in the backward recursion (see Section
+4.4).
+
+Proposition 4.4. For f ∈ L1 (Rn ), if Fn f ∈ L1 (Rn , C), then
+                                       1                            0
+                                                                                0                  
+          Fn 1(l ,∞) (x )f (x ) (ξ ) = n                 i|β |1 eiξ β lβ Hβ e−iη β lβ fˆ ηβ + ξ 1 −β (ξ ).
+                                            X
+                                                                                                             (4.10)
+                                      2
+                                           β ∈{0,1}n
+
+
+
+
+                                                         10
+
+                   Electronic copy available at: https://ssrn.com/abstract=3091664
+4.4    Backward Recursion
+     Let v j (x ) denote the barrier option price at time tj given X tj = x . We can compute each
+v j by the following backward recursion:
+
+                             v N (x ) = g(x ) := h(x )1(l ,∞) (x ),
+                            v j−1 (x ) = P∆ v j (x )1(l ,∞) (x ),         j = N, N − 1, · · · , 2,
+                              v 0 (x ) = P∆ v 1 (x ).
+
+    In order to apply the Hilbert transform method to compute each step in the induction,
+we need to apply exponential damping to the payoff function. Consider α ∈ IX such that
+             0                                        0
+gα (x ) := eα x g(x ) ∈ L1 (Rn ). Define vαj (x ) = eα x v j (x ). Applying (4.3), the backward recursion
+becomes
+
+                      vαN (x ) = gα (x ),
+                    vαj−1 (x ) = e−∆ψ(iα ) P∆ vα (x )1(l ,∞) (x ),
+                                            α j
+                                                                               j = N, N − 1, · · · , 2,   (4.11)
+                            x) = e−∆ψ(iα ) P∆
+                       vα0 (x               α 1
+                                                  x),
+                                              vα (x
+
+where P∆α is defined in (4.2). Let V (S ) be the discounted barrier option price at time zero as a
+
+function of the initial asset prices. Then,
+                                                              0
+                                       V (S ) = e−rT −α ln(S /K ) vα0 (ln(S /K )) .
+
+   As gα ∈ L1 (Rn ) and P∆   α maps from L1 (Rn ) to itself, we have P α v j (1 ≤ j ≤ N ) and v j
+                                                                          ∆ α                  α
+(0 ≤ j ≤ N ) are all in L1 (Rn ). Let k · kL1 (Rn ) be the L1 -norm. Using (4.4), we obtain
+
+                        kvαj kL1 (Rn ) ≤ e−∆(N −j)ψ(iα ) kgα kL1 (Rn ) , j = 0, 1, · · · , N.             (4.12)
+
+    In general, we cannot calculate expectations like P∆  α v j (x ) directly. To carry out the back-
+                                                             α
+ward recursion, we follow Feng and Linetsky (2008a) to take Fourier transform on both sides of
+the recursive equation (4.11). By Proposition 9 in Bertoin (1998), its multidimensional Fourier
+transform is given by
+                                     α j
+                                      vα (x ) (ξ ) = φα∆ (−ξ )v̂αj (ξ ).
+                                             
+                               Fn P∆
+
+If we further have φα∆ (−ξ )v̂αj (ξ ) ∈ L1 (Rn ), we can apply (4.10) to calculate v̂αj−1 (ξ ). Conse-
+quently, the backward induction in the Fourier space becomes
+
+             v̂αN (ξ ) =ĝα (ξ ),                                                                         (4.13)
+                           e−∆ψ(iα )                        ξ0 l
+                                                   i|β |1 eiξ β lβ
+                                          X
+           v̂αj−1 (ξ ) =
+                              2n
+                                       β ∈{0,1}n
+                                    0                                      
+                                
+                           · Hβ e−iηβ lβ φα∆ − ηβ − ξ 1 −β v̂αj ηβ + ξ 1 −β (ξ ), j = N, · · · , 2,
+                                                          
+                                                                                                          (4.14)
+             v̂α0 (ξ ) =e−∆ψ(iα ) φα∆ (−ξ )v̂α1 (ξ ).                                                     (4.15)
+
+   The following theorem shows that this backward recursion procedure is valid under mild
+assumptions and recovers v 0 (x ) through Fourier inversion.
+
+Theorem 4.1. Consider α ∈ IX such that gα (x ) ∈ L1 (Rn ). Suppose that
+                             Z
+                                 |φα∆ (−ξ )ĝα (ξ )|dξ < ∞.                                               (4.16)
+                                              Rn
+
+
+                                                                     11
+
+                     Electronic copy available at: https://ssrn.com/abstract=3091664
+Also assume that there is some time χ > 0 such that
+                                                 Z
+                               α
+                             kφχ (·)kL1 (Rn ) :=   |φαχ (ξ )|dξ < ∞                                           (4.17)
+                                                                    Rn
+
+Then, for 1 ≤ j ≤ N ,                          Z
+                                                      |φα∆ (−ξ )v̂αj (ξ )|dξ < ∞.                             (4.18)
+                                                 Rn
+and (4.14) holds. Finally, v 0 (x ) can be recovered by
+                                                        Z
+                                   1     −α 0x −∆ψ(iα )         0
+                      0
+                     v (x ) =        n
+                                       e                    e−iξ x φα∆ (−ξ )v̂α1 (ξ )dξ .                     (4.19)
+                                (2π)                     Rn
+
+
+4.5    Discrete Approximations of Two Operators
+The Hilbert transforms in (4.14) and the integral in (4.19) have to be evaluated numerically.
+Introduce the following operators:
+                                       0           0
+                                                                                        
+                            i|β |1 eiξ β lβ Hβ e−iηβ lβ φα∆ − η β − ξ 1 −β g η β + ξ 1 −β (ξ ),
+                      X
+         P ∆ g(ξ ) =
+                                                                          
+
+                          β ∈{0,1}n
+                          Z
+                                      0
+              ∆
+           R g(x ) =             e−iξ x φα∆ (−ξ )g(ξ )dξ .
+                            Rn
+
+Employing the general Sinc approximation (2.2) and further truncating the infinite series, we
+obtain the following approximation for P ∆ and R∆ :
+                                                0
+                                     i|β |1 eiξ β lβ ·
+                                  X                    X
+       P ∆ g(ξ ) ≈ Ph∆,M g(ξ ) :=                        β
+
+                                          β ∈{0,1}n                     −Mj ≤mj ≤Mj
+           Y        1 − cos[π(ξj − mj hj )/hj ] −i(mβ hβ )0lβ α
+                                               e             φ∆ (−mβ hβ − ξ 1 −β )g(mβ hβ + ξ 1 −β ), (4.20)
+                        π(ξj − mj hj )/hj
+        {j:βj =1}
+                                           n            M1                Mn
+                                                                                        0
+                                           Y            X                 X
+        R∆ g(x ) ≈ Rh∆,M g(x ) :=                hj             ···               e−i(mh) x φα∆ (−mh)g(mh).   (4.21)
+                                           j=1        m1 =−M1           mn =−Mn
+
+   The approximation error comes from discretization and trucation. The discretization error
+can be estimated using Theorem 2.2. To estimate the trucation error, we assume
+                                           ν
+                    |φt (ξ )| ≤ ae−tb|ξ | for some ν ∈ (0, 2], a, b > 0, and ξ ∈ Rn , t > 0.                  (4.22)
+
+This condition holds for many Lévy processes, in particualr for all Lévy processes with a Brow-
+nian component (see Appendix A for details). The next theorem shows the error estimates.
+Theorem 4.2. Suppose (4.22) holds. Let x = (x1 , · · · , xn )0 with xj = Re(zj ) for 1 ≤ j ≤ n.
+Further assume that for z ∈ Dd , ∀β ∈ {0, 1}n , β 6= 0,
+                  Z
+                                      −
+                           e−∆ψ(xβ ±idβ +z 1 −β ) dxβ ≤ C,                                (4.23)
+                    R|β |1      Z
+                         lim                         e−∆ψ(xβ +iyβ +z 1 −β ) dy β = 0,     (4.24)
+                         xj →±∞, βj =1
+                                  Q
+                                                 {j:βj =1} (−dj ,dj )
+
+
+where C is a finite constant independent of z . Consider g(z ) : Cn 7→ C, which is analytic and
+bounded in Dd . Then, there exist positive constants Aβ , Bβ , β ∈ {0, 1}n that are independent of
+h, M such that
+
+         P ∆ g(ξ ) − Ph∆,M g(ξ )
+                                      L∞ (Rn )
+
+
+                                                                 12
+
+                       Electronic copy available at: https://ssrn.com/abstract=3091664
+                                                                                                                   
+               X                      Y         e−πdj /hj                  Y                                  
+     ≤                      Aβ                             + Bβ                  Γ 1/ν, ∆b2ν/2−1 (Mj hj )ν /hj  ,(4.25)
+         β ∈{0,1}n ,β
+                    β 6=0
+                                              1 − e−πdj /hj
+                                  {j:βj =1}                          {j:βj =1}
+                                                                                                 R∞
+where k · kL∞ (Rn ) denotes the maximum norm on Rn and Γ(a, x) :=                                 x   y a−1 e−y dy is the in-
+complete Gamma function. In particular, let
+                                                      1        ν
+                                                           Mj − 1+ν , j = 1, · · · , n.
+                                                       1+ν
+                                 hj = n1−ν/2 πdj /(∆b)                                                                (4.26)
+
+Then there exists a positive constant C, which is independent of Mj , such that
+                                                     n        1                                   
+                                                     X                             1             ν
+          ∆
+      P       g(ξ ) − Ph∆,M g(ξ )               ≤C         Mj1+ν exp −(∆bnν/2−1 ) 1+ν (πdj Mj ) 1+ν .                 (4.27)
+                                       L∞ (R )n
+                                                     j=1
+
+There also exist positive constants Aβ0 , Bβ0 , β ∈ {0, 1}n that are independent of h, M such that
+
+        R∆ g(x ) − Rh,M
+                     ∆
+                        g(x ) ∞ n
+                              L (R )
+                                                                                                                    
+          X              Y       e−2πdj /hj                                   Y                               
+    ≤              Aβ0
+                                     −2πdj /hj
+                                               + Bβ0                                 Γ 1/ν, ∆b2ν/2−1 (Mj hj )ν /hj  ,
+            n β 0
+                               1 − e
+      β ∈{0,1} ,β 6=0
+      β                           {j:βj =1}                              {j:βj =1}
+
+In particular, set h by (4.26), there exists a positive constant C 0 , which is independent of M ,
+such that
+
+                            R∆ g(x ) − Rh∆,M g(x )
+                                                        L∞ (Rn )
+                                n              2(1−ν)                                   
+                                X                                        1             ν
+                      ≤C 0            max(1, Mj 1+ν ) exp −2(∆bnν/2−1 ) 1+ν (πdj Mj ) 1+ν .                           (4.28)
+                                j=1
+
+Remark 4.4. One can further reduce the parameters for the algorithm by equalizing the terms
+Mi di , 1 ≤ i ≤ n, i.e. letting
+
+                                                    Mi di = Mj dj , i 6= j.                                           (4.29)
+
+Thus, we only need to specify M1 , and then determine Mj , 2 ≤ j ≤ n by (4.29) and hj , 1 ≤ j ≤ n
+by (4.26). This reduces the number of parameters for the algorithm to one.
+                                                                          ν
+                                                            1        −
+Remark 4.5. In general, if we set hj = c 1+ν Mj 1+ν for some c > 0, we would obtain error
+estimates similar to those in (4.27) and (4.28) with the exponent of Mj unchanged. The choice
+                                                     ν/2−1 (M h )ν
+(4.26) for hj is derived by setting e−πdj /hj = e−∆b2        j j   , where the right-hand side is the
+leading order for the incomplete Gamma function.
+Remark 4.6. Conditions (4.23) and (4.24) can be checked for a given model and are not stringent
+at all. In particular, they hold for all the models considered in the numerical section.
+Remark 4.7. Our method for pricing barrier options and calculating survival probability is
+applicable to Lévy models with known joint characteristic function and it converges provided
+that
+                               X∞       X∞
+                                    ···       |φ∆ (−mh)| < ∞.                           (4.30)
+                                           m1 =−∞      mn =−∞
+
+Thus, our method applies to Lévy processes with different marginals if their joint characteristic
+functions satisfy (4.30). Condition (4.22) is used to show the method converges exponentially
+
+
+                                                                13
+
+                        Electronic copy available at: https://ssrn.com/abstract=3091664
+but it is not necessary for achieving exponential convergence. For example, one can use the
+weaker condition
+                                   Pn            ν
+              |φt (ξξ )| ≤ ae−tb     j=1 |ξj |       for some ν ∈ (0, 2], a, b > 0, and ξ ∈ Rn , t > 0.                 (4.31)
+
+For specific models, one can even twist the condition (4.22) or (4.31) in accordance with the
+form of the characteristic function to show exponential convergence.
+     For Lévy processes with different types of marginals, condition (4.22) may or may not hold.
+Consider the example where Xt1 is a Brownian motion and Xt2 is a jump-diffusion with its
+Brownian motion component correlated with Xt1 . Obviously they are of different types, but
+(4.22) holds. As another example, let L1t be an NIG process and L2t be an independent normal
+tempered stable process with order ν ∈ (0, 1) (so it’s not NIG). We construct Xt1 and Xt2 as
+Xt1 = L1t , Xt2 = L1t + L2t . Now X 1 and X 2 are of different types and (4.31) doesn’t hold. But it
+is still possible to show exponential convergence in this case (with terms exponentially decaying
+with different orders in the exponent).
+Remark 4.8. The pure-jump VG model is a challenging case for our method as its characteristic
+function doesn’t decay exponentially. However, it still satisfies (4.30), so our method still
+converges, but at a rate slower than exponential convergence. In Section 5.4, we will apply
+multidimensional spectral filters to accelerate convergence for this model.
+
+4.6     The Aggregate Error of Backward Recursion
+    Our algorithm yields an approximation of v̂αj for each j. Let ṽαN be the approximation of
+v̂α in the hyperrectangle Ωh ,M := [−M1 h1 , M1 h1 ] × · · · × [−Mn hn , Mn hn ] and we set ṽαN (ξ ) = 0
+  N
+
+      / Ωh ,M . Define ṽαj , 1 ≤ j ≤ N − 1 recursively as
+for ξ ∈
+
+                                                              e−∆ψ(iα ) ∆ j+1
+                                                     ṽαj =            Ph ,M ṽα .
+                                                                2n
+From the definition, ṽαj (ξ ) = 0 for ξ ∈  / Ωh ,M and ṽαj (ξ ) approximates v̂αj (ξ ) on Ωh ,M . Also
+introduce
+                         1       0                                 1      0
+               ṽ 0 =         e−α x −∆ψ(iα ) Rh∆,M ṽα1 , v̄ 0 =       e−α x −∆ψ(iα ) R∆ ṽ 1 .
+                      (2π)n                                      (2π)n
+where ṽ 0 (x ) is our approximation of v 0 (x ).
+   We assume (4.22) and estimate |ṽ 0 (x   x) − v 0 (x
+                                                      x)| as follows:
+
+        |ṽ 0 (x ) − v 0 (x )| ≤ |v̄ 0 (x ) − v 0 (x )| + |ṽ 0 (x ) − v̄ 0 (x )|
+                                        Z                                                                          
+                  1    −α 0x −∆ψ(iα )              α              1      1
+                                                                                        ∆ 1          ∆      1
+         ≤           e                           φ ∆  (−ξ )    ṽα  − v̂α    (ξ ) dξ + R  ν̃ (x ) − Rh ,M ν̃   (x )
+               (2π)n                        Rn
+         ≤ C1 (I1 + I2 + I3 ),
+
+where
+                                                 Z
+                     1     −α 0x −∆ψ(iα )
+             C1 =        e                , I1 =      |φα∆ (−ξ )| · Ph∆,M ṽα2 (ξ ) − P ∆ ṽα2 (ξ ) dξ ,
+                   (2π)n                           Rn
+                  Z
+                      |φα∆ (−ξ )| · P ∆ ṽα2 − v̂α2 (ξ ) dξ , I3 = R∆ ν̃ 1 (x ) − Rh∆,M ν̃ 1 (x ) .
+                                                   
+             I2 =
+                      Rn
+
+We can estimate I1 and I2 recursively using the Holder and Minkowski inequalities (see Ap-
+pendix D). The result is summarized as follows.
+Theorem 4.3. Suppose (4.16) and (4.22) hold. Then, we have
+                                     0
+           |ṽ 0 (x ) − v 0 (x )| ≤ CN kφα∆ (−·) ṽαN − v̂αN (·)1Ωh ,M (·)kL∞ + Ih ,M
+                                                                                     
+
+
+                                                                   14
+
+                       Electronic copy available at: https://ssrn.com/abstract=3091664
+                                                N
+                                                X
+                                            +         Ck kPh∆,M ṽαk (ξξ ) − P ∆ ṽαk (ξξ ))kL∞
+                                                k=2
+
+                                            + C1 R∆ ν̃ 1 (x ) − Rh∆,M ν̃ 1 (x ) ,                             (4.32)
+
+where C2 = C1 kφα∆ kL1 , Ck ∼ O 2−n(k−2) for k ≥ 3, CN 0 is bounded in N , and
+                                        
+
+                                          Z
+                                                        ν
+                                  Ih ,M =      ae−tb|ξ | dξ .
+                                                                 c
+                                                                Ωh ,M
+
+
+    The theorem breaks down the aggreate error into three sources: the approximation error for
+the Fourier transform of the dampened payoff on Ωh ,M and truncation (as we set ṽαN to be zero
+outside Ωh ,M ), the discrete approximation error for the operator P ∆ in each recursion step, and
+the discrete approximation error for the operator R in the last step. The second and the third
+types of errors can be further estimated using (4.27) and (4.28) and they decay exponentially.
+This means that if the computation of the Fourier transform of the dampend terminal payoff is
+exact, our algorithm would exhibit exponential convergence. It should be mentioned that since
+the second type of error builds up as the number of recursions increases, to obtain the same level
+of accuracy for cases with more monitoring dates we need to reduce the Sinc approximation
+error in each recursion step and this requires using more terms in the Sinc expansion.
+
+4.7        Implementation of Discrete Approximations
+    We compute v̂αj (ξ ) for ξ on a grid {kh, −Mi ≤ ki ≤ Mi , 1 ≤ i ≤ n} for j = N, · · · , 1. Recall
+c(k, m) defined in (2.8). Using (4.20) and (4.21), we obtain
+
+v̂αN (k h ) = ĝα (kh),
+                    e−∆ψ(iα ) X |β |1 i(kβ hβ )0lβ
+v̂αj−1 (kh) ≈                          i e
+                      2n             n
+                             β ∈{0,1}
+                                                                                                                 
+                                                      0
+           X             Y
+ ·             β               c(kj , mj )e−i(mβ hβ ) lβ φα∆ (−mβ hβ − k 1 −β h1 −β )v̂αj (mβ hβ + k 1 −β h1 −β ) ,
+     −Mj ≤mj ≤Mj          {j:βj =1}
+                                                                                                              (4.33)
+                             
+                   n
+                   Y hj        e−α 0x −∆ψ(iα )
+                                                           X                       0
+v (x 0
+   x) ≈                                                                  e−i(mh) x φα∆ (−mh
+                                                                                          mh)v̂α1 (mh
+                                                                                                   mh).       (4.34)
+                         2π
+                   j=1                            −Mj ≤mj ≤Mj ,1≤j≤n
+
+         For any β ∈ {0, 1}n , introduce the multidimensional discrete Hilbert transform (DHT):
+
+                    Hβh ,M f (k h ) =
+                                       X          Y
+                                           β          c(kj , mj )f (mβ hβ + k 1 −β h1 −β ).
+                                           −Mj ≤mj ≤Mj {j:βj =1}
+
+
+The sum in (4.33) involves 2n − 1 partial or full DHTs. A naive implementation calculates β
+                                                                                             P
+one by one for β ∈ {0, 1}n and for any β with k ones a k-fold sum needs to be evaluated. Even
+if the k-fold sum can be computed with the help of Toeplitz matrix-vector multiplication, the
+whole procedure is still computationally too intensive.
+     We propose an efficient way to evaluate (4.33) by recognizing that higher-order partial
+DHTs can be computed from lower-order ones. For example, the partial DHT for the first two
+dimensions can be obtained by applying DHT to the second dimension of the partial DHT for
+only the first dimension. Our implementation proceeds in a recursive way as follows.
+     Let φα∆ (resp. v̂ αj ) be an n-dimensional matrix with its m -th (−M ≤ m ≤ M ) entry equal to
+φα∆ (−mh)(resp. v̂αj (mh )). Recall that ◦ denote pointwise multiplication and ∗ denote matrix
+
+                                                                   15
+
+                              Electronic copy available at: https://ssrn.com/abstract=3091664
+multiplication. Now suppose we already have matrices φα∆ and v̂ αj , the procedure of computing
+the matrix v̂ αj−1 via (4.33) consists of the following steps.
+(1) Compute the pointwise product v 1 = φα∆ ◦ v̂ αj . This matrix gives the term in (4.33) with
+β = 0 for all k h .
+(2) Repeat this step until matrices v q , u q , q = 1, · · · , n are obtained. To calculate u q , for all
+−Mp ≤ kp ≤ Mp , p = 1, · · · , q − 1, q + 1, · · · , n, compute
+
+   u q (k1 h1 , · · · , kq−1 hq−1 , :, kq+1 hq+1 , · · · , kn hn )                                                  (4.35)
+                                q
+    = iE (Mq , hq , lq ) ◦ [T ∗ (E (Mq , hq , −lq ) ◦ v q (k1 h1 , · · · , kq−1 hq−1 , :, kq+1 hq+1 , · · · , kn hn ))] ,
+                                                      q
+where T q is a Toeplitz matrix with entry Tkm           = c(k, m), −Mq ≤ k, m ≤ Mq and E (M, h, l) =
+                               0
+ ei(−M h)l , · · · , ei(M h)l . The matrix u q gives the sum of terms in (4.33) with β such that βp = 0
+                             
+
+or 1 for p = 1, · · · , q − 1, βq = 1 and βp = 0 for p = q + 1, · · · , n for all k h . Calculate v q+1 =
+v q + u q . Then v q+1 is the sum of terms in (4.33) with β such that βp = 0 for p = q + 1, · · · , n
+for all k h .
+(3) Finally, set v̂ αj−1 = 21n e−∆ψ(iα ) (v n + u n ).
+
+                              ◦φα                                                      · 21n e−∆ψ(iα )j−1
+                      v̂ αj     ∆
+                                    v1           v2           ···          vn                      v̂ α
+                                      (4.35)       (4.35)                     (4.35)
+
+                                    u1          u2            ···          un
+
+                                     Figure 2: Diagram for computing v̂ αj−1
+
+     The diagram in Figure 2 illustrates the recursive procedure. It only requires calculating
+(4.35) n times and this is the minimal number that one can obtain. An alternative recursive
+procedure would require calculating 2n − 1 times of equations like (4.35).
+     Below we summarize our algorithm, termed as multidimensional fast Hilbert transform, for
+pricing barrier options.
+Step 1. Choose α ∈ IX such that gα ∈ L1 (Rn ). Select appropriate Mp , hp , 1 ≤ p ≤ n. Compute
+φα∆ (−kh) and ĝα (kh) for all −Mp ≤ kp ≤ Mp , p = 1, · · · , n.
+Step 2. For j = N, N − 1, · · · , 2, implement steps (1) to (3) above to compute the value of
+v̂αj−1 (k h ) for all −Mp ≤ kp ≤ Mp , p = 1, · · · , n.
+Step 3. Obtain v 0 (x ) by (4.34).
+     Now we analyze the time and space computational complexity of the algorithm. Recall that
+M = max(M1 , · · · , Mn ) and assume that all Mp s are simply constant multiples of M . Com-
+puting Toeplitz matrix-vector product in (4.35) can be done efficiently using FFT (see Feng
+and Linetsky (2008a), Appendix B for the implementation detail). The complexity for comput-
+ing v̂αj−1 (k1 h1 , · · · , kq−1 hq−1 , :, kq+1 hq+1 , · · · , kn hn ) for each pair (k1 , · · · , kq−1 , kq+1 , · · · , kn ) is
+O(M log2 M ) and this has to be repeated O(M n−1 ) times. So the cost of obtaining the matrix u q
+for each q is O(M n log2 M ) and adding them up gives the cost for v̂ αj−1 , which is O(nM n log2 M ).
+In addition, the cost of computing (4.21) at a given x is O(M n ). Thus, the backward induction
+procedure requires a total of O(nN M n log2 M ) operations, where N is the number of moni-
+toring dates. As we need to store the matrices φα∆ as well as v̂ αj for the current j, the space
+requirement is O(M n ) (we do not need to store v̂ αl for l > j).
+Remark 4.9. Our method generalizes the Feng-Linetsky method for pricing barrier options and
+calculating survival probabilities in 1D exponential Lévy models to general dimensions. The
+extension is not trivial for several reasons. First, the nD Fourier transform of a function multi-
+plied by an indicator involves Hilbert transforms of orders from 1 to n (see (4.10)), where the
+1D case only involves the 1D Hilbert transform. As our previous discussions show, the sequence
+in which these Hilbert tranforms of varying orders are computed matters as it directly affects
+
+
+                                                              16
+
+                        Electronic copy available at: https://ssrn.com/abstract=3091664
+the computational efficiency. Second, while the Fourier transform of 1D dampened payoffs of
+calls and puts can be obtained in simple closed-form formulas, the Fourier transform for nD
+dampened payoffs of calls and puts may not admit a closed-form expression and even if there is
+one it can involve sophisticated special functions which are too time-consuming to compute (see
+Appendix B.1). In our implementation we reduce the Fourier transform integral to integrals of
+lower dimensions and calculate them numerically using a quadrature rule. Third, while IX is
+an interval in the 1D case and it can be easily dertermined, its structure in multidimensions
+is hard to figure out. Instead we look for a rectangular region inside IX (see Appendix B.2).
+Fourth, Sinc theory is only developed for the 1D case in Stenger (1993, 2011). We extend the
+theory to multidimensions and finding the right conditions and completing the proof require
+work.
+
+
+5     Numerical Results for Barrier Options and Survival Proba-
+      bilities
+    We test our method on several representative Lévy models in 2D and 3D for calculating
+the joint survival probability and pricing down-and-out call options under several monitoring
+frequencies (annual, monthly, weekly and daily). Computations are done using Matlab on a
+desktop computer with Intel Core i5-4590 CPU at 3.30 GHz and 8 GB RAM, running Windows
+7. Below we denote the barrier for the price of asset j by Lj . In all cases, for the fast Hilbert
+transform algorithm we only set the value of M1 for computation and the other Mp s and all hp s
+are determined following Remark 4.4. After α is chosen, we calculate d according to (B.9) for
+the survival probability and (B.10) for the call. We also provide the 99% confidence interval
+from Monte Carlo simulation with 107 samples as a benchmark for each case. For one case, we
+also show results from the Fourier-cosine method and the finite difference method.
+
+5.1    2D Black-Scholes Model
+     X follows a 2D Brownian motion with drift vector µ and covariance matrix Σ . It is easy
+to see that λj− = −∞ and λj+ = ∞ for j = 1, 2. Therefore, from (B.8), any rectangular region
+(λ̃1− , λ̃1+ ) × (λ̃2− , λ̃2+ ) with λ̃j− < −1 and λ̃j− > 0 (j = 1, 2) is inside IX and hence α1 , α2 can
+be chosen freelypfrom negative numbers. For this model, ν = 2 in (4.22) due to (A.3) and
+b = (σ12 + σ22 − σ14 + σ24 + (4ρ2 − 2)σ12 σ22 )/2, which is half of the smallest eigenvalue of Σ.
+     For the survival probability problem, we set µ1 = 0.1, σ1 = 0.2, µ2 = 0.05, σ2 = 0.3, ρ = 0.5,
+S01 = 100, S02 = 80, L1 = 70, L2 = 40 and T = 1. Table 1 shows the one-year joint survival
+probability under the physical measure for different monitoring frequencies. It can be seen that
+with only a few terms, we can already achieve very accurate results. In Figure 3 (a), we plot the
+convergence of the error as M1 increases for N = 12, which clearly corroborates the theoretical
+                                                                       1/2
+estimate in Theorem 4.3 that shows exponential decay in M1 .
+
+                            N     probability    time(s)     MC 99% CI
+                            1       0.9832        0.013    (0.9830, 0.9834)
+                           12       0.9741        0.092    (0.9738, 0.9744)
+                           50       0.9685        0.378    (0.9682, 0.9688)
+                           250      0.9647        8.114    (0.9644, 0.9650)
+
+Table 1: One-year joint survival probability under the 2D Black-Scholes model (L1 = 70, L2 =
+40). We set α1 = α2 = −4, M1 = 100 for N = 1, 12, 50 and 200 when N = 250. It takes
+216, 2526, 10544 and 37284 seconds for N = 1, 12, 50, 250, respectively to obtain the confidence
+interval from Monte Carlo simulation. The fast Hilbert transform results all fall in the intervals.
+
+
+                                                   17
+
+                   Electronic copy available at: https://ssrn.com/abstract=3091664
+                         (a) 2D GBM                      (b) 2D Merton’s JD
+
+
+
+
+                                           (c) 2D NIG
+
+Figure 3: Convergence of the 2D fast Hilbert transform algorithm for joint survival probability
+in three models under N = 12. In the plots, M refers to the value of M1 and the values of
+M2 , h1 , h2 are set according to Remark 4.4 from M . The results validate the conclusion in
+Theorem 4.3 which shows the algorithm converges exponentially if there is no approximation
+error in the terminal step and this is the case for the survival probability problem.
+
+
+
+
+                                               18
+
+                 Electronic copy available at: https://ssrn.com/abstract=3091664
+   Moreover, to show our algorithm also work with barriers close to initial prices, we test it
+with two set of parameters L1 = 90, L2 = 75 (high barriers) and L1 = 98, L2 = 76 (extremely
+high barriers) with all other parameters remain unchanged. See Table 2 and Table 3.
+
+                          N     probability   time(s)      MC 99% CI
+                           1      0.5982       0.010    (0.5974, 0.5982)
+                          12      0.2916       0.069    (0.2911, 0.2919)
+                          50      0.2237       0.269    (0.2233, 0.2239)
+                          250     0.1888       1.335    (0.1883, 0.1889)
+
+Table 2: One-year joint survival probability under the 2D Black-Scholes model with high barriers
+(L1 = 90, L2 = 75). We set α1 = α2 = −4, M1 = 100. It takes 107, 613, 2002 and 8634
+seconds for N = 1, 12, 50, 250, respectively to obtain the confidence interval from Monte Carlo
+simulation. The fast Hilbert transform results all fall in the intervals.
+
+
+                          N     probability   time(s)      MC 99% CI
+                           1      0.5385       0.008    (0.5379, 0.5387)
+                          12      0.1849       0.069    (0.1846, 0.1852)
+                          50      0.1142       0.280    (0.1137, 0.1142)
+                          250     0.0815       1.413    (0.0814, 0.0818)
+
+Table 3: One-year joint survival probability under the 2D Black-Scholes model with extremely
+high barriers (L1 = 98, L2 = 75). We set α1 = α2 = −4, M1 = 100. It takes 109, 466, 1209 and
+4436 seconds for N = 1, 12, 50, 250, respectively to obtain the confidence interval from Monte
+Carlo simulation. The fast Hilbert transform results all fall in the intervals.
+
+    For pricing the 2D down-and-out call option, we set σ1 = 0.5, σ2 = 1.2, ρ = 0.5 and
+µj = r − qj − σj2 /2 (j = 1, 2) with r = 0.02, qj = 0. For the other parameters, S01 = 20, S02 = 30,
+K = 50, L1 = 16, L2 = 24 and T = 1. We compare the performance of the 2D fast Hilbert
+transform algorithm, the 2D Fourier-cosine method of Ruijter and Oosterlee (2012) and the 2D
+finite difference scheme using ADI (Duffy (2013)). Ruijter and Oosterlee (2012) does not treat
+barrier options, but using the idea for 1D barrier option pricing in Fang and Oosterlee (2009),
+we can easily develop the 2D Fourier-cosine algorithm for pricing 2D barrier call options. This
+algorithm requires the value of three parameters: L, Q and M . The parameter L controls the
+length of the truncation interval, while Q is the number of terms for each dimension to calculate
+the cosine expansion coefficient of the payoff function by the discrete cosine transform and M
+refers to the number of terms in the Fourier-cosine expansion for each dimension.
+    The results are listed in Table 4. Both the 2D fast Hilbert transform algorithm and the 2D
+Fourier-cosine method outperform the ADI finite difference scheme significantly. Comparing
+the former two, our method fares better than the 2D Fourier-cosine method. For N = 1, 12,
+both methods are very accurate, but our approach is faster. For N = 50, 250, our algorithm is
+notably better in both accuracy and computation time.
+
+5.2   2D Merton’s Jump-Diffusion Model with a Common Jump Component
+   Let X be a 2D jump-diffusion with a common jump component given in Section A. The
+bivariate jump size vectors are assumed to follow a bivariate normal distribution with mean
+vector θ and covariance matrix Σ J . This model is a 2D extension of the standard 1D Merton’s
+jump-diffusion model. It is easy to check that λj− = −∞ and λj+ = ∞ for j = 1, 2. Thus, like
+the Black-Scholes model, we can choose α1 , α2 freely from negative numbers. For this model,
+
+
+                                                19
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+         2D Fast Hilbert Transform          2D Fourier-Cosine               2D FDM-ADI
+  N      price(error)       time(s)     price(error)     time(s)      price(error)   time(s)
+  1      14.8379(0.0024)         0.17   14.8379(0.0024)        0.29   14.8307(-0.0048)    6.45
+  12     8.3156(0.0006)          0.22   8.3155(0.0005)         0.61   8.3415(-0.0265)     6.58
+  50     6.4396(0.0003)          0.44   6.4288(-0.0105)        1.71   6.5074(0.0681)      6.41
+  250    5.4361(0.0008)          1.72   5.3618(-0.0735)        7.42   5.5821(0.1468)      6.39
+
+Table 4: Prices of a one-year 2D down-and-out call option under the 2D Black-Scholes model.
+For the 2D fast Hilbert transform approach, we set α1 = α2 = −2, M1 = 100. For the
+2D Fourier-cosine method, we set L = 10, Q = 211 and, M = 27 for N = 1 and M = 28 for
+N = 12, 50, 250. For the finite difference method, we use 500 and 400 respectively for the number
+of discretization in time and in log-price. The benchmarks are 14.8355, 8.3150, 6.4393, 5.4353 for
+N = 1, 12, 50, 250 respectively and they are obtained by running the 2D fast Hilbert transform
+and the 2D Fourier-cosine method with a large number of terms until they agree on the digits
+shown.
+
+
+we have ν = 2 in (4.22) due to (A.3) and b takes the same value as the Black-Scholes case.
+We set µ1 = 0.04, σ1 = 0.2, µ2 = 0.07, σ2 = 0.3, ρ = 0.5, λ = 1, θ1 = −0.01, θ2 = −0.02,
+σJ1 = 0.15, σJ2 = 0.2, ρJ = 0.4, S01 = 100, S02 = 80, L1 = 70, L2 = 40 and T = 1. Table 5
+displays the results for the one-year joint survival probability under the physical measure and
+our method also works very well in this case. Figure 3 (b) shows the exponential decay of the
+           2/3
+error in M1 , which again validates the theoretical estimate in Theorem 4.3. The performance
+of our method for pricing the 2D barrier call option under the Merton’s model is similar to the
+Black-Scholes case and hence is omitted here.
+
+                           N     probability   time(s)     MC 99% CI
+                           1       0.9252       0.13      (0.9249, 0.9255)
+                           12      0.8904       0.23      (0.8900, 0.8906)
+                           50      0.8763       0.41      (0.8759, 0.8765)
+                           250     0.8678       7.88      (0.8675, 0.8681)
+
+Table 5: One-year joint survival probability under the 2D Merton’s jump-diffusion model. We
+set α1 = α2 = −4, M1 = 100 for N = 1, 12, 50, and 200 for N = 250. It takes 533, 5454, 21642
+and 108381 seconds for N = 1, 12, 50, 250, respectively to obtain the confidence interval from
+Monte Carlo simulation. The fast Hilbert transform results all fall in the intervals.
+
+
+
+5.3     2D Pure-Jump NIG Model
+    X is a 2D pure-jump NIG process presented in Section A. For the model parameters, we
+set µ1 = 0.03, µ2 = 0.05, σ1 = 0.2, σ2 = 0.3, ρ = 0.5, c = 1, η = π. To obtain the risk-neutral
+parameters we adjust the values of the drift vector using r = 0.02 and qj = 0. The formulas
+for λj− and λj+ can be found in Feng and Linetsky (2008a), Table 3.1. We use (B.8) with n = 2
+to obtain one rectangular region inside IX . It can be checked that λ̃j− = λj− /2 < −1 in this
+example and α is calculated by (B.9) and (B.10). For S01 , S02 , L1 , L2 , K, T , we use the same
+values as those in the 2D Black-Scholes model for the two problems. Table 6, Table 7 and Table
+8 shows the performance of calculating the one-year risk-neutral joint survival probability with
+three different sets of barriers and Figure 3 (c) demonstrates the exponential decay of the error
+      1/2
+in M1 , substantiating the theoretical estimate in Theorem 4.3. Comparing the magnitude of
+the log-error in Figure 3 (a)/(b) to (c) for similar M , we can see that convergence is slower
+
+                                                20
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+in the pure-jump case than the previous two models in which a Brownian motion component
+exists and consequently ν attains its maximum value 2. Despite the slower convergence rate, the
+results show that our method still works reasonably well for the survival probability problem.
+For the call option price, the results are presented in Table 9 and the performance is still good.
+
+                         N     probability    time(s)     MC 99% CI
+                         1        0.9541       0.023    (0.9539, 0.9543)
+                         12       0.9383       0.852    (0.9380, 0.9384)
+                         50       0.9319        16.4    (0.9316, 0.9321)
+                         250      0.9291        680     (0.9287, 0.9292)
+
+Table 6: One-year joint survival probability under the 2D pure-jump NIG model (L1 = 70, L2 =
+40). We set α1 = −6.4028, α2 = −4.4092, M1 = 100 for N = 1, 200 for N = 12, 500 for N = 50
+and 2000 for N = 250. It takes 265, 2783, 10110 and 47603 seconds for N = 1, 12, 50, 250,
+respectively to obtain the confidence interval from Monte Carlo simulation. The fast Hilbert
+transform results all fall in the intervals.
+
+
+                         N     probability    time(s)     MC 99% CI
+                         1        0.4594       0.026    (0.4591, 0.4599)
+                         12       0.2250       0.130    (0.2249, 0.2255)
+                         50       0.1871       2.213    (0.1867, 0.1873)
+                         250      0.1728       57.17    (0.1722, 0.1728)
+
+Table 7: One-year joint survival probability under the 2D pure-jump NIG model with high
+barriers (L1 = 90, L2 = 75). We set α1 = −6.4028, α2 = −4.4092, M1 = 100 for N = 1, 12,
+200 for N = 50 and 500 for N = 250. It takes 183, 1041, 3663 and 17027 seconds for N =
+1, 12, 50, 250, respectively to obtain the confidence interval from Monte Carlo simulation. The
+fast Hilbert transform results all fall in the intervals.
+
+
+                         N     probability    time(s)     MC 99% CI
+                         1        0.3780       0.016    (0.3778, 0.3786)
+                         12       0.1240       0.530    (0.1238, 0.1244)
+                         50       0.0889       11.40    (0.0887, 0.0891)
+                         250      0.0764       57.14    (0.0761, 0.0765)
+
+Table 8: One-year joint survival probability under the 2D pure-jump NIG model with extremely
+high barrier (L1 = 98, L2 = 75). We set α1 = α2 = −4, M1 = 100 for N = 1, 200 for N = 12,
+and 500 for N = 50, 250. It takes 186, 718, 2190 and 9541 seconds for N = 1, 12, 50, 250,
+respectively to obtain the confidence interval from Monte Carlo simulation. The fast Hilbert
+transform results all fall in the intervals.
+
+
+5.4   2D Pure-Jump VG Model
+    From Remark 4.8, we know our algorithm does not converge exponentially in this model. To
+accelerate its converge, we apply 2D spetral filtering and its details can be found in Appendix
+C. We set the parameters as follows: S1 = 100, S2 = 80, L1 = 70, L2 = 40, µ1 = 0.03, µ2 =
+0.05, σ1 = 0.2, σ2 = 0.3, ρ = 0.5, c = 4, λ = 4, T = 1/4. We use the 2D exponential filter with
+its exponent set to 10 and fix h1 = h2 = 0.5 and let α1 = −6.7060, α2 = −4.4444. Table 10
+
+                                                21
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+                            N      price    time(s)        MC 99% CI
+                            1     4.9675     1.23     (4.9578, 4.9718)
+                            12    4.6773     2.02     (4.6723, 4.6863)
+                            50    4.5896     94.3     (4.5790, 4.5930)
+                            250   4.5515     3079     (4.5427, 4.5567)
+
+Table 9: Price of a one-year 2D down-and-out call option under the 2D pure-jump NIG model.
+We set α1 = −6.4028, α2 = −4.4091, M1 = 200 for N = 1, 12, 1000 for N = 50 and 4000 for
+N = 250. It takes 275, 2583, 9110 and 43603 seconds for N = 1, 12, 50, 250, respectively to
+obtain the confidence interval from Monte Carlo simulation. The fast Hilbert transform results
+all fall in the intervals.
+
+
+clearly shows the spectal filter improves the accuracy of our method with the same M and h .
+Significant improvement can also be observed for maturities equal to 1/12 and 1/2, but not for
+T = 1. The results are in line with those in the 1D case reported in Phelan et al. (2018).
+
+           N     probability(HT)     probability(filter)    time(s)      MC 99% CI
+           1          0.99736              0.99734           0.16     (0.99729, 0.99737)
+           12         0.99475              0.99680           1.51     (0.99679, 0.99688)
+           50         0.98648              0.99661           6.34     (0.99672, 0.99682)
+           250        0.99209              0.99638           31.8     (0.99672, 0.99681)
+
+Table 10: One-quarter joint survival probability under the 2D VG model. We set M1 = 500
+and M2 is determined using equation (4.29) and fix h1 = h2 = 0.5 for all all cases. It takes
+156, 1877, 7881 and 39255 seconds for N = 1, 12, 50, 250, respectively to obtain the confidence
+interval from Monte Carlo simulation.
+
+
+5.5   3D Black-Scholes Model
+    We set σ1 = 0.2, σ2 = 0.3, σ3 = 0.5, ρ12 = ρ13 = ρ23 = 0.5, S01 = 100, S02 = 80, S03 = 100,
+L1 = 50, L2 = 40, L3 = 60 and T = 1. Like the 2D case, α can be chosen freely from negative
+numbers. For calculation of survival probability under the physical measure, we set µ1 = 0.1,
+µ2 = 0.05, µ3 = 0.08. For pricing the call option under the risk-neutral measure, we adjust
+the drift vector with r = 0.04 and q = 0, and the strike K = 280. The results are shown in
+Table 11 and 12. For all frequencies, computation time increases compared with the 2D case,
+but it is still reasonable in practice. The only result that falls outside the confidence interval
+is the call price with daily monitoring. However, in this case the relative error of our result is
+small enough to be considered as accurate. The performance of the 3D Merton’s jump-diffusion
+model is very similar to the 3D Black-Scholes model, so it is omitted to save space.
+
+5.6   3D Pure-Jump NIG Model
+    We set µ1 = 0.03, µ2 = 0.05, µ3 = 0.07, σ1 = 0.2, σ2 = 0.3, σ3 = 0.4, ρ12 = ρ13 = ρ23 = 0.5,
+c = 1, λ = π, S01 = 100, S02 = 80, S03 = 100, L1 = 50, L2 = 40, L3 = 60, T = 1 and call option
+strike K = 280. We obtain the drift under the risk-neutral measure with r = 0.04 and qj = 0.
+In this example, we first set λ̃j± = λj± /2 and verify that they give a rectangular region inside
+IX . This is better than using (B.8) with n = 3. It can be checked that λ̃j− < −1 in this example
+and α is calculated by (B.9) and (B.10).
+    Table 13 and 14 present the results for the survival probability and the call option. It can
+be seen that to obtain results of similar accuracy, it takes more time under the 3D pure-jump
+
+                                                22
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+                         N      probability    time(s)      MC 99% CI
+                         1        0.8787        0.48      (0.8784, 0.8790)
+                         12       0.8009         3.83     (0.8006, 0.8012)
+                         50       0.7713        24.20     (0.7711, 0.7717)
+                         250      0.7533         989      (0.7530, 0.7536)
+
+Table 11: One-year joint survival probability under the 3D Black-Scholes model. We set α1 =
+α2 = α3 = −4, M1 = 50 for N = 1, 12, 60 for N = 50 and 150 for N = 250. It takes 217, 2332,
+9425 and 47036 seconds for N = 1, 12, 50, 250, respectively to obtain the confidence interval
+from Monte Carlo simulation. The fast Hilbert transform results all fall in the intervals.
+
+                          N      price     time(s)         MC 99% CI
+                          1     36.1119        6.10     (36.0420, 36.1404)
+                          12    35.4911       39.95     (35.4270, 35.5254)
+                          50    35.2137        188      (35.1286, 35.2270)
+                          250   35.1024       1859      (34.9129, 35.0113)
+
+Table 12: One-year call option under the 3D Black-Scholes model. We set α1 = α2 = α3 = −2,
+M1 = 50 for N = 1, 100 for N = 12, 120 for N = 50 and 200 for N = 250. It takes 442, 4627,
+18679 and 92205 seconds for N = 1, 12, 50, 250, respectively to obtain the confidence interval
+from Monte Carlo simulation. The fast Hilbert transform results all fall in the intervals except
+when N = 250.
+
+
+NIG model than the Black-Scholes. Although for N = 250, our result is not in the confidence
+interval, it is still quite accurate. The error can be reduced by increasing the number of terms
+used in the Sinc approximation. In general, obtaining highly accurate results under N = 250
+for a 3D pure-jump model is computationally demanding as lack of a Brownian component in
+the model drags down the convergence rate.
+
+                         N      probability    time(s)      MC 99% CI
+                         1        0.8670        4.54      (0.8668, 0.8674)
+                         12       0.8180        45.37     (0.8177, 0.8184)
+                         50       0.8020         188      (0.8018, 0.8025)
+                         250      0.7896        4218      (0.7946, 0.7953)
+
+Table 13: One-year joint survival probability under the 3D pure-jump NIG model. We set
+α1 = −2.9514, α2 = −1.9546, α3 = −1.0707, M = 50 for N = 1, 12, 50 and 150 for N = 250.
+It takes 233, 2611, 10699 and 55296 seconds for N = 1, 12, 50, 250, respectively to obtain the
+confidence interval from Monte Carlo simulation. The fast Hilbert transform results fall in the
+intervals except when N = 250.
+
+    We end this section with some remarks. First, our implementation was done in Matlab with-
+out parallelization. As our algorithm can be parallelized, significant reductions in computation
+time can be expected using a parallel implementation. Furthermore, switching to programming
+languages like C for implementation can also bring in significant reductions. Second, the exam-
+ples considered all have a one-year maturity. For shorter maturities, there are fewer recursions
+to do, so computation time would be less than the numbers reported here.
+
+
+
+
+                                                 23
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+                          N     price      time(s)      MC 99% CI
+                          1     32.6177     32.55    (32.5510, 32.6417)
+                          12    32.3283      114     (32.2605, 32.3512)
+                          50    32.2219      317     (32.1740, 32.2648)
+                          250   32.2991     4380     (32.0990, 32.1897)
+
+Table 14: One-year call option under the 3D pure-jump NIG model. We set α1 = −3.4514, α2 =
+−2.4546, α3 = −1.9611, M = 60 for N = 1, 100 for N = 12, 50, and 150 for N = 250. It takes
+249, 2658, 10975 and 53760 seconds for N = 1, 12, 50, 250, respectively to obtain the confidence
+interval from Monte Carlo simulation. The fast Hilbert transform results fall in the intervals
+except when N = 250.
+
+
+6    Conclusion
+    This paper develops Sinc approximation for computing multidimensional Hilbert transform
+and analyze its convergence rate. Our results generalize the classical Sinc approximation results
+for 1D Hilbert transform. We demonstrate the efficiency of the method in two applications for
+problems with two or three dimensions: detecting edges in 2D images, and pricing barrier
+options and calculating survivial probabilities in multivariate exponential Lévy models. In
+the second application, the convergence rate of our algorithm depends on the decay rate of
+the characteristic function of the Lévy process. When it is a Brownian motion or a jump-
+diffusion, our method converges rapidly as the characteristic function decays exponentially with
+the highest possible order. For pure-jump models, its convergence speed varies and we consider
+two typical examples: the NIG and VG processes. Our method works well for the NIG model.
+For the VG model, although our method converges quite slowly, applying it together with
+a spectral filter can accelerate its convergence and deliver satisfactory results if the horizon
+of the problem is not too long. We also show through examples that our method compares
+favorably with Monte Carlo simulation, the Fourier-cosine method and finite difference in terms
+of computational performance. However, due to the curse of dimensionality, we don’t expect
+the method to be tractable for high-dimensional problems.
+    The multidimensional Sinc approximation developed in this paper can be applied to solve
+various other problems, such as the valuation of exotic options like double lookback options
+(He et al. (1998)) and multi-asset Bermudan options (Ruijter and Oosterlee (2012)), valuation
+adjustments for credit derivatives in structural models (Lipton and Savescu (2014)) as well as
+stochastic control problems (Ge and Li (2020)) for exponential Lévy models.
+
+
+Acknowledgements
+   We thank the Area Editor, the Associate Editor and three reviewers for their comments and
+suggestions which led to significant improvement in the paper. This research was supported by
+Hong Kong Research Grant Council General Research Fund Grant No. 14203418.
+
+
+References
+Andricopoulos, A. D., M. Widdicks, D. P. Newton, and P. W. Duck (2007). Extending quadra-
+ ture methods to value multi-asset and complex path dependent options. Journal of Financial
+ Economics 83 (2), 471–499.
+Applebaum, D. (2009). Lévy Processes and Stochastic Calculus. Cambridge, UK: Cambridge
+ University Press.
+
+
+
+                                                24
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+Ballotta, L. and E. Bonfiglioli (2016). Multivariate asset models using Lévy processes and
+  applications. The European Journal of Finance 22 (13), 1320–1350.
+Bertoin, J. (1998). Lévy processes, Volume 121. Cambridge, UK: Cambridge University Press.
+Black, F. and J. C. Cox (1976). Valuing corporate securities: Some effects of bond indenture
+  provisions. The Journal of Finance 31 (2), 351–367.
+Boyarchenko, S. and S. Levendorskii (2002a). Non-Gaussian Merton-Black-Scholes Theory.
+Boyarchenko, S. and S. Z. Levendorskii (2002b). Non-Gaussian Merton-Black-Scholes Theory,
+  Volume 9. World Scientific.
+Broadie, M. and Y. Yamamoto (2005). A double-exponential fast Gauss transform algorithm
+  for pricing discrete path-dependent options. Operations Research 53 (5), 764–779.
+Chen, Z., L. Feng, and X. Lin (2012). Simulating Lévy processes from their characteristic
+  functions and financial applications. ACM Transactions on Modeling and Computer Simula-
+  tion 22 (3), 1–26.
+Cont, R. and P. Tankov (2004). Financial Modeling with Jump Processes. Cambridge, UK:
+  Chapman & Hall.
+Cont, R. and E. Voltchkova (2005). A finite difference scheme for option pricing in jump diffusion
+  and exponential Lévy models. SIAM Journal on Numerical Analysis 43 (4), 1596–1626.
+De Innocentis, M. and S. Levendorskiĭ (2013). Pricing discrete barrier optins and credit default
+  swaps under Lévy processes. Quantitative Finance. DOI: 10.1080/14697688.2013.826814.
+Duffy, D. J. (2013). Finite Difference Methods in Financial Engineering: a Partial Differential
+  Equation Approach. Chichester, England: John Wiley & Sons.
+Fan, L. (2018). Some New Developments of Transform Methods for Financial Engineering
+  Applications. Ph. D. thesis, The Chinese University of Hong Kong.
+Fang, F. and C. W. Oosterlee (2009). Pricing early-exercise and discrete barrier options by
+  Fourier-cosine series expansions. Numerische Mathematik 114 (1), 27–62.
+Feng, L. and X. Lin (2013a). Inverting analytic characteristic functions and financial applica-
+  tions. SIAM Journal on Financial Mathematics 4 (1), 372–398.
+Feng, L. and X. Lin (2013b). Pricing Bermudan options in Lévy process models. SIAM Journal
+  on Financial Mathematics 4 (1), 474–493.
+Feng, L. and V. Linetsky (2008a). Pricing discretely monitored barrier options and default-
+  able bonds in Lévy process models: a fast Hilbert transform approach. Mathematical Fi-
+  nance 18 (3), 337–384.
+Feng, L. and V. Linetsky (2008b). Pricing options in jump-diffusion models: An extrapolation
+  approach. Operations Research 56 (2), 304–325.
+Feng, L. and V. Linetsky (2009). Computing exponential moments of the discrete maximum of
+  a Lévy process and lookback options. Finance and Stochastics 13 (4), 501–529.
+Fusai, G., I. D. Abrahams, and C. Sgarra (2006). An exact analytical solution for discrete
+  barrier options. Finance and Stochastics 10 (1), 1–26.
+Fusai, G., G. Germano, and D. Marazzina (2016). Spitzer identity, Wiener-Hopf factoriza-
+  tion and pricing of discretely monitored exotic options. European Journal of Operational
+  Research 251 (1), 124–134.
+Fusai, G. and M. C. Recchioni (2007). Analysis of quadrature methods for pricing discrete
+  barrier options. Journal of Economic Dynamics and Control 31 (3), 826–860.
+Ge, Y. and L. Li (2020). A Hilbert transform approach for controlled jump-diffusions with
+  financial applications. International Journal of Financial Engineering.
+Giles, M. B. and Y. Xia (2017). Multilevel Monte Carlo for exponential Lévy models. Finance
+  and Stochastics 21 (4), 995–1026.
+Gobet, E. (2000). Weak approximation of killed diffusion using Euler schemes. Stochastic
+  processes and their applications 87 (2), 167–197.
+Gottlieb, D. and C. Shu (1997). On the Gibbs phenomenon and its resolution. SIAM Re-
+  view 39 (4), 644–668.
+
+
+                                                25
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+He, H., W. P. Keirstead, and J. Rebholz (1998). Double lookbacks. Mathematical Finance 8 (3),
+  201–228.
+King, F. W. (2009). Hilbert transforms, Volume 2. Cambridge, UK: Cambridge University
+  Press.
+Kirkby, J. L. (2017). Robust barrier option pricing by frame projection under exponential Lévy
+  dynamics. Applied Mathematical Finance 24 (4), 337–386.
+Kirkby, J. L. (2018). American and exotic option pricing with jump diffusions and other Lévy
+  processes. Journal of Computational Finance 22 (3).
+Kohlmann, K. (1996). Corner detection in natural images based on the 2-D Hilbert transform.
+  Signal Processing 48 (3), 225–234.
+Kou, S. and H. Zhong (2016). First-passage times of two-dimensional Brownian motion. Ad-
+  vances in Applied Probability 48 (4), 1045–1060.
+Lando, D. (2009). Credit Risk Modeling: Theory and Applications. Princeton University Press.
+Leoni, P. and W. Schoutens (2008). Multivariate smiling. Wilmott Magazine 8, 82–91.
+Li, L. and V. Linetsky (2015). Discretely monitored first passage problems: an eigenfunction
+  expansion approach. Finance and Stochastics 19 (4), 941–977.
+Li, L. and G. Zhang (2018). Error analysis of finite difference and Markov chain approximations
+  for option pricing. Mathematical Finance 28 (3), 877–919.
+Lin, X. (2010). The Hilbert Transform and Its Applications in Computational Finance.
+Lipton, A. and I. Savescu (2013). CDSs, CVA and DVA-a structural approach. Risk 26 (4), 56.
+Lipton, A. and I. Savescu (2014). Pricing credit default swaps with bilateral value adjustments.
+  Quantitative Finance 14 (1), 171–188.
+Lorenzo-Ginori, J. V. (2007). An approach to the 2d Hilbert transform for image process-
+  ing applications. In International Conference Image Analysis and Recognition, pp. 157–165.
+  Springer.
+Luciano, E., M. Marena, and P. Semeraro (2016). Dependence calibration and portfolio fit with
+  factor-based subordinators. Quantitative Finance 16 (7), 1037–1052.
+Luciano, E. and W. Schoutens (2006). A multivariate jump-driven financial asset model. Quan-
+  titative finance 6 (5), 385–402.
+Madan, D. and M. Yor (2008). Representing the CGMY and Meixner Lévy processes as time
+  changed Brownian motions. Journal of Computational Finance 12 (1), 27–47.
+Mendoza-Arriaga, R. and V. Linetsky (2016). Multivariate subordination of Markov processes
+  with financial applications. Mathematical Finance 26 (4), 699–747.
+Mijatovic, A. and M. Pistorius (2013). Continuously monitored barrier options under Markov
+  processes. Mathematical Finance 23 (1), 1–38.
+Petrella, G. and S. G. Kou (2004). Numerical pricing of discrete barrier and lookback options
+  via Laplace transforms. Journal of Computational Finance 8 (1), 1–37.
+Phelan, C. E., D. Marazzina, G. Fusai, and G. Germano (2018). Hilbert transform, spectral
+  filters and option pricing. Annals of Operations Research. doi:10.1007/s10479-018-2881-4.
+Ruijter, M. J. and C. W. Oosterlee (2012). Two-dimensional Fourier cosine series expansion
+  method for pricing financial options. SIAM Journal on Scientific Computing 34 (5), B642–
+  B671.
+Ruijter, M. J., M. Versteegh, and C. W. Oosterlee (2015). On the application of spectral filters
+  in a Fourier option pricing technique. Journal of Computational Finance 19 (1), 75–106.
+Sato, K. (1999). Lévy Processes and Infinitely Divisible Distributions. Cambridge, UK: Cam-
+  bridge University Press.
+Schoutens, W. (2003). Lévy Processes in Finance: Pricing Financial Derivatives. Chichester,
+  UK: John Wiley & Sons.
+Schoutens, W. and J. Cariboni (2010). Lévy Processes in Credit Risk. Chichester, UK: John
+  Wiley & Sons.
+Stenger, F. (1993). Numerical Methods Based on Sinc and Analytic Functions. New York:
+
+
+                                                26
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+  Springer.
+Stenger, F. (2011). Handbook of Sinc Numerical Methods. Boca Raton, FL: CRC Press.
+Vandeven, H. (1991). Family of spectral filters for discontinuous problems. Journal of Scientific
+  Computing 6 (2), 159–192.
+Zhang, G. and L. Li (2019). Analysis of Markov chain approximation for option pricing and
+  hedging: grid design and convergence behavior. Operations Research 67 (2), 407–427.
+
+
+
+
+                                                27
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+ Online Companion to “Sinc Approximation of Multidimensional
+           Hilbert Transform and Its Applications”
+             Jie Chen∗          Liaoyuan Fan†               Lingfei Li‡       Gongqiu Zhang§
+
+                                           February 15, 2021
+
+
+
+
+A       Multidimensional Exponential Lévy Models
+    For excellent expositions on Lévy processes, one can refer to Bertoin (1998) and Sato (1999).
+Consider an n-dimensional Lévy process X t := (Xt1 , · · · , Xtn )0 that starts at x := (x1 , · · · , xn )0 .
+For j = 1, · · · , n, X j has Lévy characteristics (µj , σj2 , Πj ), which are the drift, variance rate of
+the Brownian motion component and Lévy measure, respectively. For X j , the Lévy-Khintchine
+                                                                             j              j
+theorem shows that the characteristic function φjtR(ξ) := Exj [eiξ(Xt −xj ) ] = e−tψ (ξ) , where the
+characteristic exponent ψ j (ξ) = 12 σj2 ξ 2 − iµj ξ + R (1 − eiξy + iξy1{|y|≤1} )Πj (dy). The Lévy
+measure Πj satisfies R (y 2 ∧ 1)Πj (dy) < ∞. Let IX j := {α ∈ R : |y|>1 e−αy Πj (dy) < ∞},
+                          R                                                     R
+
+which is an interval with endpoints λj− , λj+ (−∞ ≤ λj− ≤ 0 ≤ λj+ ≤ ∞). For specific 1D Lévy
+processes, the value of λj− and λj+ can be found in Feng and Linetsky (2008), Table 3.1. From
+                                                                                          j
+Theorem 25.17 in Sato (1999), we know that α ∈ IX j if and only if Exj [e−αXt ] is finite for all
+                                                                          j
+t > 0. In this paper, we require that −1 ∈ IX j so that Exj [eXt ] is finite for all t > 0. Following
+Feng and Linetsky (2008), we further require that λj− < −1 and λj+ > 0. For the general Lévy
+process X , we denote its characteristics by (µ , Σ , Π), with
+                                                                    Z
+                µ = (µ1 , · · · , µn )0 , Σ = (ρij σi σj )1≤i,j≤n ,   (|yy |2 ∧ 1)Π(dyy ) < ∞.  (A.1)
+                                                                   Rn
+
+Here, ρ = (ρij )1≤i,j≤n is the correlation matrix for the n-dimensional Brownian component.
+The joint characteristic function of X t − x is given by
+                                  h            i
+                    φt (ξ ) := E eihξ ,X t −x i = e−tψ(ξ ) ,
+                                                 Z
+                              1 0          0                 0
+                       ξ
+                    ψ(ξ ) =     ξ Σ ξ − iµ +
+                                         µ   ξ       (1 − eiξ y + iξξ 0y 1{|y |≤1} )Π(dyy ),
+                              2                   R2
+
+
+where ψ(ξ ) is the characteristic exponent of X . We also consider
+                                  (         Z                      )
+                                                               0
+                              IX :=    α ∈ Rn :             e−α y Π(dyy ) < ∞ .
+                                                   |y |>1
+
+    ∗
+     Department of Systems Engineering and Engineering Management, The Chinese University of Hong Kong,
+HKSAR. Email: chenjie@se.cuhk.edu.hk.
+   †
+     JP Morgan, Singapore. Email: fanly5173@gmail.com.
+   ‡
+     Corresponding author. Department of Systems Engineering and Engineering Management, The Chinese
+University of Hong Kong, HKSAR. Email: lfli@se.cuhk.edu.hk.
+   §
+     School of Science and Engineering, The Chinese University of Hong Kong, Shenzhen, China. Email: zhang-
+gongqiu@cuhk.edu.cn.
+
+
+
+                                                      1
+
+                    Electronic copy available at: https://ssrn.com/abstract=3091664
+Theorem 25.17 in Sato (1999) shows that IX is a convex set that contains the origin and α ∈ IX
+                      0
+if and only if Ex [e−α X t ] is finite for all t > 0.
+    The asset price processes Stj , 1 ≤ j ≤ n are assumed to follow
+                                             j
+                                Stj = Kj eXt , with X0j = ln(S0j /Kj ).                             (A.2)
+
+Here, Kj are positive constants chosen for convenience. If (A.2) is the model under a chosen
+                                                                       j
+risk-neutral measure, to ensure no arbitrage, the process e−(r−qj )t eXt should be a martingale,
+which is equivalent to
+                                            Z
+                       µj = r − qj − σj /2 + (1 − ey + y1{|y|≤1} )Πj (dy),
+                                      2
+                                                  R
+
+where r is the risk-free rate and qj is the dividend yield for asset j.
+     Below we list several classes of multivariate Lévy processes that are common in financial
+modelling and present their characteristic exponents.
+Multidimensional Brownian motion: Let X be a multidimensional Brownian motion with
+drift vector µ and covariance matrix Σ given in (A.1). Then ψ(ξ ) = 12 ξ 0Σξ − iµ 0ξ .
+Multidimensional jump-diffusions with common jumps: Let W be a multidimensional
+Brownian motion       PNwith  drift vector µ and covariance matrix Σ given in (A.1). For j = 1, · · · , n,
+let X t = W t + k=1 Y k , where N is a Poisson process with arrival rate λ, and Y 1 , Y 2 , · · · are
+                         t
+
+i.i.d. with Y k follows a given multidimensional distribution F . It is assumed that the jump
+part is independent of W . For this process, ψ(ξ ) is given by ψ(ξ ) = 12 ξ 0Σξ − iµ 0ξ + λ(1 −
+       iξ 0y F (dy )). Idiosyncratic jumps modelled by compound Poisson processes can be further
+R
+  Rn e
+added to the model (see Cont and Tankov (2004), Section 5.2 for general discussions).
+Multidimensional time-changed Brownian motion: Let W be a multidimensional Brow-
+nian motion with drift vector µ and covariance matrix Σ given in (A.1). Consider a 1D Lévy
+subordinator Tt , which is a non-negative Lévy process (this implies that it is also nondecreasing).
+Its Laplace transform is given by
+                                                       Z
+                   E[e−λTt ] = e−Φ(λ)t , Φ(λ) = γλ +         (1 − e−λs )ν(ds), Re(λ) ≥ 0.
+                                                          [0,∞)
+
+where γ ≥ 0 is the drift of T and ν is its Lévy measure. Suppose T and W are independent.
+Define Xtj := WTjt . Then X t := (Xt1 , · · · , Xtn )0 is a multidimensional Lévy process and ψ(ξξ ) =
+Φ 21 ξ 0Σξ − iµ 0ξ . While W j has continuous sample paths, X j is a jump-diffusion (γ > 0) or a
+                      
+
+pure-jump process (γ = 0). This class of processes was studied and applied to equity modelling
+in Luciano and Schoutens (2006) and Leoni and Schoutens (2008). Further generalization
+through multivariate subordination can be found in Luciano et al. (2016) and Mendoza-Arriaga
+and Linetsky (2016). A popular choice of Lévy subordinators in the literature √         is the inverse
+                                                                                     √             √
+Gaussian process for which ν(ds) = cs−3/2 e−ηs ds (c, η > 0) and Φ(λ) = γλ+2c π[ λ + η− η].
+Using this time change, each X j is a normal inverse Gaussian (NIG) process and we call X as
+the multidimensional NIG model. Another popular Lévy subordinator is the Gamma process
+with ν(ds) = cs−1 e−ηs ds (c, η > 0) and Φ(λ) = γλ + c ln(1 + λ/η). This time change leads to
+a multidimensional model with each coordinate a 1D variance gamma (VG) process and the
+joint process is called the multidimensional VG model. Other choices of Lévy subordinators can
+be found in Madan and Yor (2008) and Luciano et al. (2016), which can be used to construct
+multidimensional models with each coordinate a CGMY, a Meixner or a generalized hyperbolic
+process.
+Linear combinations of independent Lévy processes: Ballotta and Bonfiglioli (2016) con-
+struct multivariate Lévy models by taking linear combinations of independent Lévy processes.
+Let Y1 , · · · , Yn , Z be independent univariate Lévy processes. Then define Xjt = Yjt + aj Zt for
+
+
+                                                      2
+
+                    Electronic copy available at: https://ssrn.com/abstract=3091664
+j = 1, · · · , n. The process Z models the systematic factor whereas Yj represents the idiosyn-
+cratic factor specific to asset j. This is a flexible and parsimonious family of models as shown
+in Ballotta and Bonfiglioli (2016). The joint characteristic function of X is given by
+                                                        
+                                                n          n
+                                                              Y
+                                               X           Y
+                                 φt (ξ ) = φZ
+                                            t
+                                                  a  ξ
+                                                     j j    φt j (ξj ),
+                                                         j=1             j=1
+
+which is in closed-form if the characteristic functions of Yj s and Z are so.
+Multidimensional KoBoL processes: This class of pure-jump Lévy processes is proposed
+in Boyarchenko and Levendorskii (2002). We refer readers to Section 9.1 for details on these
+processes and their characteristic exponents. The multidimensional NIG and VG models are
+special cases in this family.
+    For several results in the paper, we impose condition (4.22) for φt (ξ ). This condition holds
+for any jump-diffusion and it can be shown as follows. The Lévy-Itô decomposition shows that
+                                   
+X t = µ t + B t + X lt + lim→0 X̃ t , where B t is a multidimensional driftless Brownian motion with
+covariance matrix Σ , X l is the process associated with the jumps of X with Euclidian norm
+                           
+greater than 1 while X̃ t is the compensated jump process for jumps of X with Euclidian norm
+between  and 1, and the four components are independent. Using the decomposition, it is easy
+to see that, if the Brownian motion component is present (i.e., Σ 6= 0 ),
+                      0             0                l                            0           1   0             2
+      |φt (ξ )| = |eiξ µ t | · |E[eiξ B t ]| · |E[ei(X t +lim→0 X̃ t ) ]| ≤ |E[eiξ B t ]| = e− 2 tξ Σξ ≤ e−tb|ξ | ,
+
+where b is one half of the smallest eigenvalue of Σ (we assume Σ is positive definite, so b is
+positive). Therefore, for any jump-diffusion, condition (4.22) holds with ν = 2. For pure-jump
+Lévy processes, (4.22) needs to be checked case by case. An example we will analyze is the
+pure-jump NIG model (γ = 0), for which,
+                                     √ hp 0                     √ i
+                           ψ(ξ ) = 2c π    ξ Σξ /2 − iµ 0ξ + η − η .
+                                                                           √
+It can be checked that for this model, (4.22) is valid with ν = 1 and b = c 2πλm , where λm is
+the smallest eigenvalue of Σ .
+
+
+B     Issues of Discrete Approximations for Barrier Option Pricing
+   This section provides discrete approximations for (4.13), (4.14) and (4.15). We want to
+compute v̂αk (ξ ) for ξ on a grid {(kh) : −Mj ≤ kj ≤ Mj , 1 ≤ j ≤ n} for k = N, · · · , 1. Let
+M = max(M1 , · · · , Mn ).
+
+B.1    Computation of ĝα (ξ )
+   Unlike the 1D case where ĝα (ξ ) has an easy-to-compute closed-form formula for typical
+barrier payoffs, the efficient computation of ĝα (ξ ) for a general dimension has to be addressed
+on a case-by-case basis. For the survival probability calculation, g(x ) = 1(l ,∞) (x ) and the
+dampened function gα (x ) ∈ L1 (Rn ) if α < 0 . In this case, it is easy to obtain a closed-form
+formula for ĝα (ξ ), which is given by
+                                                          n
+                                                          Y elp (αp +iξp )
+                                             ĝα (ξ ) =                        .                                       (B.1)
+                                                                   αp + iξp
+                                                          p=1
+
+    We next show how to calculate ĝα (ξ ) for the call payoff ( np=1 STp − K)+ (see Remark
+                                                                P
+4.2) when n = 2, 3. The put payoff can be dealt with similarly. We select Kp = K for all p
+
+
+                                                               3
+
+                     Electronic copy available at: https://ssrn.com/abstract=3091664
+in (A.2) and for the call g(x ) can be written as K( np=1 exp − 1)+ 1(l ,∞) (x ). The dampened
+                                                            P
+
+function gα (x ) ∈ L1 (Rn ) if α < −1 . When np=1 elp ≥ 1, the formula for gα (x ) can be easily
+                                                 P
+
+obtained. Below we will only discuss the nontrivial case where np=1 elp < 1 (detailed derivation
+                                                                     P
+is omitted).
+(1) n = 2:
+                                       ĝα (ξ ) = I1 (ξ ) − I2 (ξ ),
+where
+                                                       l1
+        I1 (ξ ) = Ke(iξ1 +α1 )l1 +(iξ2 +α2 ) ln(1−e ) ·
+                                                               l
+               h             el1                        eln(1−e 1 )            1            i
+                                                +                   −                         , (B.2)
+                 (iξ1 + α1 + 1)(iξ2 + α2 ) (iξ1 + α1 )(iξ2 + α2 + 1) (iξ1 + α1 )(iξ2 + α2 )
+                      Z ln(1−el1 )
+        I2 (ξ ) = K                hξ (x2 )dx2 ,                                                (B.3)
+                       l2
+
+and
+
+             e(α2 +iξ2 )x2 (1 − ex2 )α1 +iξ1 +1 e(α2 +iξ2 +1)x2 (1 − ex2 )α1 +iξ1 e(α2 +iξ2 )x2 (1 − ex2 )α1 +iξ1
+hξ (x2 ) =                                     +                                 −                                .
+                       α1 + iξ1 + 1                         α1 + iξ1                         α1 + iξ1
+   The integral in (B.3) can be calculated in closed-form using the Gauss hypergeometric
+function 2 F1 with complex-valued arguments. However, we find that computing 2 F1 is time-
+consuming, so we propose to calculate I2 by discretizing the 1D integral. For simplicity, we use
+the rectangle rule on [l2 , ln(1 − el1 )] by dividing it into M̃ equal subintervals and obtain
+
+                                     M̃
+                                     X                       ln(1 − el1 ) − l2
+                    I2 (ξ ) ≈ K h̃         hξ (x̃j ), h̃ =                     , x̃j = l2 + (j − 0.5)h̃.          (B.4)
+                                     j=1
+                                                                   M̃
+
+In our implementation, we set M̃ sufficiently large to obtain good accuracy and M̃ ≥ 2M + 1.
+To efficiently compute the sum in (B.4), we utilize the fractional FFT to calculate the sum for
+all ξ2 for every ξ1 . This approach has a total time complexity of O(M M̃ log2 M̃ ) as opposed
+to O(M M̃ 2 ) for the implementation without fractional FFT. Of course, higher-order numerical
+quadrature rules can also be applied to discretize the integral.
+(2) n = 3:
+                                     ĝα (ξ ) = I1 (ξ ) − I2 (ξ ),
+where
+                       "
+                     e(α1 +1+iξ1 )l1 e(α2 +iξ2 )l2 e(α3 +iξ3 )l3    e(α1 +iξ1 )l1 e(α2 +1+iξ2 )l2 e(α3 +iξ3 )l3
+         I1 (ξξ ) =K                                             +
+                     α1 + 1 + iξ1 α2 + iξ2 α3 + iξ3                  α1 + iξ1 α2 + 1 + iξ2 α3 + iξ3
+                                                                                                             #
+                    e(α1 +iξ1 )l1 e(α2 +iξ2 )l2 e(α3 +1+iξ3 )l3    e(α1 +iξ1 )l1 e(α2 +iξ2 )l2 e(α3 +iξ3 )l3
+                  +                                              −                                            ,   (B.5)
+                     α1 + iξ1 α2 + iξ2 α3 + 1 + iξ3                 α1 + iξ1 α2 + iξ2 α3 + iξ3
+                    Z ln(1−el3 −el2 ) Z ln(1−el3 −ex1 )
+         I2 (ξ ) =K                                     hξ (x1 , x2 )dx2 dx1 .                                    (B.6)
+                           l1                l2
+
+and
+
+      hξ (x1 , x2 ) = e(α1 +iξ1 )x1 +(α2 +iξ2 )x2
+                      "                                                                                 #
+                            (1 − ex1 − ex2 )α3 +1+iξ3   (1 − ex1 − ex2 )e(α3 +iξ3 )l3   e(α3 +1+iξ3 )l3
+                    × −                               +                               −                  .
+                           (α3 + iξ3 )(α3 + 1 + iξ3 )            α3 + iξ3               α3 + 1 + iξ3
+
+
+
+                                                                 4
+
+                       Electronic copy available at: https://ssrn.com/abstract=3091664
+To obtain (B.6), we again apply the rectangle rule. The grid is as follows. For x1 , divide
+[l1 , ln(1 − el3 − el2 )] equally, i.e.,
+
+                                                                          ln(1 − el3 − el2 ) − l1
+                 xk1 = l1 + (k − 0.5)∆x1 , 1 ≤ k ≤ M̃ , ∆x1 =                                     .
+                                                                                    M̃
+                                             k
+For each xk1 , divide [l2 , ln(1 − el3 − ex1 )] equally, i.e.,
+                                                                           k
+                 k,j                 k                  k   ln(1 − el3 − ex1 ) − l2
+                x2 = l2 + (j − 0.5)∆x2 , 1 ≤ j ≤ M̃ , ∆x2 =                         .
+                                                                                        M̃
+Then, we have                                                                      
+                                    M̃            M̃
+                                                                              k,j            k
+                                                        ∆xk2 · h(xk1 , xk,j
+                                    X             X
+                                                                            ix2 ξ2  ix1 ξ1
+                        I2 (ξ ) ≈         ∆x1                          2 )e        e       .           (B.7)
+                                    k=1           j=1
+
+Like the 2D case, we set M̃ sufficiently large to obtain good accuracy and M̃ ≥ 2M + 1. To
+efficiently compute the above double sum, we apply the fractional FFT to compute the inner
+sum for all ξ2 and all xk1 , and then apply the fractional FFT again to compute the outer sum for
+all ξ1 . This procedure is repeated for every ξ3 . The total time complexity is O(M M̃ 2 log2 M̃ ).
+
+B.2     Validity of Discrete Approximations, Choice of α and Analytic Strips
+   In order to implement the discrete approximations of the two operators in Section 4.5 for
+the recursion (4.14) and the integral (4.19), we need to show that each term φα∆ (−zz )v̂αk (zz ),
+k = N, · · · , 1 verifies the conditions in Theorem 4.2. To this end, we assume the following.
+
+ (1) Conditions (4.23) and (4.24) hold.
+
+ (2) Suppose that for every j = 1, · · · , n there exist λ̃j− < 0 and λ̃j+ > 0 such that (λ̃1− , λ̃1+ ) ×
+     · · · × (λ̃n− , λ̃n+ ) ⊂ Ix .
+
+ (3) For the chosen α ∈ IX , ĝα (z ) is analytic in some tube domain containing Rn .
+
+   Under (2), φ∆ (z ) is analytic in S1 × · · · × Sn , where Sj := {zj ∈ C : Im(zj ) ∈ (λ̃j− , λ̃j+ )}
+                                                                                          α
+(j = 1, · · · , n). From (4.6), φα∆ (−z ) is analytic in S1α1 × · · · × Snαn , where Sj j := {zj ∈ C :
+Im(zj ) ∈ (αj − λ̃j+ , αj − λ̃j− )}. Together with (3), we know that φα∆ (−z )ĝα (z ) is analytic in some
+tube domain Dd = Dd1 × · · · × Ddn containing Rn . We defer the discussions on the choice of α
+and its impact on d for later (see (B.8) and (B.9)). Additionally, we assume that
+
+ (4) For the chosen α ∈ IX , gα −y ∈ L1 (Rn ) if |yj | < dj for all j = 1, · · · , n.
+
+    If a function f (z ) is analytic in Dd , then Hβ f can be analytically continued for any β ∈
+{0, 1}n so that it is analytic in Dd . Using this observation and the recursion (4.14), we can
+conclude that all v̂αk (z ) are also analytic in Dd . Furthermore, all v̂αk (z ) are bounded in Dd ,
+which we now explain. First, using (4.12), it is easy to see that
+
+                     kv̂αk (·)kL∞ (Rn ) ≤ e−∆(N −k)ψ(iαα) kgα (·)kL1 (Rn ) , k = 1, · · · , N.
+
+This inequality further implies that
+
+              kv̂αk (· + iy )kL∞ (Rn ) ≤ e−∆(N −k)ψ(i(α −y )) kgα −y (·)kL1 (Rn ) , k = 1, · · · , N,
+
+if |yj | < dj for j = 1, · · · , n. Boundedness of v̂αk (z ) for z ∈ Dd then follows.
+     Now we conclude that under (1) to (4), the discrete approximations (4.20) and (4.21) can
+be applied to compute the recursion (4.14) and the integral (4.19).
+
+                                                            5
+
+                     Electronic copy available at: https://ssrn.com/abstract=3091664
+   We next discuss verification of (1) to (4).
+   For (1), it can be done given the explicit expression of the characteristic function of a given
+model (see Remark 4.6).
+   In (2), we require a rectangular region inside IX , which is always possible. Unlike the 1D
+case, for a multidimensional Lévy process, it is difficult to characterize IX explicitly and it
+may not be rectangular. To find such a region inside IX , we apply Hölder’s inequality with
+      n
+p = n−1 , q = n and use induction to obtain
+
+                     0
+                                              h    n Pn−1     j
+                                                                 i n−1            n  1
+              Ex [e−α X t ] ≤ E(x1 ,··· ,xn−1 ) e− n−1 j=1 αj Xt
+                                                                     n
+                                                                        Exn e−nαn Xt n
+                                                                           
+
+                               n                 i 1
+                                                j
+                               Y        h
+                                     Exj e−nαj Xt
+                                                     n
+                           ≤                           .
+                               j=1
+
+
+Recall that each IX j is an interval with endpoints λj− , λj+ . Thus,
+
+                            λ1− /n, λ1+ /n × · · · × λn− /n, λn+ /n ⊂ IX ,
+                                                                  
+
+
+and we simply set λ̃j± = λj± /n. Alternatively, one can use trial-and-error, i.e., propose a
+rectangular region and verify that it is inside IX .
+    The requirement in (3) can be checked from the explicit expression of ĝα (z ) if it is available.
+Otherwise we replace ĝα (z ) by its approximation and analyze its analyticity.
+    For (4), it can be verified directly after α is selected and d is determined.
+    The value of α is critical to the convergence speed of the algorithm as it determines d , the
+vector of half-widths of the analytic strips, which affects the convergence rate (see (4.27) and
+(4.28)). To show how to select α , it is best to work through some examples.
+
+    • Joint survival probability: For α < 0 , the poles of (B.1) are given by (iα1 , · · · , iαn ). Thus,
+      φα∆ (−z )ĝα (z ) is analytic in {z ∈ Cn : Im(Zj ) ∈ (αj , αj − λ̃j− ), j = 1, · · · , n}. To maximize
+      every dj , we set (αj , αj − λ̃j− ) to be symmetric around the real axis, which gives
+
+                                             αj = λ̃j− /2, dj = −αj .                                 (B.8)
+
+    • 2D/3D call: For α < −1 , we can determine the poles of the approximation of ĝα (ξ ) from
+      (B.2), (B.4) for the 2D case and from (B.5), (B.7) for the 3D case. Suppose λ̃j− < −1
+      for each j. Then, φα∆ (−z )ĝα (z ) is analytic in {z ∈ Cn : Im(zj ) ∈ (αj + 1, αj − λ̃j− ), j =
+      1, · · · , n} for n = 2, 3. To maximize every dj , we set (αj + 1, αj − λ̃j− ) to be symmetric
+      around the real axis, which gives
+
+                                       αj = (λ̃j− − 1)/2, dj = −αj − 1.                               (B.9)
+
+In both examples, using the choice of α , one can verify that (4) holds.
+
+
+C     Multidimensional Spectral Filters
+     When the characteristic function does not decay exponetially, we propose to apply spectral
+filters to accelerate the convergence of our method. For 1D exponential Lévy models, 1D spectral
+filters have been applied by Ruijter et al. (2015) for accerlerating the Fourier cosine method
+and by Phelan et al. (2018) for speeding up the fast Hilbert transform algorithm of Feng and
+Linetsky (2008). Here, we consider multidimensional spectral filters and present a short but
+self-contained discussion for the convenience of readers.
+
+
+
+                                                     6
+
+                    Electronic copy available at: https://ssrn.com/abstract=3091664
+   First recall the definition of a 1D filter of oder p defined in Vandeven (1991) and Gottlieb
+and Shu (1997). It is a function denoted by σ(η) supported on η ∈ [−1, 1] with the following
+properties:
+                             
+                                                   (l)
+                              (a) σ(0) = 0, σ (0) = 0, ∀l < p,
+                             
+                                  (b) σ(η) = 0 for |η| = 1,                              (C.1)
+                             
+                                  (c) σ(η) ∈ C p−1 .
+                             
+
+    A commonly used 1D filter is the exponential filter, which taks the following form:
+                                                                        p
+                                                   σ(η) = e−Cη ,
+
+where p is even and positive. This function does not meet the requirement (b) in Eq. (C.1) as
+it is not exactly zero when |η| = 1. However, we can select C <  log 10, where 10− is machine
+precision so that the tiny difference can be neglected. An advantage of the exponential filter is
+that it has a simple form and the order of the filter is given by the parameter p.
+     For multidimensional filters, we consider
+                                                            n
+                                                            Y
+                                                σ(η ) =           σj (ηj )
+                                                            j=1
+
+where σj , j = 1, · · · , n are 1D filters. For simplicity, they are from the same filter class and in
+our implementation each σj is a 1D exponential filter.
+    To use a multidimensional spectral filter in the computation of barrier option prices and
+survival probabilities, we simply replace the characteristic function φα∆ (ξ ) in the formulas for
+Ph∆,M and Rh∆,M with φα∆ (ξ )σ(ξ ).
+
+
+D     Proofs
+                                      x). Since f ∈ L2 , we can represent f as F −1 fˆ.
+Theorem 2.1. We first analyze E(f, h)(x
+                                n
+                                                  !
+                    X           Y
+           f (x ) −      f (kh)    S(ki , h)(xi )
+                     k ∈Zn            i=1
+                                                                                          
+                     Z                                     n
+               1                       0
+                                                X          Y
+           =               fˆ(t ) e−ix t −                    S(kj , h)(xj )e−ikj htj  dt
+             (2π)n    Rn                       k ∈Zn    j=1
+                                                                                                     
+                     Z                                                      n
+               1                                   −ix 0t
+                                                                X           Y
+           =                              fˆ(t ) e         −                    S(kj , h)(xj )e−ikj htj  dt
+             (2π)n    {t :|tj |>π/h ∀j}                         k ∈Zn       j=1
+
+We used the following relationship in the above derivation:
+                               
+                                  ixt           if − π/h < t < π/h,
+         X                     e ,
+                               
+                         ikht     ix(t−2mπ/h)
+             S(k, h)(x)e      = e             , if (2m − 1)π/h < t < (2m + 1)π/h,
+                               
+         k∈Z                   
+                                 cos(πx/h),     if t = (2m ± 1)π/h,
+
+which shows the term in the parenthesis is zero in the region {t : |tj | ≤ π/h ∀j}, and bounded
+by 2 outside the region. Thus, we have
+                                                            Cn
+                             Z                                 Z
+                         1
+      kE(f, h )(x )k ≤     n
+                                                 ˆ
+                                               2|f (t )|dt ≤ n                   e−d|tt| dt
+                       (2π) {t :|tj |>π/hj ∀j}              π {t :|tj |>π/hj ∀j}
+
+
+                                                            7
+
+                   Electronic copy available at: https://ssrn.com/abstract=3091664
+                                                                               n Z
+                         Cn                                                Cn Y
+                            Z
+                                               − √dn (|t1 |+···+|tn |)                        − √d |t |
+                       ≤ n                    e                        dt ≤ n                e n j dtj
+                         π {tt:|tj |>π/hj ∀j}                              π
+                                                                              j=1 |tj |>π/hj
+                          √ n Y    n
+                          C n            − √dπ
+                       ≤                e nhj .
+                            πd
+                                             j=1
+
+   For the multidimensional Sinc approximation on Hn f , using the representation
+                                                        
+                                       Z    n
+                                   1       Y                        0
+                     Hn f (x ) =     n
+                                             −isgn(tj ) fˆ(t )e−ix t dt
+                                 (2π) Rn
+                                                                  j=1
+
+and the fact that
+          X cos[π(x − kh)/h] − 1                        S(k, h)(t)e−ikhξ
+                                                                    Z
+                                                            P.V.
+                                              e−ikhξ =                   dt
+                  π(x − kh)/h                         R      t−x
+                                                             π
+          k∈Z
+                  Z −itξ0                               (
+             P.V.    e                         0         ξ,                −π/h < ξ < π/h,
+          =               dt = −isgn(ξ 0 )e−ixξ , ξ 0 =
+              π R t−x                                    ξ − (2mπ/h), otherwise.
+
+we have
+                                                                           
+                                       n
+                    X                  Y 1 − cos[π(x − kj h)/h]
+       Hn f (x) −         f (kh)                                           
+                                                   π(x − kj h)/h
+                    k∈Z                j=1
+                                                                                                        
+                               n                                 n
+                                                                   1 − cos[π(x − kj h)/h]
+               Z
+         1                     Y                                 Y
+     =              fˆ(t )         −isgn(tj )e−ixj tj −                                          e−ikhtj  dt
+       (2π)n   Rn                                                         π(x − kj h)/h
+                              j=1                                j=1
+                                                                                                              
+                                             n                             n
+                                                                                 1 − cos[π(x − kj h)/h] −ikhtj 
+               Z
+         1                                   Y                             Y
+     =                            fˆ(t )        −isgn(tj )e−ixj tj −                                  e         dt .
+       (2π)n   {tt:|tj |>π/hj }                                                      π(x − kj h)/h
+                                          j=1                              j=1
+
+The term in the square bracket is bounded by 2 and one can apply similar arguments to obtain
+the estimate for EH (f, h )(ξ ). The error estimates for the case where fˆ decays polynomially can
+be derived analogously.
+
+   To prove Theorem 2.2, we need the following lemma.
+
+Lemma D.1. Assume (2.3) holds. For any β ∈ {0, 1}n , β 6= 0 and α ∈ {−1, 1}n ,
+
+                                                    f (ξ β + iαβ dβ− + z 1 −β )dξ β
+           Q
+             {p:βp =1} sin(πzp /hp )
+                                     Z
+                                                                   −
+                   (2πi)|β |1
+                                             Q
+                                      R|β |1   {j:βj =1} (ξj + αj dj − zj ) sin(πζj /hj )
+                          Y         e−π(dj −|yj |)/hj (1 + e−2π|yj |/hj )
+               ≤C                                                         .
+                                      (dj − |yj |)(1 − e−2πdj /hj )
+                      {j:βj =1}
+
+Proof of Lemma D.1. Applying the following two inequalities
+
+                           sinh(π|y|/h) ≤ | sin(π(x ± iy)/h)| ≤ cosh(π|y|/h),                                       (D.1)
+                               |t − z ± id| ≥ d − |y| (z = x + iy, |y| < d, t ∈ R),                                 (D.2)
+
+we obtain that
+                                                                               αβ dβ− + z 1 −β )dξξ β
+             Q
+                   {p:βp =1} sin(πzp /hp )
+                                                   Z                f (ξξ β + iα
+                                                                                    −
+                         (2πi)|β |1
+                                                            Q
+                                                   R|β |1       {j:βj =1} (ξj + αj dj − zj ) sin(πζj /hj )
+
+
+                                                                   8
+
+                     Electronic copy available at: https://ssrn.com/abstract=3091664
+                                                cosh(π|yj |/hj )
+                                                                              Z
+                       Y              1
+                ≤                             ·                  ·                      f (ξ β + iαβ dβ− + z 1 −β ) dξ β .
+                                2π(dj − |yj |) sinh(π|dj |/hj )               R|β |1
+                    {j:βj =1}
+
+Simplifying and using (2.3) give us the desired bound.
+
+Theorem 2.2. (1) We prove the error bounds by induction. The case with n = 1 is proved
+in Stenger (1993). Suppose our error bounds hold for all dimensions that is less than n. For
+j = 1, · · · , n, let 0 < δj < dj and define
+                                                                                
+                                                              1
+                      Dj (mj , δj ) = zj ∈ C : |Rezj | < mj +     hj , |Imzj | < δj .
+                                                              2
+
+Fix zj = xj + iyj in Ddj , and set ζj = ξj + iηj (j = 1, · · · , n). If mj is sufficiently large and δj
+is sufficiently close to dj , then zj ∈ Dj (mj , δj ). And let
+                                                              m1
+                                                              X               mn
+                                                                              X                    n
+                                                                                                   Y
+                          m, δ , f )(zz ) = f (zz ) −
+                        E(m                                           ···                 kh)
+                                                                                       f (kh             S(kj , hj )(zj )                    (D.3)
+                                                         k1 =−m1            kn =−mn                j=1
+
+We first show by induction that
+             Qn
+               p=1 sin(πzp /hp )
+                                 Z                                    Z
+                                                                                          f (ζ )dζ
+                                                                ···                     Qn
+                            (2πi)n               ∂D1 (m1 ,δ1 )     ∂Dn (mn ,δn )  j=1 (ζj − zj ) sin(πζj /hj )
+                                                                                                         
+                        X                        X                                  Y
+                  =               (−1)|β |1         β      f (kkβ hβ + z 1−β ) ·         S(kj , hj )(zj ) ,                                (D.4)
+                      β ∈{0,1}n               −Mp ≤kp ≤Mp                                  {j:βj =1}
+
+For n = 1, the result is given by Cauchy’s residue theorem. Now suppose the equality holds for
+the n − 1 case, then
+  Qn
+    p=1 sin(πzp /hp )
+                           Z                    Z
+                                                                                   f (ζ )dζ
+                n
+                                           ···                      Qn
+         (2πi)              ∂D1 (m1 ,δ1 )        ∂Dn (mn ,δn )         j=1 (ζj − zj ) sin(πζj /hj )
+  Qn−1
+    p=1 sin(πzp /hp )                                                                   dζ1 · · · dζn−1
+                           Z                    Z
+=                                           ···                              Qn−1
+      (2πi)n−1               ∂D1 (m1 ,δ1 )        ∂Dn−1 (mn−1 ,δn−1 )           j=1 (ζj − zj ) sin(πζj /hj )
+                                              f (ζ1 , · · · , ζn−1 , ζn )dζn
+                            Z
+          sin(πzn /hn )
+       ·
+                2πi           ∂Dn (mn ,δn ) (ζn − zn ) sin(πζn /hn )
+  Qn−1
+    j=1 sin(πzj /hj )                                                                  dζ1 · · · dζn−1
+                           Z                    Z
+=             n−1
+                                           ···                               Qn−1
+      (2πi)                  ∂D1 (m1 ,δ1 )        ∂Dn−1 (mn−1 ,δn−1 )           j=1 (ζj − zj ) sin(πζj /hj )
+                                                                                                                
+                                              mn                                                k
+                                              X         f (ζ1 , · · · , ζn−1 , kn hn )(−1)        n
+       · f (ζ1 , · · · , ζn−1 , zn ) −                                                             sin(πzn /hn )
+                                                                π(zn − kn hn )/hn
+                                           kn =−mn
+                                                                                                             
+                        0
+                                   β0
+     X                         X                                                      Y
+=              (−1)|β |1                     f (k β0 0 hβ0 0 + z 10 −β 0 , zn ) ·            S(kj , hj )(zj )
+    β 0 ∈{0,1}n−1               −Mp ≤kp0 ≤Mp                                          {j:βj0 =1}
+                                                                                                                                                       
+      mn
+                                                          0
+      X                                 X                          X 0                                                        Y
+−               S(kn , hn )(zn )                    (−1)|β |1             β       f (k β0 0 hβ0 0 + z 10 −ββ 0 , kn hn )                S(kj , hj )(zj )
+    kn =−mn                         β 0 ∈{0,1}n−1               −Mp ≤kp0 ≤Mp                                                {j:βj0 =1}
+
+                                                                                                         
+      X                            X                                          Y
+=               (−1)|ββ |1            β       f (k β hβ + z 1 −β )                   S(kj , hj )(zj )
+    β ∈{0,1}n               −Mp ≤kp ≤Mp                                   {j:βj =1}
+
+
+                                                                      9
+
+                           Electronic copy available at: https://ssrn.com/abstract=3091664
+The third equality follows from induction, the fourth equality is obtained from rewriting z =
+(z 0 , zn ), k = (k 0 , kn ), h = (h 0 , hn ). Thus by induction, we obtain (D.4).
+       Noting that the number of positive and negative terms in {(−1)|β |1 : β ∈ {0, 1}n } are the
+same, we can rewrite the right side of (D.4) as
+                                                                                              
+           X                                    X                             Y
+                 (−1)|β |1 +1 f (zz ) −           β    f (kkβ hβ + z 1 −β )   S(kj , hj )(zj ) (D.5)
+       β ∈{0,1}n                       −Mp ≤kp ≤Mp                           {j:βj =1}
+
+Thus using (D.5), the term E(m , δ , f )(z ) that is defined in (D.3) can be written as
+                            Qn
+                             p=1 sin(πzp /hp )
+                                               Z                  Z
+                        n+1                                                               f (ζ )dζ
+E(m , δ , f )(z ) = (−1)              n
+                                                              ···                Qn
+                                (2πi)           ∂D1 (m1 ,δ1 )      ∂Dn (mn ,δn )  j=1 (ζj − zj ) sin(πζj /hj )
+
+
+                                                                                                              
+          X                                       X                                      Y
+ +                  (−1)|β |1 +n+1 f (z ) −          β      f (k β hβ + z 1 −β ) ·               S(kj , hj )(zj ) .
+                                                                                                                     (D.6)
+     β ∈{0,1}n ,β 6=1                          −Mp ≤kp ≤Mp                             {j:βj =1}
+
+We now derive the limit of the integral in (D.6) by taking mj to ∞ for all j. The integral can be
+split into contributions from the product of horizontal segments only, those from the product of
+vertical segments only and those from the mixed product of horizontal and vertical segments.
+We observe that whenever there is a vertical segment involved in the integration region, the
+integral vanishes in the limit. We illustrate this result by considering an integral of this type
+below, where a vertical segment is used for the n-th dimension and horizontalsegments are used
+in all other dimensions. Here ζj = ξj + idj , 1 ≤ j ≤ n − 1, ζn := mn + 21 hn + iηn , and let
+ξ̃ = (ξ1 , · · · , ξn−1 )0 , d̃ = (d1 , · · · , dn−1 )0 .
+                                                                              −
+                                                                                                    
+                                                                                       1
+      Z δn Z (m1 + 1 )h1            Z (mn−1 + 1 )hn−1                                    
+                        2                         2             f    ξ̃ + id̃   , mn + 2   h n + iη n dξ̃ dηn
+                                ···                       Qn−1
+       −δn −(m1 + 12 )h1              −(mn−1 + 12 )hn−1     j=1 (ζj − zj ) sin(πζj /hj ) · (ζn − zn ) sin(πζn /hn )
+        Z δn Z (m1 + 1 )h1              Z (mn−1 + 1 )hn−1                   −
+                                                                 f (ξ̃ + id̃ , mn + 21 hn + iηn )dξ̃
+                                                                                        
+                              2                      2
+     ≤                              ···                      Qn−1                                             dηn
+           −δn      −(m1 + 21 )h1         −(mn−1 + 12 )hn−1    j=1 (ξj + idj − zj ) sin(π(ξj + idj )/hj )
+                             1
+            ·             1
+                             
+                  mn + 2 hn − xn
+      → 0 as mj → ∞ for j = 1, · · · , n.
+
+The inequaltiy is obtained as follows. Along {(mn + 12 )hn + iηn : −δn ≤ ηn ≤ δn }, we have
+                                                 
+                                                1
+                          |ζn − zn | ≥ mn +         hn − xn ,
+                                                2
+                          | sin(πζn /hn )| = |(−1)n cosh(πηn /hn )| ≥ 1.
+
+In addition, the (n − 1)-dimensional integral can be bounded using Lemma D.1.
+    Putting these limiting results together, when mj → ∞, δj → dj for all j, the first part of
+the RHS of (D.6) becomes
+     Qn
+       p=1 sin(πzp /hp )
+                         Z                    Z
+                                                                        f (ζ )dζ
+                 n
+                                        · · ·                Qn
+           (2πi)          ∂D1 (m1 ,δ1 )        ∂Dn (mn ,δn )    j=1 (ζj − zj ) sin(πζj /hj )
+         Qn
+           p=1 sin(πzp /hp )                                                    f (ξ + iαd − )dξ
+                                                P             Z
+                                                  {j:αj =1} 1
+                               X
+      =                                   (−1)                        n               −                     .(D.7)
+              (2πi)n
+                                                                   Q
+                             α          n
+                                 α ∈{−1,1}                     Rn     j=1 (ξj + iαj dj − zj ) sin(πζj /hj )
+
+
+
+                                                          10
+
+                        Electronic copy available at: https://ssrn.com/abstract=3091664
+The RHS of (D.7) can be bounded as
+                                          n
+                                          Y e−π(dj −|yj |)/hj (1 + e−2π|yj |/hj )
+                                      C                                                                                             (D.8)
+                                          j=1
+                                                   (dj − |yj |)(1 − e−2πdj /hj )
+
+using Lemma D.1. For the second part of the RHS of (D.6), applying the induction assumption
+together with (2.3) and (2.4), we obtain for each β ∈ {0, 1}n , β 6= 0 , 1 ,
+                                                                                  
+                             X                               Y
+                   f (z ) −     β    f (k β hβ + z 1 −β ) ·       S(kj , hj )(zj )
+                                 −Mj ≤kj ≤Mj                                     {j:βj =1}
+                                                                                                                 
+                               X                          Y      e−π(dp −|yp |)/hp (1 + e−2π|yp |/hp )
+                  ≤                            Cα                                                                                 (D.9)
+                                                                      (dp − |yp |)(1 − e−2πdp /hp )
+                      α ∈{0,1}n ,α ≤β ,α 6=0         {p:αp =1}
+
+Here α ≤ β means αj ≤ Rβj for all 1 ≤ j ≤ n. Adding (D.8) and (D.9) over β 6= 0 , 1 yields (2.5).
+(2) We have EI (f, h ) = Rn E(f, h )(x )dx . Using (D.7) with zi = xi , interchanging the order of
+integration and applying the identities
+               Z                                      Z
+             1    sin(πx/h)        i               1     sin(πx/h)         i
+                             dx = e−π(d+it)/h ,                    dx = e−π(d−it)/h ,
+            2πi R t − x − id       2              2πi R x − t − id         2
+
+and (D.1), we obtain (2.6).
+(3) We have EH (f, h )(ξ ) = π1n Rn QE(f,h  )(x )
+                                R
+                                      n             dx . Thus (2.7) can be derived by using (D.7) with
+                                      i=1 (ξi −xi )
+zi = xi , interchanging the order of integration and applying the identity
+
+                                                  eiπωsgn(Im(ω))/h − eiπzsgn(Im(z))/h
+                           Z
+                       1        sin(πx/h)
+                                             dx =
+                       π    R (ω − x)(z − x)                    ω−z
+
+together with (D.1) and (D.2).
+
+Proposition 4.2. It holds that
+                                                     0                       0               (α )
+                      Ex [f (X t )] = Ex [e−α X t fα (X t )] = e−α x −tψ(iα ) Ex [fα (X t )].
+                                          (α )
+Take the Fourier transform of Ex [fα (X t )] as a function of x and use Proposition 9 in Bertoin
+(1998), we obtain                             
+                                 (α )
+                           Fn Ex [fα (X t )] (ξ ) = φαt (−ξ )fˆα (ξ ).
+
+Due to the integrability condition (4.5), we can invert the Fourier transform and obtain (4.7).
+
+Proposition 4.3. Given β ∈ {0, 1}n , let kβ (ξ ) = {j:βj =1} 1/(πξj ). The partial Hilbert trans-
+                                                     Q
+
+form Hβ of fˆ is the convolution of fˆ and kβ , i.e. Hβ fˆ(ξ ) = (fˆ ∗ kβ )(ξ ) (see Eq.(15.39) in King
+(2009)). The convolution theorem shows that
+               
+  Fβ−1 Hβ fˆ(ξ ) (xβ + ξ 1 −β ) = Fβ−1 (fˆ(ξ ))(xβ + ξ 1 −β ) · (2π)|β |1 Fβ−1 (kβ (ξ ))(xβ + ξ 1 −β ), (D.10)
+
+where
+                                               |β |1 Z                                                  |β |1
+                                                                           e−ixj ξj dξj
+                                                                                             
+                                           1                     Y                                  −i              Y
+   Fβ−1 (kβ (ξ ))(xβ + ξ 1 −β ) =                                                       =                                     sgn(xj ).
+                                          2π             R|β |1 {j:β =1}      πξj                   2π
+                                                                   j                                              {j:βj =1}
+
+
+
+
+                                                                 11
+
+                      Electronic copy available at: https://ssrn.com/abstract=3091664
+The function kβ (ξ ) is not in L1 (Rn ), so Fβ−1 (kβ (ξ ))(xβ +ξ 1 −β ) must be interpreted as a Cauchy
+principal integral. We further apply Fourier inversion to those dimensions p with βp = 0 on
+both sides of (D.10) and obtain that
+                                                             Y
+                           Fn−1 Hβ fˆ(ξ ) (x ) = i|β |1 f (x )         sgn(xj ).
+                                                                                  {j:βj =1}
+
+Here, we use the identity that F1−1   −1 ˆ                             −1 ˆ                 ˆ
+                                 −β (Fβ (f (ξ ))(xβ + ξ 1 −β ))(x ) = Fn f (x ) = f (x ) as f ∈
+ 1   n
+L (R , C). Further applying Fn on both sides of the above equation gives us (4.9).
+
+Proposition 4.4. Consider the translation operators
+                           
+                        (j)
+                      Tlj f (x ) := f (x1 , · · · , xj−1 , xj − lj , xj+1 , · · · , xn )
+
+We can write
+                                                                                                                               
+                             n
+                           1 Y                                             1
+   1(l ,∞) (x )f (x ) =                       (j)                                                        β
+                                                                                               f (x ) · Tlβ 
+                                                                                     X                           Y
+                                        1 + Tlj sgn(xj ) f (x ) =                                                        sgn(xp )
+                          2n                                                2n
+                               j=1                                                 β ∈{0,1}n                 {p:βp =1}
+
+          β                    (p)
+where Tlβ =
+               Q
+                   {p:βp =1} Tlp . Furthermore, we have
+                                                                                                              
+                                β                                       β
+                   f (x ) · Tlβ                 sgn(xp ) = Tlβ                                       β
+                                         Y                                        Y
+                                                                                            sgn(xp ) · T−l f (x )
+                                     {p:βp =1}                                  {p:βp =1}
+
+Then, by (4.9) and the property of Fourier transform w.r.t. translation, we obtain
+                                          
+                                                                0           0
+                                                                                               
+    Fn Tlβ                       β
+                                      f (x ) (ξ ) = i|β | eiξ β lβ Hβ e−iηβ lβ fˆ η β + ξ 1 −β (ξ ).
+                 Y
+                       sgn(xp ) · T−l
+                    {p:βp =1}
+
+Applying the Fn to 1(l ,∞) (x )f (x ) and using the above results gives us (4.10).
+
+Theorem 4.1. First, notice that if (4.17) holds, then for any t ≥ χ,
+                Z                 Z                          Z
+                       α
+                     φt (ξ ) dξ =        α     α
+                                       φχ (ξ )φt−χ (ξ ) dξ ≤    φαχ (ξ ) dξ < ∞.
+                          Rn                     Rn                                    Rn
+
+We prove that (4.18) holds for every j. For j = N , it is given by the assumption (4.16). Now
+assume that the claim (4.18) holds for j to N and we prove below that it also holds for j − 1.
+Using the recursion (4.14), we have
+
+                                                       e−∆ψ(iα ) X
+                        Z
+                             φα∆ (−ξ )v̂αj−1 (ξ ) dξ ≤               Iβ ,
+                          Rn                             2n        n                    β ∈{0,1}
+
+where
+                       Z
+                                               0
+                                                                                       
+                               φα∆ (−ξ )Hβ e−iηβ lβ φα∆ − η β − ξ 1 −β v̂αj η β + ξ 1 −β (ξ ) dξ
+                                                                      
+              Iβ :=
+                          Rn
+
+As |φα∆ (−ξ )| is bounded over ξ , I0 is finite by the induction assumption. Now pick p > 1 such
+that p∆ ≥ χ and set q = p/(p − 1). Note that (φα∆ (−ξ ))p = φαp∆ (−ξ ) ∈ L1 (Rn ), and this implies
+φα∆ (−ξ ) ∈ Lp (Rn ). The Calderón-Zygmund inequality (see Eq.(15.115) in King (2009)) says
+that, if f ∈ Lp (Rn ) with p > 1, then
+                                                    n
+                                                    Y                                n
+                                                                                     Y
+                                kHn f kp =                H(k) f       = H(1)               H(k) f
+                                                    k=1            p                 k=2             p
+
+
+                                                                   12
+
+                      Electronic copy available at: https://ssrn.com/abstract=3091664
+                                                  n
+                                                  Y
+                                       ≤ Cp(1)          H(k) f       ≤ · · · ≤ Cp(n) kf kp
+                                                  k=2            p
+
+                      (k)
+for some constants Cp , 1 ≤ k ≤ n. Here, we write H(k) as the partial Hilbert transform with
+β = (0, · · · , 0, 1, 0, · · · , 0), where only βk = 1. Thus for I1 , by Hölder’s inequality,
+                                           0
+                                                          
+       I1 ≤ kφα∆ (−·)kp · Hn e−iη l φα∆ (−η )v̂αj (η ) (·) ≤ Ckφα∆ (−·)kp · kφα∆ (−·)v̂αj (·)kq .
+                                                                      q
+
+Using the boundedness of v̂αj , we have
+
+                             kφα∆ (−·)v̂αj (·)kq ≤ kv̂αj (·)kq−1 α       j
+                                                             ∞ kφ∆ (−·)v̂α (·)k1
+
+which is finite by the induction assumption. This shows I1 is finite. The finiteness of {Iβ : β 6=
+0 , 1 } can be proved similarly. Finally, (4.19) follows from Proposition 4.2.
+
+Theorem 4.2. (1) For P ∆ g(ξ ), the total approximation error consists of the error for the terms
+involving several partial Hilbert transforms and the term with the n-dimensional Hilbert trans-
+form. We can directly apply Theorem 2.2 to estimate the approximation error for the partial
+Hilbert transforms under (4.23) and the boundedness of g. Below we only analyze the error for
+the n-dimensional Hilbert transform. We have
+
+             P ∆ g(ξ ) − Ph,M
+                          ∆
+                              g(ξ ) ≤ P ∆ g(ξ ) − Ph,∞
+                                                   ∆            ∆
+                                                       g(ξ ) + Ph,∞          ∆
+                                                                    g(ξ ) − Ph,M g(ξ ) .
+
+The first term can be estimated by applying (2.7) as our assumption on characteristic function
+(4.23) and the boundedness of g allows us to verify the conditions in Theorem 2.2. For the
+second term, it is bounded by
+                            X
+              kgkL∞ (Rn )            |φ∆ (−mh)|
+                            |mj |>Mj ,1≤j≤n
+                                                                                                              
+                                     n                                                                 n
+                                                                                        2 2 ν/2
+                                                                                 Pn
+                                                                     e−∆b(                  )
+                                     Y                  X                                              Y
+            ≤a · 2n kgkL∞ (Rn )          h−1
+                                           j
+                                                                                  j=1 mj hj       ·         hj 
+                                    j=1           mj >Mj ,1≤j≤n                                        j=1
+                                             
+                                     n                                                Pn                   n
+                                                                             ν/2−1                 ν
+                                                                     e−∆bn
+                                     Y                  X                                                  Y
+            ≤a · 2n kgkL∞ (Rn )          h−1
+                                           j
+                                                                                      j=1 (mj hj )    ·         hj
+                                    j=1           mj >Mj ,1≤j≤n                                            j=1
+                                             
+                                     n             n Z ∞
+                                                                           ν/2−1 xν
+                                                                 e−∆bn
+                                     Y             Y
+                  n
+            ≤a · 2 kgkL∞ (Rn )           h−1
+                                           j
+                                              ·                                  j   dxj
+                                    j=1            j=1 Mj hj
+                               n
+                               Y                         
+                  n
+            ≤a · 2 kgkL∞ (Rn )   Γ 1/ν, ∆bnν/2−1 (Mj hj )ν /hj ,                                                      (D.11)
+                                 j=1
+
+                                                    P                    ν/2
+                                                          n    2 2
+                                                                                            Pn
+where we used |(1 − cos(x))/x| ≤ 1, (4.22),               j=1 mj hj              ≥ nν/2−1                    ν
+                                                                                                 j=1 (mj hj ) (due to the
+concavity of xν/2 as ν ∈ (0, 2]). Combining Eq.(6.20) in Feng and Linetsky (2008), (2.7) and
+(D.11), we arrive at (4.25). Now we set hj according to (4.26) and hj is bounded as Mj ≥ 1.
+Therefore, for some constant C > 0,
+
+                                            e−πdj /hj
+                                                        ≤ Ce−πdj /hj .                                                (D.12)
+                                          1 − e−πdj /hj
+where the constant C is independent of j. As Γ(a, x) ∼ xa−1 e−x for x large, we can bound
+Γ(a, x) as a constant times xa−1 e−x for all x bounded away from 0. Using this estimate, (4.26),
+
+                                                         13
+
+                  Electronic copy available at: https://ssrn.com/abstract=3091664
+                                2             ν            1              ν 
+(D.12) and that the term Mj1+ν exp −2cMj1+ν ≤ AMj1+ν exp −cMj1+ν for some constant
+A > 0 when c > 0, we obtain (4.27).
+(2) The proof for R∆ g(x ) is similar to the proof for P ∆ g(ξ ), so the detail is omitted.
+
+Theorem 4.3. (1) From the proof of Theorem 4.1, we have that for every q > 1,
+
+                                                      kHβ f kLq ≤ Cqβ kf kLq ,
+                          β
+for some constant Cqβ > 0. Now we use this result to bound kP ∆ gkLq for g ∈ Lq . Using the
+expression of P ∆ g yields
+
+                                                     0           0
+                                                                                                      
+                                          i|β |1 eiξ β lβ Hβ e−iηβ lβ φα∆ − η β − ξ 1 −β g η β + ξ 1 −β (ξ )
+                                X
+         P ∆ g(ξ ) Lq =
+                                                                                        
+
+                              β ∈{0,1}n                                                                              Lq
+                                                        0
+                                                                                                   
+                                                    e−iηβ lβ φα∆
+                               X                                                  
+                      ≤                   Hβ                        − η β − ξ 1 −β g η β + ξ 1 −β        (ξ )
+                                                                                                                Lq
+                          β ∈{0,1}n
+                                                     η0 l
+                                      Cqβ e−iηβ lβ φα∆ (ξ )g(ξ )
+                               X
+                      ≤
+                                                                          Lq
+                          β ∈{0,1}n
+                               X
+                      ≤               Cqβ kφα∆ (ξ )g(ξ )kLq
+                        β ∈{0,1}n
+
+                      ≤ Cq kφα∆ (ξ )g(ξ )kLq
+                                                     β
+where we set Cq = 2n maxβ ∈{0,1}n Cqβ .
+   (2) Set
+                                      1   1      1
+                         q1 = 1,        +    =      , k = 2, · · · , N.
+                                     pk   qk   qk−1
+Let
+                                                         n
+                                                         Y
+                                      Cnorm =                  2Mi hi , C3 = C1 · 2n Cq2 ,
+                                                         i=1
+                                                    k
+                                          C3 Cnorm Y α
+                                      Ck = n(k−2)      kφ∆ (−·)kLpi , k ≥ 4.
+                                           2       i=2
+
+      For i = 1, · · · , N − 1, we have
+
+                                               e−∆ψ(iα ) ∆ i+1
+                  ṽαi (ξ ) − v̂αi (ξ ) =               Ph ,M ṽα (ξ ) − P ∆ v̂αi+1 (ξ )
+                                                 2n
+                      e−∆ψ(iα )  ∆ i+1           ∆ i+1          ∆    i+1      i+1
+                                                                                         
+                  ≤              P    ṽ
+                                  h ,M α (ξ ) − P  ṽα  (ξ ) + P   ṽα    − v̂α      (ξ )
+                        2n
+Now we estimate I1 and I2 .
+                                           Z
+                               I1 = C1              |φα∆ (−ξ )| · Ph∆,M ṽα2 (ξ ) − P ∆ ṽα2 (ξ ) dξ
+                                             n
+                                           ZR
+                                  ≤ C1      |φα∆ (−ξ )| dξ · kPh∆,M ṽα2 − P ∆ ṽα2 kL∞
+                                        Rn
+                                  ≤ C2 kPh∆,M ṽα2 − P ∆ ṽα2 kL∞
+
+where C2 = C1 kφα∆ kL1 and
+                                            Z
+                                                     |φα∆ (−ξ )| · P ∆ ṽα2 − v̂α2 (ξ ) dξ
+                                                                                  
+                                I2 = C1
+                                               Rn
+
+
+                                                                     14
+
+                      Electronic copy available at: https://ssrn.com/abstract=3091664
+                                 ≤ C1 kφα∆ (−·)kLp2 · kP ∆ ṽα2 − v̂α2 kLq2
+                                                                      
+
+                                 ≤ C3 kφα∆ (−·)kLp2 · kφα∆ (−·) ṽα2 − v̂α2 (·)kLq2
+                                                                           
+
+where C3 = C1 · 2n Cq2 . Applying the Holder inquality and the Minkowski inequality, we obtain
+
+        kφα∆ (−·) ṽα2 − v̂α2 (·)kLq2
+                             
+
+         ≤kφα∆ (−·)kLp3 · kṽα2 − v̂α2 kLq3
+           e−∆ψ(iαα) α
+         ≤           kφ∆ (−·)kLp3 · kPh∆,M ṽα3 − P ∆ v̂α3 kLq3
+              2n
+           e−∆ψ(iα ) α                
+                                           ∆       3     ∆ 3             ∆      3      3
+                                                                                                    
+         ≤           kφ ∆ (−·)k L p3    kP h ,M ṽα  − P  ṽα kLq3 + kP      ṽα  − v̂α     ξ
+                                                                                           (ξ ))kLq3
+              2n
+           kφα∆ (−·)kLp3
+                          kPh∆,M ṽα3 − P ∆ ṽα3 kLq3 + Cq3 kφα∆ (−·)kLp3 kφα∆ (−·) ṽα3 − v̂α3 (·)kLq3
+                                                                                                     
+         ≤        n
+                 2
+                   N            k
+                  X       1    Y
+         ≤··· ≤         n(k−2)
+                                     kφα∆ (−·)kLpi kPh∆,M ṽαk − P ∆ ṽαk kLqk
+                  k=3
+                      2        i=3
+             N
+             Y
+                   Cqk kφα∆ (−·)kLpk kφα∆ (−·) ṽαN − v̂αN (·)kLqN .
+                                                          
+         +                                                                                                (D.13)
+             k=3
+
+      We point out the inequality
+                                               kf kLp ≤ Cnorm kf kL∞ ,                                    (D.14)
+which holds for p > 1 and f supported in the bounded hyperrectangle. We have
+
+         kφα∆ (−·) ṽαN − v̂αN (·)kLqN
+                              
+
+          ≤ kφα∆ (−·) ṽαN − v̂αN (·)1Ωh ,M (·)kLqN + kφα∆ (−·) ṽαN − v̂αN (·)1Ωhc ,M (·)kLqN
+                                                                            
+
+          ≤ Cnorm kφα∆ (−·) ṽαN − v̂αN (·)1Ωh,M   (·)kL∞ + kĝα kL∞ kφα∆ (−·)1Ωhc ,M (·)kLqN
+                                       
+                                                 M
+
+          ≤ Cnorm kφα∆ (−·) ṽαN − v̂αN (·)1Ωh,M
+                                       
+                                                 M
+                                                   (·)kL∞ + kĝα kL∞ Ih ,M .                              (D.15)
+
+Let
+                                                                            N
+                                                                            Y
+                      0
+                     CN = C3 max{Cnorm , kĝα kL∞ }kφα∆ (−·)kLp2                  Cqk kφα∆ (−·)kLpk .
+                                                                            k=3
+Using (D.14) and (D.15), we can bound the RHS of (D.13) by the RHS of (4.32).
+   Next we provide estimates for the constants. First, we have
+                              Z                   1 Z                     1
+                                                    p                   ν     p
+                  α                   α       p              p −p∆b|ξ |
+                kφ∆ (−·)kLp =       |φ∆ (−ξ )| dξ     ≤     a e           dξ
+                                              Rn                            Rn
+                                                          Z              1
+                                                     n                ν      p                 1
+                                                   − νp
+                                     ≤ (p∆b)                   ap e−|η | dη     , η = (p∆b) ν ξ
+                                                           R n
+
+                                                                      p −|η |ν dη
+                                                                R
+                                          1      n
+                                               − νp                n a e
+                                     = Ap p           ,   A= R             n
+                                                                     (∆b) ν
+and the constant Cp is given by
+                                            (
+                                         1
+                                         n
+                                             tan(π/2p), 1 < p ≤ 2,
+                                       Cp =
+                                             cot(π/2p), 2 ≤ p < ∞.
+                                                                                           1
+Then, with qk = 2 − 21k , we obtain (assume A > 1, otherwise replace A p with 1)
+                                                                     − p1
+                                                      
+                   qk−1 qk                1            1                     − k
+             pk =             = 2 · 2 − k · 2 − k−1 ≥ 2k , pk k ≤ 2 2k ,
+                                 k
+                  qk − qk−1              2           2
+
+                                                               15
+
+                        Electronic copy available at: https://ssrn.com/abstract=3091664
+                                                     
+                          π                    π    π                    π               π
+              tan                  ≈1+2           −         =1+               1
+                                                                                 ≤ 1 + k+1 .
+                         2qk                  2qk   4             2k+1   2 − 2k        2
+
+and
+                  k                       k       n 1     √
+                                               − ii ν
+                  Y                       Y
+                        kφα∆ (−·)kLpi ≤       2 2     A 2i ≤ A,            3 ≤ k ≤ N,
+                  i=2                     i=2
+                   N                            N       n
+                  Y                             Y    − k ν       1
+                                                                               π n         1
+                        Cqk kφα∆ (−·)kLpk ≤         2 2k    · A 2k · 1 +                ≤ A 4 en .
+                                                                              2k+1
+                  k=3                           k=3
+                           
+Thus Ck ∼ O          1               0 ∼ O(1).
+                                and CN
+                  2n(k−2)
+
+
+References
+Ballotta, L. and E. Bonfiglioli (2016). Multivariate asset models using Lévy processes and
+  applications. The European Journal of Finance 22 (13), 1320–1350.
+Bertoin, J. (1998). Lévy processes, Volume 121. Cambridge, UK: Cambridge University Press.
+Boyarchenko, S. and S. Z. Levendorskii (2002). Non-Gaussian Merton-Black-Scholes Theory,
+  Volume 9. World Scientific.
+Cont, R. and P. Tankov (2004). Financial Modeling with Jump Processes. Cambridge, UK:
+  Chapman & Hall.
+Feng, L. and V. Linetsky (2008). Pricing discretely monitored barrier options and default-
+  able bonds in Lévy process models: a fast Hilbert transform approach. Mathematical Fi-
+  nance 18 (3), 337–384.
+Gottlieb, D. and C. Shu (1997). On the Gibbs phenomenon and its resolution. SIAM Re-
+  view 39 (4), 644–668.
+King, F. W. (2009). Hilbert transforms, Volume 2. Cambridge, UK: Cambridge University
+  Press.
+Leoni, P. and W. Schoutens (2008). Multivariate smiling. Wilmott Magazine 8, 82–91.
+Luciano, E., M. Marena, and P. Semeraro (2016). Dependence calibration and portfolio fit with
+  factor-based subordinators. Quantitative Finance 16 (7), 1037–1052.
+Luciano, E. and W. Schoutens (2006). A multivariate jump-driven financial asset model. Quan-
+  titative finance 6 (5), 385–402.
+Madan, D. and M. Yor (2008). Representing the CGMY and Meixner Lévy processes as time
+  changed Brownian motions. Journal of Computational Finance 12 (1), 27–47.
+Mendoza-Arriaga, R. and V. Linetsky (2016). Multivariate subordination of Markov processes
+  with financial applications. Mathematical Finance 26 (4), 699–747.
+Phelan, C. E., D. Marazzina, G. Fusai, and G. Germano (2018). Hilbert transform, spectral
+  filters and option pricing. Annals of Operations Research. doi:10.1007/s10479-018-2881-4.
+Ruijter, M. J., M. Versteegh, and C. W. Oosterlee (2015). On the application of spectral filters
+  in a Fourier option pricing technique. Journal of Computational Finance 19 (1), 75–106.
+Sato, K. (1999). Lévy Processes and Infinitely Divisible Distributions. Cambridge, UK: Cam-
+  bridge University Press.
+Stenger, F. (1993). Numerical Methods Based on Sinc and Analytic Functions. New York:
+  Springer.
+Vandeven, H. (1991). Family of spectral filters for discontinuous problems. Journal of Scientific
+  Computing 6 (2), 159–192.
+
+
+
+
+                                                            16
+
+                     Electronic copy available at: https://ssrn.com/abstract=3091664
+
