@@ -1,0 +1,1242 @@
+{
+  "handoff": "computed-permute-provider-handoff-v1",
+  "branch": "computed-permute-provider-handoff-v1",
+  "base_commit": "b4b03df4eac1639e8b449a432b7543d66539c181",
+  "host": {
+    "cpu": "AMD Ryzen 5 2600 Six-Core Processor",
+    "native_avx512f": false,
+    "kernel": "7.2.6-arch2-1",
+    "sde": [
+      "Intel(R) Software Development Emulator.  Version:  10.13.1 external (0)",
+      "Copyright (C) 2008-2026, Intel Corporation. All rights reserved."
+    ]
+  },
+  "correctness": {
+    "core_run": {
+      "pass": true,
+      "records": {
+        "dimensions": 1280,
+        "prepare_failures": 0,
+        "bytes": 245760,
+        "sha256": "5aa96e59411a2163a0c2053020c5633cca30505fa6f3fd37fccec7e2fd32894f",
+        "mprotect_read_only_during_tests": true
+      },
+      "contract": {
+        "probes": 117,
+        "registers_checked": 5499,
+        "unexpected_change": 0,
+        "wrong_output": 0,
+        "register_maps": [
+          "main",
+          "alt1",
+          "alt2"
+        ],
+        "failures": ""
+      },
+      "block_state_sweep": {
+        "dimensions": "D1..D1280",
+        "blocks": "0..1048575",
+        "checks_vs_oracle": 1342177280,
+        "failures_vs_oracle": 0,
+        "checks_vs_seek": 22004480,
+        "failures_vs_seek": 0,
+        "seconds": 58.8
+      },
+      "scopes": [
+        {
+          "scope": "canonical",
+          "dimensions": "D1..D256",
+          "blocks": "0..15 consecutive (block state by recurrence from 0)",
+          "dimension_block_pairs": 4096,
+          "packets": 524288,
+          "lanes_checked_affine_vs_oracle": 16777216,
+          "mismatch_affine_vs_oracle": 0,
+          "affine_prepare_failures": 0,
+          "lanes_checked_computed_vs_oracle": 16777216,
+          "mismatch_computed_vs_oracle": 0,
+          "oracle_block_inverse_failures": 0,
+          "first_packet_lanes": 131072,
+          "first_packet_mismatch": 0,
+          "last_packet_lanes": 131072,
+          "last_packet_mismatch": 0,
+          "donor_selection_failures": 0,
+          "duplicate_or_omitted_blocks": 0,
+          "block_state_checks": 4096,
+          "block_state_failures": 0,
+          "asm_block_transitions": 3840,
+          "repeat_runs": 4096,
+          "repeat_mismatch": 0,
+          "alternate_register_runs": 8192,
+          "alternate_register_mismatch": 0,
+          "reverse_order_runs": 4096,
+          "reverse_order_mismatch": 0,
+          "record_model_lanes": 16777216,
+          "record_model_mismatch": 0,
+          "computed_outputs_sha256": "8b7ba5a94dae21558f0a338cc2e2b9ed59e21d26d0131a7bfd6ee15048543975",
+          "affine_contexts_sha256": "1b214363320503998418bc8241a88ed49e9c7c4e830d144ae29ec3454f9c1b37",
+          "seconds": 2.6
+        },
+        {
+          "scope": "far_blocks",
+          "dimensions": "D1..D1280",
+          "blocks": "56 blocks: 2^k-1 and 2^k for k=1..19, 2^20-2, 2^20-1, 16 pseudo-random; each entered by asm advance from oracle state of B-1",
+          "dimension_block_pairs": 71680,
+          "packets": 9175040,
+          "lanes_checked_affine_vs_oracle": 293601280,
+          "mismatch_affine_vs_oracle": 0,
+          "affine_prepare_failures": 0,
+          "lanes_checked_computed_vs_oracle": 293601280,
+          "mismatch_computed_vs_oracle": 0,
+          "oracle_block_inverse_failures": 0,
+          "first_packet_lanes": 2293760,
+          "first_packet_mismatch": 0,
+          "last_packet_lanes": 2293760,
+          "last_packet_mismatch": 0,
+          "donor_selection_failures": 0,
+          "duplicate_or_omitted_blocks": 0,
+          "block_state_checks": 71680,
+          "block_state_failures": 0,
+          "asm_block_transitions": 71680,
+          "repeat_runs": 71680,
+          "repeat_mismatch": 0,
+          "alternate_register_runs": 0,
+          "alternate_register_mismatch": 0,
+          "reverse_order_runs": 0,
+          "reverse_order_mismatch": 0,
+          "record_model_lanes": 0,
+          "record_model_mismatch": 0,
+          "computed_outputs_sha256": "ef8ebf54c410a50dd9f800b6751958747b4459e147d2380db80ab372feaecb40",
+          "affine_contexts_sha256": "01ea0c783f13efdc5bcbdcf66682f8d69676e850e719105fe9714296a4de3fee",
+          "seconds": 21.8
+        }
+      ]
+    },
+    "extended_run": {
+      "pass": true,
+      "scope": "extended",
+      "dimensions": "D1..D1280",
+      "blocks": "0..255 (points 0..1048575)",
+      "records_sha256": "5aa96e59411a2163a0c2053020c5633cca30505fa6f3fd37fccec7e2fd32894f",
+      "totals": {
+        "dimension_block_pairs": 327680,
+        "packets": 41943040,
+        "lanes_checked_affine_vs_oracle": 1342177280,
+        "mismatch_affine_vs_oracle": 0,
+        "affine_prepare_failures": 0,
+        "lanes_checked_computed_vs_oracle": 1342177280,
+        "mismatch_computed_vs_oracle": 0,
+        "oracle_block_inverse_failures": 0,
+        "first_packet_lanes": 10485760,
+        "first_packet_mismatch": 0,
+        "last_packet_lanes": 10485760,
+        "last_packet_mismatch": 0,
+        "donor_selection_failures": 0,
+        "duplicate_or_omitted_blocks": 0,
+        "block_state_checks": 327680,
+        "block_state_failures": 0,
+        "asm_block_transitions": 326400,
+        "repeat_runs": 327680,
+        "repeat_mismatch": 0
+      },
+      "shards": [
+        {
+          "blocks": "0..15",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "a90d96068e73ab5e007f460815debed7810a3171e1b55c693aa7cbdab9a36281",
+          "affine_contexts_sha256": "bf3bd7fc0b80ec95802b2398e72a955a59fd245f9bd8517fc710f7bdfde97978",
+          "seconds": 10.7
+        },
+        {
+          "blocks": "16..31",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "fecc27bdd107d478e389fff7486ca0f71476918ef868d594a05bac34eb59d10b",
+          "affine_contexts_sha256": "7bffcb7d22dccc64ac3db4a563240934b64a9fcb5ed71956a1ddd9548c6f4eed",
+          "seconds": 7.5
+        },
+        {
+          "blocks": "32..47",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "4497150e3917ce273d0a4517d1e1e639a439ca6a1909db0e18ac11f0fa5ccf5b",
+          "affine_contexts_sha256": "43419bd0cb66ac23b896504e299533edf65d2197402236ba09077ab131e72f6c",
+          "seconds": 10.3
+        },
+        {
+          "blocks": "48..63",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "f43f5e122e9d24f494039da7543d885bc5168d767b52efbce0a1cf2ca15f662f",
+          "affine_contexts_sha256": "c26fe17658c4affcc441eb4e4c74475a96286b115645599b9abbb6a869c68f1c",
+          "seconds": 10.7
+        },
+        {
+          "blocks": "64..79",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "b6215af841f05f484bde973ee3f76084bc7d04ffed8846929db39c5c139dcba6",
+          "affine_contexts_sha256": "347471a22146bdefe18074553d0ca4c8dd6e65a164c837b83c29b42603b6dcd4",
+          "seconds": 7.9
+        },
+        {
+          "blocks": "80..95",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "0a89c06c0c4497ee2c6b56e793d5172cc9a9a87704b3d4955a856c35e9a9f089",
+          "affine_contexts_sha256": "70df560f0a74adc8408a5071cbaabaf31011ceb752489b4488147f04bb3473e4",
+          "seconds": 10.0
+        },
+        {
+          "blocks": "96..111",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "77b509e831c76dc9c826763140a4471f3d8d1a3ff6312897a2b0004d637c8996",
+          "affine_contexts_sha256": "ebb293542f82c40932bf95451a779538ae0c457d158bcc4d6d9614ebe7837734",
+          "seconds": 10.7
+        },
+        {
+          "blocks": "112..127",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "a14dc083c99560f918d4e01699dfeb70166d9725f6434db75b79efeafde40273",
+          "affine_contexts_sha256": "fd06d0c7988f730cac46ad435b92e00c94c8f5b8e9da9f8cc9d6e1439a13634f",
+          "seconds": 10.4
+        },
+        {
+          "blocks": "128..143",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "4d9d4cb30299e48533c0abf004e210988376c79056e4aeb225fca5891d14165c",
+          "affine_contexts_sha256": "861b1fb59ccd92a299abb9f26d56612b4ae92d77d5de16e5ae26a076a341ddb3",
+          "seconds": 10.5
+        },
+        {
+          "blocks": "144..159",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "1f300b58a3c7f0fb3da4eec74c572eeef0533612ebb5093974315f66134d4aa4",
+          "affine_contexts_sha256": "4becbd5c28509dde13aaeef16da84b994edcf93891220b517d92b3107888b8ca",
+          "seconds": 10.1
+        },
+        {
+          "blocks": "160..175",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "4313bf62ed542422be7027b7a4dfda6d27078f0c229ed487ee4d7dbd5fa142e5",
+          "affine_contexts_sha256": "722742d555ad411998b3646bc1e16eebfd51dd668df5888e244efb905f7eeab8",
+          "seconds": 7.1
+        },
+        {
+          "blocks": "176..191",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "a228294c6cd7b3ddf9343e22de0ce938d3f6d36ce53c617d02fd93e89766be33",
+          "affine_contexts_sha256": "fc7d6d10e49ef612d9e785a715f0addffeb43d0d9aabe6df9bfa805c9f18a5f7",
+          "seconds": 7.0
+        },
+        {
+          "blocks": "192..207",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "7da5826dcdc3127812dd1dc25cb4c01d724ddae1871e7362de92e2ae5c9f9d26",
+          "affine_contexts_sha256": "0fd575f9ac648f82142a4c062df7d20123677eace2303c73395a469571676cb1",
+          "seconds": 6.7
+        },
+        {
+          "blocks": "208..223",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "e2e528470d5a54c4705819234332228833e6a8cf4d724bf1063d75a4984ac0a1",
+          "affine_contexts_sha256": "a40ce0450a79ffd5b4ec3d12fc70ccf214a6d9bc21e369eb2b867df3e9b3ebea",
+          "seconds": 6.7
+        },
+        {
+          "blocks": "224..239",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "7cf227bfd9f0741c382866aff16bae785b859767e54adc647ae23325eb36386d",
+          "affine_contexts_sha256": "2eabb1c02ad75d3f534c4b0a9ccf9da74955733a67c03532308ae3a18b25d8c0",
+          "seconds": 6.3
+        },
+        {
+          "blocks": "240..255",
+          "pass": true,
+          "exit_code": 0,
+          "computed_outputs_sha256": "394619bbb9a7a3162be23a9f6836c88981d54a69e248ea4fad4a80adca542111",
+          "affine_contexts_sha256": "23c1baffe7fa83f7b632df18417978fd4a1ab0dd35dfa531b9b5b8c71f4ca6aa",
+          "seconds": 6.3
+        }
+      ],
+      "shard_output_digest_chain_sha256": "9d3dc21581fc0695790b40fdae5ca1e475086fea73cb224c1c6f8984ddebded2"
+    },
+    "negative_controls": {
+      "all_faults_detected": true,
+      "faults": [
+        {
+          "fault": "record_daddr",
+          "description": "D2 daddr[3] ^= 64 (packet address step, t = 3)",
+          "exit_code": 1,
+          "detected": true,
+          "nonzero_failure_counters": {
+            "mismatch_computed_vs_oracle": 32768,
+            "alternate_register_mismatch": 65536,
+            "record_model_mismatch": 32768
+          }
+        },
+        {
+          "fault": "record_dlane",
+          "description": "D3 dlane[0] ^= 1 (packet lane step, t = 0)",
+          "exit_code": 1,
+          "detected": true,
+          "nonzero_failure_counters": {
+            "mismatch_computed_vs_oracle": 32768,
+            "alternate_register_mismatch": 65536,
+            "record_model_mismatch": 32768
+          }
+        },
+        {
+          "fault": "record_half",
+          "description": "D5 half ^= 2 (second-half lane XOR)",
+          "exit_code": 1,
+          "detected": true,
+          "nonzero_failure_counters": {
+            "mismatch_computed_vs_oracle": 32768,
+            "first_packet_mismatch": 256,
+            "last_packet_mismatch": 256,
+            "alternate_register_mismatch": 65536,
+            "record_model_mismatch": 32768
+          }
+        },
+        {
+          "fault": "record_ctl",
+          "description": "D8 ctl[9] ^= 4 (base lane control)",
+          "exit_code": 1,
+          "detected": true,
+          "nonzero_failure_counters": {
+            "mismatch_computed_vs_oracle": 4096,
+            "first_packet_mismatch": 32,
+            "last_packet_mismatch": 32,
+            "alternate_register_mismatch": 8192,
+            "record_model_mismatch": 4096
+          }
+        },
+        {
+          "fault": "record_cstep",
+          "description": "D11 cstep[0] ^= 0xF (block step, odd blocks)",
+          "exit_code": 1,
+          "detected": true,
+          "nonzero_failure_counters": {
+            "mismatch_computed_vs_oracle": 32768,
+            "first_packet_mismatch": 256,
+            "last_packet_mismatch": 256,
+            "block_state_failures": 8,
+            "alternate_register_mismatch": 65536,
+            "record_model_mismatch": 32768
+          }
+        },
+        {
+          "fault": "donor_block",
+          "description": "harness hands donor block B ^ 1 instead of B",
+          "exit_code": 1,
+          "detected": true,
+          "nonzero_failure_counters": {
+            "donor_selection_failures": 16777216
+          }
+        },
+        {
+          "fault": "skip_advance",
+          "description": "harness skips CPP_BLOCK_ADVANCE at block boundaries",
+          "exit_code": 1,
+          "detected": true,
+          "nonzero_failure_counters": {
+            "mismatch_computed_vs_oracle": 15667200,
+            "first_packet_mismatch": 122400,
+            "last_packet_mismatch": 122400,
+            "block_state_failures": 3825,
+            "alternate_register_mismatch": 29253090
+          }
+        }
+      ]
+    },
+    "summary": {
+      "core_pass": true,
+      "extended_pass": true,
+      "negative_controls_all_detected": true,
+      "bench_a_equals_b": true
+    }
+  },
+  "bytes": {
+    "B_computed": {
+      "fixed_bytes": 0,
+      "bytes_per_dimension": 192,
+      "bytes_per_dimension_mutable_optional": 4,
+      "bytes_per_block": 0,
+      "bytes_per_block_x_dimension": 0,
+      "note": "192-byte immutable record per dimension. The optional 4 bytes are the caller-owned block state of each dimension when blocks are the outer loop and dimensions the inner loop; with blocks inner it stays in a register. Donor blocks are caller input and excluded for A and B.",
+      "totals": {
+        "D256_16_blocks": 49152,
+        "D1280_256_blocks": 245760
+      }
+    },
+    "A_affine448": {
+      "fixed_bytes": 0,
+      "bytes_per_dimension": 0,
+      "bytes_per_block": 0,
+      "bytes_per_block_x_dimension": 448,
+      "totals": {
+        "D256_16_blocks": 1835008,
+        "D1280_256_blocks": 146800640
+      }
+    }
+  },
+  "instructions": {
+    "source": "objdump of build/audit_instantiate.o and build/bench_kernels.o",
+    "per_unit_accounting": {
+      "A_affine448": {
+        "preload_per_context": 2,
+        "preload_note": "each 448-byte context belongs to one (block, dimension), so the preload runs once per (block, dimension)",
+        "caller_context_select_per_block_x_dimension": 5,
+        "per_block_transition": 0,
+        "per_packet_provider": 11,
+        "provider_instructions_per_block_x_dimension": 1415
+      },
+      "B_computed": {
+        "per_dimension_preload": 2,
+        "preload_note": "the record is block-independent: once per dimension when blocks are the inner loop, once per (block, dimension) when dimensions are the inner loop (the bench order)",
+        "caller_record_select_per_dimension": 2,
+        "per_block_transition": 8,
+        "per_block_transition_detail": {
+          "CPP_BLOCK_ADVANCE": 2,
+          "CPP_BLOCK_ENTER": 6,
+          "caller_state_load_store_when_dimensions_are_inner": 2
+        },
+        "per_packet_provider_first": 3,
+        "per_packet_provider_next": 7,
+        "provider_instructions_per_block_x_dimension": 904
+      },
+      "note": "Instruction counts per (block, dimension) unit of 128 packets, from the boundary symbols. Consumer and loop control are excluded here and are reported in loop_bodies."
+    },
+    "boundaries": {
+      "audit_a_dim_preload": {
+        "instructions": 2,
+        "vector_instructions": 2,
+        "scalar_instructions": 0,
+        "loads": 2,
+        "load_bytes": 128,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 14,
+        "zmm_registers": [
+          "zmm16",
+          "zmm17"
+        ],
+        "gpr_registers": [
+          "r15"
+        ],
+        "zmm_written": [
+          "zmm16",
+          "zmm17"
+        ],
+        "gpr_written": [],
+        "dependency_chain_instructions": 1,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 0
+      },
+      "audit_a_packet": {
+        "instructions": 11,
+        "vector_instructions": 7,
+        "scalar_instructions": 4,
+        "loads": 4,
+        "load_bytes": 130,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 63,
+        "zmm_registers": [
+          "zmm0",
+          "zmm1",
+          "zmm2",
+          "zmm3",
+          "zmm16",
+          "zmm17"
+        ],
+        "gpr_registers": [
+          "r14",
+          "r15",
+          "r8",
+          "r9",
+          "rsi"
+        ],
+        "zmm_written": [
+          "zmm0",
+          "zmm1",
+          "zmm2",
+          "zmm3"
+        ],
+        "gpr_written": [
+          "r8",
+          "r9"
+        ],
+        "dependency_chain_instructions": 5,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 2
+      },
+      "audit_b_dim_preload": {
+        "instructions": 2,
+        "vector_instructions": 2,
+        "scalar_instructions": 0,
+        "loads": 2,
+        "load_bytes": 20,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 13,
+        "zmm_registers": [
+          "zmm16",
+          "zmm17"
+        ],
+        "gpr_registers": [
+          "r15"
+        ],
+        "zmm_written": [
+          "zmm16",
+          "zmm17"
+        ],
+        "gpr_written": [],
+        "dependency_chain_instructions": 1,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 0
+      },
+      "audit_b_block_advance": {
+        "instructions": 2,
+        "vector_instructions": 0,
+        "scalar_instructions": 2,
+        "loads": 1,
+        "load_bytes": 4,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 10,
+        "zmm_registers": [],
+        "gpr_registers": [
+          "r10",
+          "r15",
+          "r8",
+          "r9"
+        ],
+        "zmm_written": [],
+        "gpr_written": [
+          "r10",
+          "r9"
+        ],
+        "dependency_chain_instructions": 2,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 2
+      },
+      "audit_b_block_enter": {
+        "instructions": 6,
+        "vector_instructions": 2,
+        "scalar_instructions": 4,
+        "loads": 0,
+        "load_bytes": 0,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 26,
+        "zmm_registers": [
+          "zmm16",
+          "zmm18"
+        ],
+        "gpr_registers": [
+          "r10",
+          "r11",
+          "r9"
+        ],
+        "zmm_written": [
+          "zmm18"
+        ],
+        "gpr_written": [
+          "r11",
+          "r9"
+        ],
+        "dependency_chain_instructions": 4,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 2
+      },
+      "audit_b_packet_first": {
+        "instructions": 3,
+        "vector_instructions": 3,
+        "scalar_instructions": 0,
+        "loads": 2,
+        "load_bytes": 128,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 20,
+        "zmm_registers": [
+          "zmm0",
+          "zmm1",
+          "zmm17",
+          "zmm18"
+        ],
+        "gpr_registers": [
+          "r11",
+          "r14",
+          "r9"
+        ],
+        "zmm_written": [
+          "zmm0",
+          "zmm1"
+        ],
+        "gpr_written": [],
+        "dependency_chain_instructions": 2,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 0
+      },
+      "audit_b_packet_next": {
+        "instructions": 7,
+        "vector_instructions": 4,
+        "scalar_instructions": 3,
+        "loads": 5,
+        "load_bytes": 140,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 43,
+        "zmm_registers": [
+          "zmm0",
+          "zmm1",
+          "zmm17",
+          "zmm18"
+        ],
+        "gpr_registers": [
+          "r10",
+          "r11",
+          "r14",
+          "r15",
+          "r8",
+          "r9"
+        ],
+        "zmm_written": [
+          "zmm0",
+          "zmm1",
+          "zmm18"
+        ],
+        "gpr_written": [
+          "r10",
+          "r11",
+          "r9"
+        ],
+        "dependency_chain_instructions": 4,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 3
+      },
+      "audit_a_context_select": {
+        "instructions": 5,
+        "vector_instructions": 0,
+        "scalar_instructions": 5,
+        "loads": 2,
+        "load_bytes": 16,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 22,
+        "zmm_registers": [],
+        "gpr_registers": [
+          "r12",
+          "r13",
+          "r15",
+          "rbx"
+        ],
+        "zmm_written": [],
+        "gpr_written": [
+          "r15"
+        ],
+        "dependency_chain_instructions": 5,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 4
+      },
+      "audit_b_record_select": {
+        "instructions": 2,
+        "vector_instructions": 0,
+        "scalar_instructions": 2,
+        "loads": 1,
+        "load_bytes": 8,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 11,
+        "zmm_registers": [],
+        "gpr_registers": [
+          "r13",
+          "r15",
+          "rbx"
+        ],
+        "zmm_written": [],
+        "gpr_written": [
+          "r15"
+        ],
+        "dependency_chain_instructions": 2,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 2
+      },
+      "audit_consumer_sink": {
+        "instructions": 2,
+        "vector_instructions": 2,
+        "scalar_instructions": 0,
+        "loads": 0,
+        "load_bytes": 0,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 12,
+        "zmm_registers": [
+          "zmm0",
+          "zmm1",
+          "zmm20",
+          "zmm21"
+        ],
+        "gpr_registers": [],
+        "zmm_written": [
+          "zmm20",
+          "zmm21"
+        ],
+        "gpr_written": [],
+        "dependency_chain_instructions": 1,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 0
+      },
+      "audit_consumer_fused": {
+        "instructions": 13,
+        "vector_instructions": 12,
+        "scalar_instructions": 1,
+        "loads": 6,
+        "load_bytes": 384,
+        "stores": 6,
+        "store_bytes": 384,
+        "code_bytes": 113,
+        "zmm_registers": [
+          "zmm0",
+          "zmm1",
+          "zmm4",
+          "zmm5",
+          "zmm6",
+          "zmm7",
+          "zmm22"
+        ],
+        "gpr_registers": [
+          "rdx"
+        ],
+        "zmm_written": [
+          "zmm0",
+          "zmm1",
+          "zmm4",
+          "zmm5",
+          "zmm6",
+          "zmm7"
+        ],
+        "gpr_written": [
+          "rdx"
+        ],
+        "dependency_chain_instructions": 3,
+        "calls": 0,
+        "branches": 0,
+        "gathers": 0,
+        "stack_operations": 0,
+        "spills": 0,
+        "mask_register_uses": 0,
+        "vzeroupper": 0,
+        "flags_writers": 1
+      }
+    },
+    "loop_bodies": {
+      "bench_a_sink": {
+        "instructions": 16,
+        "vector_instructions": 9,
+        "scalar_instructions": 7,
+        "loads": 4,
+        "load_bytes": 130,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 88,
+        "branches": 1,
+        "loop_carried_chain_instructions": {
+          "rsi": 1,
+          "zmm20": 1,
+          "zmm21": 1
+        },
+        "kernel_code_bytes": 226
+      },
+      "bench_b_sink": {
+        "instructions": 12,
+        "vector_instructions": 6,
+        "scalar_instructions": 6,
+        "loads": 5,
+        "load_bytes": 140,
+        "stores": 0,
+        "store_bytes": 0,
+        "code_bytes": 68,
+        "branches": 1,
+        "loop_carried_chain_instructions": {
+          "r11": 1,
+          "r8": 1,
+          "r9": 1,
+          "zmm18": 1,
+          "zmm20": 1,
+          "zmm21": 1
+        },
+        "kernel_code_bytes": 290
+      },
+      "bench_b_sink_transition": {
+        "instructions": 3,
+        "vector_instructions": 0,
+        "scalar_instructions": 3,
+        "loads": 1,
+        "load_bytes": 4,
+        "stores": 1,
+        "store_bytes": 4,
+        "code_bytes": 14,
+        "branches": 0
+      },
+      "bench_a_fused": {
+        "instructions": 27,
+        "vector_instructions": 19,
+        "scalar_instructions": 8,
+        "loads": 10,
+        "load_bytes": 514,
+        "stores": 6,
+        "store_bytes": 384,
+        "code_bytes": 193,
+        "branches": 1,
+        "loop_carried_chain_instructions": {
+          "rdx": 1,
+          "rsi": 1
+        },
+        "kernel_code_bytes": 346
+      },
+      "bench_b_fused": {
+        "instructions": 23,
+        "vector_instructions": 16,
+        "scalar_instructions": 7,
+        "loads": 11,
+        "load_bytes": 524,
+        "stores": 6,
+        "store_bytes": 384,
+        "code_bytes": 173,
+        "branches": 1,
+        "loop_carried_chain_instructions": {
+          "r11": 1,
+          "r8": 1,
+          "r9": 1,
+          "rdx": 1,
+          "zmm18": 1
+        },
+        "kernel_code_bytes": 511
+      },
+      "bench_b_fused_transition": {
+        "instructions": 3,
+        "vector_instructions": 0,
+        "scalar_instructions": 3,
+        "loads": 1,
+        "load_bytes": 4,
+        "stores": 1,
+        "store_bytes": 4,
+        "code_bytes": 14,
+        "branches": 0
+      }
+    },
+    "gates": [
+      {
+        "check": "audit_a_packet instructions == 11",
+        "pass": true,
+        "observed": 11
+      },
+      {
+        "check": "audit_a_dim_preload instructions == 2",
+        "pass": true,
+        "observed": 2
+      },
+      {
+        "check": "audit_b_packet_next instructions == 7",
+        "pass": true,
+        "observed": 7
+      },
+      {
+        "check": "audit_b_packet_first instructions == 3",
+        "pass": true,
+        "observed": 3
+      },
+      {
+        "check": "audit_b_dim_preload instructions == 2",
+        "pass": true,
+        "observed": 2
+      },
+      {
+        "check": "audit_b_block_advance instructions == 2",
+        "pass": true,
+        "observed": 2
+      },
+      {
+        "check": "audit_b_block_enter instructions == 6",
+        "pass": true,
+        "observed": 6
+      },
+      {
+        "check": "audit_a_dim_preload has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+        "pass": true,
+        "observed": {}
+      },
+      {
+        "check": "audit_a_packet has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+        "pass": true,
+        "observed": {}
+      },
+      {
+        "check": "audit_b_dim_preload has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+        "pass": true,
+        "observed": {}
+      },
+      {
+        "check": "audit_b_block_advance has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+        "pass": true,
+        "observed": {}
+      },
+      {
+        "check": "audit_b_block_enter has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+        "pass": true,
+        "observed": {}
+      },
+      {
+        "check": "audit_b_packet_first has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+        "pass": true,
+        "observed": {}
+      },
+      {
+        "check": "audit_b_packet_next has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+        "pass": true,
+        "observed": {}
+      },
+      {
+        "check": "audit_b_dim_preload writes flags == False",
+        "pass": true,
+        "observed": 0
+      },
+      {
+        "check": "audit_b_block_advance writes flags == True",
+        "pass": true,
+        "observed": 2
+      },
+      {
+        "check": "audit_b_block_enter writes flags == True",
+        "pass": true,
+        "observed": 2
+      },
+      {
+        "check": "audit_b_packet_first writes flags == False",
+        "pass": true,
+        "observed": 0
+      },
+      {
+        "check": "audit_b_packet_next writes flags == True",
+        "pass": true,
+        "observed": 3
+      }
+    ]
+  },
+  "benchmark": {
+    "verify_only_under_emulation": {
+      "timed": false,
+      "host_check": "/proc/cpuinfo of the host lacks avx512f (emulator suspected)",
+      "checks": [
+        {
+          "scope": "d256_b16",
+          "dimensions": 256,
+          "blocks": 16,
+          "consumer": "sink",
+          "a_equals_b_bitwise": true,
+          "sink_word0": "0x00000c00",
+          "q_path0": 0
+        },
+        {
+          "scope": "d256_b16",
+          "dimensions": 256,
+          "blocks": 16,
+          "consumer": "fused",
+          "a_equals_b_bitwise": true,
+          "sink_word0": "0x00000000",
+          "q_path0": 3680.0813
+        },
+        {
+          "scope": "d1280_b256",
+          "dimensions": 1280,
+          "blocks": 256,
+          "consumer": "sink",
+          "a_equals_b_bitwise": true,
+          "sink_word0": "0x00ffe000",
+          "q_path0": 0
+        },
+        {
+          "scope": "d1280_b256",
+          "dimensions": 1280,
+          "blocks": 256,
+          "consumer": "fused",
+          "a_equals_b_bitwise": true,
+          "sink_word0": "0x00000000",
+          "q_path0": 167310.75
+        }
+      ],
+      "pass": true
+    },
+    "native_timing": {
+      "timed": false,
+      "reason": "cpuid reports no avx512f",
+      "host_cpu": "AMD Ryzen 5 2600 Six-Core Processor"
+    }
+  },
+  "hashes": {
+    "files": {
+      ".gitignore": {
+        "bytes": 20,
+        "sha256": "c7cd0fc55d4b88bc4ed87b1cdc33670d9046174ab762188a0f2ce10290bb56e0"
+      },
+      "Makefile": {
+        "bytes": 3926,
+        "sha256": "87d5c6d262ed8d52bcbc49ccf94ef01828cd10b9f0df83b559a6a0e57e1f6b8f"
+      },
+      "README.md": {
+        "bytes": 25439,
+        "sha256": "a6475d1ad906ac16a80b48691630d533365280d840eea53e563b5b141488c42f"
+      },
+      "asm/cpp_provider_fragments.inc": {
+        "bytes": 3070,
+        "sha256": "d7ff2d8d6c439e552470b79c4b46f2e7f9c16d9b1c0da9f2e43257d4f45cc532"
+      },
+      "audit/audit_disasm.py": {
+        "bytes": 16906,
+        "sha256": "e89056e1c1d394325b20868b7d55a40eebfc7b5d2aa61116409ce2cd699e495b"
+      },
+      "audit/audit_instantiate.S": {
+        "bytes": 1862,
+        "sha256": "17fe46d583e9d3fda2a5e712f29ae83d96d6b91e357a8639d44c0be57bd1c38b"
+      },
+      "baseline_affine_frozen/CONTRACT.md": {
+        "bytes": 5012,
+        "sha256": "ceba8e87ebc5995b722f409418b1f41f1f26542e9e12ba900657f2a532ebe946"
+      },
+      "baseline_affine_frozen/UPSTREAM_SHA256SUMS": {
+        "bytes": 1110,
+        "sha256": "0e7bd5ce6261445d3163f4f8b93caaea70657e3d2c6291dbc71bec366a257bfb"
+      },
+      "baseline_affine_frozen/dim_provider.h": {
+        "bytes": 2787,
+        "sha256": "d1647ec129b7221b264b645cbbfd26205285c6f49c2aa6e61e4473f90492fd7c"
+      },
+      "baseline_affine_frozen/dim_provider_fragments.inc": {
+        "bytes": 3875,
+        "sha256": "1b1c8cbc4214c8bd2ecd42f396507745a520d69eb24ca5bc0e20433fcc487827"
+      },
+      "baseline_affine_frozen/dim_provider_prepare.c": {
+        "bytes": 12862,
+        "sha256": "e9752e7b0fd201c8b13ee1d70c2a1a86af361fe1231ddc3d2d85e471692c939f"
+      },
+      "bench/bench_ab.c": {
+        "bytes": 20349,
+        "sha256": "fb55c7841ce4d7b6eb648f2f9888e41c4151dd8b9c080e9012655d7d9a4efb07"
+      },
+      "bench/bench_ab.h": {
+        "bytes": 2058,
+        "sha256": "87318fff44bf4f67a19da28c863b515ada26bccab53534121e610332566cb685"
+      },
+      "bench/bench_consumers.inc": {
+        "bytes": 882,
+        "sha256": "807dd1bebe58ecaaee1d04ec9662c3f16f43284985cade858730d198aadf6376"
+      },
+      "bench/bench_kernels.S": {
+        "bytes": 2924,
+        "sha256": "845598b9ab4e932dd6f7c0ed865658c65a3bc7c4fbc9809316c588678361b481"
+      },
+      "data/joe_kuo_d1280.bin": {
+        "bytes": 168960,
+        "sha256": "f61aaf7fe3defc80843d712985fadbd848fbe01aa626916e9ff9ae8f700c938e"
+      },
+      "data/new-joe-kuo-6.21201.d2-d1280.txt": {
+        "bytes": 81618,
+        "sha256": "c1d098e97996159b83949bd90b057af18901038d7f52375941ce4e3b39613265"
+      },
+      "include/cpp_directions.h": {
+        "bytes": 334,
+        "sha256": "514360fcbf2d5b401f710705499ddbd36e0506f1fee0198c35cbd22bdf1f7af0"
+      },
+      "include/cpp_provider.h": {
+        "bytes": 3616,
+        "sha256": "2e02bf8dbe1a3f69e135d26017f6366c64c5cd5b70fba3a9f38210e91f9975e6"
+      },
+      "results/audit.json": {
+        "bytes": 41723,
+        "sha256": "6277595d6ad7aaa2c6e9ce16d27db167590b14e64c87059e2b5bce438fc68965"
+      },
+      "results/audit_disassembly.txt": {
+        "bytes": 22593,
+        "sha256": "ab9fac151ac9bc97103882ec94eb4eb2caf10e83d20aee6d9922cdf8e6993e14"
+      },
+      "results/bench_native/status.json": {
+        "bytes": 106,
+        "sha256": "9377435814a5435c9038ff0a3f1c0a64a4f04ab23f72ccd3c8adcc96e9fa0fa9"
+      },
+      "results/bench_verify/verify.json": {
+        "bytes": 761,
+        "sha256": "528f14fa8db7059f251d16b4203944dc39cbd1ac7954f156d19c43d2c2ef120b"
+      },
+      "results/correctness_core.json": {
+        "bytes": 3001,
+        "sha256": "b388599d1b2c0c27e0b0ec596a336b96899a3cf27b1ecef2e041a8debec1684f"
+      },
+      "results/correctness_extended.json": {
+        "bytes": 5891,
+        "sha256": "01cd36d3df3d5e6021897e0206bf779ac1ff86191c394dc472f54b7721ada5d8"
+      },
+      "results/negative_controls.json": {
+        "bytes": 2628,
+        "sha256": "6cfd4a8d6bde17ec5418be7cf61fc09bdc20dca685d3fb497efaf18c0de15c44"
+      },
+      "results/records_d1280.bin": {
+        "bytes": 245760,
+        "sha256": "5aa96e59411a2163a0c2053020c5633cca30505fa6f3fd37fccec7e2fd32894f"
+      },
+      "src/cpp_directions.c": {
+        "bytes": 550,
+        "sha256": "e8776bd17781fed82756ac727e251facbb99ef05e178332f387205c2bd747371"
+      },
+      "src/cpp_provider_prepare.c": {
+        "bytes": 3992,
+        "sha256": "7603ef66941ab730abf003b85c8460d7c26771594918f859481e067296615589"
+      },
+      "tests/oracle_scalar.c": {
+        "bytes": 1732,
+        "sha256": "e5e700024f9d5decc985c9958a6d88e75997415a3eb0798c9faef932bbd12b26"
+      },
+      "tests/oracle_scalar.h": {
+        "bytes": 1252,
+        "sha256": "ab42ffb01e9c8a9006f4f939da72c2f53bc6126a48f3d574e76076e2685eb38c"
+      },
+      "tests/sha256.c": {
+        "bytes": 3373,
+        "sha256": "2afee7e2917c29ce815c178a93174620266305367ce401ad928aae4cad78eda1"
+      },
+      "tests/sha256.h": {
+        "bytes": 345,
+        "sha256": "5d21bc6fe44ddf83e8ce7882a7e929bef3b0426d5841878b4faf26bf5c5fd219"
+      },
+      "tests/test_correctness.c": {
+        "bytes": 34852,
+        "sha256": "f71d4c7886a59d610f251e699f77af17c4bb829d0af1ccc35d1d928b21cc90b5"
+      },
+      "tests/test_wrappers.S": {
+        "bytes": 7041,
+        "sha256": "3afa42fc99c996f2d17a5e378644aaf1a4e7436dabc367e0238836a89239596a"
+      },
+      "tools/collect_results.py": {
+        "bytes": 7488,
+        "sha256": "fb5c8c1dba6d67aba81ca329a29657255e900867ba00eaab1b35c233a1c1aabf"
+      },
+      "tools/gen_directions.py": {
+        "bytes": 3153,
+        "sha256": "dcf238e22064fdd083099a9f9c07dbb3bb23f20b03f6fa0b2333a51dac256eb7"
+      },
+      "tools/run_extended.py": {
+        "bytes": 4212,
+        "sha256": "00abb76b824a15467a55e39a165723c36c1c59a399aa59affb62a9c7901a52d0"
+      },
+      "tools/run_negative_controls.py": {
+        "bytes": 2178,
+        "sha256": "e797881539d21fd63100207a780703042bd30d380ba30dec00d65b379b455f3a"
+      }
+    },
+    "frozen_affine_baseline_vs_upstream_SHA256SUMS": {
+      "CONTRACT.md": {
+        "upstream_sha256": "ceba8e87ebc5995b722f409418b1f41f1f26542e9e12ba900657f2a532ebe946",
+        "frozen_copy_sha256": "ceba8e87ebc5995b722f409418b1f41f1f26542e9e12ba900657f2a532ebe946",
+        "identical": true
+      },
+      "dim_provider.h": {
+        "upstream_sha256": "d1647ec129b7221b264b645cbbfd26205285c6f49c2aa6e61e4473f90492fd7c",
+        "frozen_copy_sha256": "d1647ec129b7221b264b645cbbfd26205285c6f49c2aa6e61e4473f90492fd7c",
+        "identical": true
+      },
+      "dim_provider_prepare.c": {
+        "upstream_sha256": "e9752e7b0fd201c8b13ee1d70c2a1a86af361fe1231ddc3d2d85e471692c939f",
+        "frozen_copy_sha256": "e9752e7b0fd201c8b13ee1d70c2a1a86af361fe1231ddc3d2d85e471692c939f",
+        "identical": true
+      },
+      "dim_provider_fragments.inc": {
+        "upstream_sha256": "1b1c8cbc4214c8bd2ecd42f396507745a520d69eb24ca5bc0e20433fcc487827",
+        "frozen_copy_sha256": "1b1c8cbc4214c8bd2ecd42f396507745a520d69eb24ca5bc0e20433fcc487827",
+        "identical": true
+      }
+    },
+    "frozen_affine_baseline_provenance": {
+      "upstream": "asian-option-engine/dim_provider_handoff (untracked directory in the engine checkout at the base commit; not in any commit)",
+      "upstream_SHA256SUMS_sha256": "0e7bd5ce6261445d3163f4f8b93caaea70657e3d2c6291dbc71bec366a257bfb",
+      "copied": [
+        "CONTRACT.md",
+        "dim_provider.h",
+        "dim_provider_fragments.inc",
+        "dim_provider_prepare.c"
+      ]
+    },
+    "base_commit_direction_numbers/joe_kuo_6_21201.bin": "fa6418f236d4667b5deb5b62e6d5fcd6385c64dd60ef2cd1f06fed0e8ea74199",
+    "records_d1280.bin": "5aa96e59411a2163a0c2053020c5633cca30505fa6f3fd37fccec7e2fd32894f"
+  }
+}

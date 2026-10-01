@@ -1,0 +1,89 @@
+{
+  "all_faults_detected": true,
+  "faults": [
+    {
+      "fault": "record_daddr",
+      "description": "D2 daddr[3] ^= 64 (packet address step, t = 3)",
+      "exit_code": 1,
+      "detected": true,
+      "nonzero_failure_counters": {
+        "mismatch_computed_vs_oracle": 32768,
+        "alternate_register_mismatch": 65536,
+        "record_model_mismatch": 32768
+      }
+    },
+    {
+      "fault": "record_dlane",
+      "description": "D3 dlane[0] ^= 1 (packet lane step, t = 0)",
+      "exit_code": 1,
+      "detected": true,
+      "nonzero_failure_counters": {
+        "mismatch_computed_vs_oracle": 32768,
+        "alternate_register_mismatch": 65536,
+        "record_model_mismatch": 32768
+      }
+    },
+    {
+      "fault": "record_half",
+      "description": "D5 half ^= 2 (second-half lane XOR)",
+      "exit_code": 1,
+      "detected": true,
+      "nonzero_failure_counters": {
+        "mismatch_computed_vs_oracle": 32768,
+        "first_packet_mismatch": 256,
+        "last_packet_mismatch": 256,
+        "alternate_register_mismatch": 65536,
+        "record_model_mismatch": 32768
+      }
+    },
+    {
+      "fault": "record_ctl",
+      "description": "D8 ctl[9] ^= 4 (base lane control)",
+      "exit_code": 1,
+      "detected": true,
+      "nonzero_failure_counters": {
+        "mismatch_computed_vs_oracle": 4096,
+        "first_packet_mismatch": 32,
+        "last_packet_mismatch": 32,
+        "alternate_register_mismatch": 8192,
+        "record_model_mismatch": 4096
+      }
+    },
+    {
+      "fault": "record_cstep",
+      "description": "D11 cstep[0] ^= 0xF (block step, odd blocks)",
+      "exit_code": 1,
+      "detected": true,
+      "nonzero_failure_counters": {
+        "mismatch_computed_vs_oracle": 32768,
+        "first_packet_mismatch": 256,
+        "last_packet_mismatch": 256,
+        "block_state_failures": 8,
+        "alternate_register_mismatch": 65536,
+        "record_model_mismatch": 32768
+      }
+    },
+    {
+      "fault": "donor_block",
+      "description": "harness hands donor block B ^ 1 instead of B",
+      "exit_code": 1,
+      "detected": true,
+      "nonzero_failure_counters": {
+        "donor_selection_failures": 16777216
+      }
+    },
+    {
+      "fault": "skip_advance",
+      "description": "harness skips CPP_BLOCK_ADVANCE at block boundaries",
+      "exit_code": 1,
+      "detected": true,
+      "nonzero_failure_counters": {
+        "mismatch_computed_vs_oracle": 15667200,
+        "first_packet_mismatch": 122400,
+        "last_packet_mismatch": 122400,
+        "block_state_failures": 3825,
+        "alternate_register_mismatch": 29253090
+      }
+    }
+  ]
+}

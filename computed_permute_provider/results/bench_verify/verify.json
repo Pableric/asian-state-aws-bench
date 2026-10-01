@@ -1,0 +1,11 @@
+{
+  "timed": false,
+  "host_check": "/proc/cpuinfo of the host lacks avx512f (emulator suspected)",
+  "checks": [
+    {"scope": "d256_b16", "dimensions": 256, "blocks": 16, "consumer": "sink", "a_equals_b_bitwise": true, "sink_word0": "0x00000c00", "q_path0": 0},
+    {"scope": "d256_b16", "dimensions": 256, "blocks": 16, "consumer": "fused", "a_equals_b_bitwise": true, "sink_word0": "0x00000000", "q_path0": 3680.0813},
+    {"scope": "d1280_b256", "dimensions": 1280, "blocks": 256, "consumer": "sink", "a_equals_b_bitwise": true, "sink_word0": "0x00ffe000", "q_path0": 0},
+    {"scope": "d1280_b256", "dimensions": 1280, "blocks": 256, "consumer": "fused", "a_equals_b_bitwise": true, "sink_word0": "0x00000000", "q_path0": 167310.75}
+  ],
+  "pass": true
+}

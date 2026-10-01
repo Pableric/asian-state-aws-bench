@@ -1,0 +1,1 @@
+{"timed": false, "reason": "cpuid reports no avx512f", "host_cpu": "AMD Ryzen 5 2600 Six-Core Processor"}

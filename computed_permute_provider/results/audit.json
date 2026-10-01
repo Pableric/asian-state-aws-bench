@@ -1,0 +1,1659 @@
+{
+  "pass": true,
+  "source": "objdump -d -w of assembled objects",
+  "toolchain": {
+    "gcc": "gcc (GCC) 16.2.1 20260810",
+    "as": "GNU assembler (GNU Binutils) 2.47",
+    "objdump": "GNU objdump (GNU Binutils) 2.47"
+  },
+  "objects": {
+    "boundaries": "build/audit_instantiate.o",
+    "bench": "build/bench_kernels.o"
+  },
+  "gates": [
+    {
+      "check": "audit_a_packet instructions == 11",
+      "pass": true,
+      "observed": 11
+    },
+    {
+      "check": "audit_a_dim_preload instructions == 2",
+      "pass": true,
+      "observed": 2
+    },
+    {
+      "check": "audit_b_packet_next instructions == 7",
+      "pass": true,
+      "observed": 7
+    },
+    {
+      "check": "audit_b_packet_first instructions == 3",
+      "pass": true,
+      "observed": 3
+    },
+    {
+      "check": "audit_b_dim_preload instructions == 2",
+      "pass": true,
+      "observed": 2
+    },
+    {
+      "check": "audit_b_block_advance instructions == 2",
+      "pass": true,
+      "observed": 2
+    },
+    {
+      "check": "audit_b_block_enter instructions == 6",
+      "pass": true,
+      "observed": 6
+    },
+    {
+      "check": "audit_a_dim_preload has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+      "pass": true,
+      "observed": {}
+    },
+    {
+      "check": "audit_a_packet has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+      "pass": true,
+      "observed": {}
+    },
+    {
+      "check": "audit_b_dim_preload has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+      "pass": true,
+      "observed": {}
+    },
+    {
+      "check": "audit_b_block_advance has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+      "pass": true,
+      "observed": {}
+    },
+    {
+      "check": "audit_b_block_enter has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+      "pass": true,
+      "observed": {}
+    },
+    {
+      "check": "audit_b_packet_first has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+      "pass": true,
+      "observed": {}
+    },
+    {
+      "check": "audit_b_packet_next has no calls/branches/gathers/stack/stores/spills/mask registers/vzeroupper",
+      "pass": true,
+      "observed": {}
+    },
+    {
+      "check": "audit_b_dim_preload writes flags == False",
+      "pass": true,
+      "observed": 0
+    },
+    {
+      "check": "audit_b_block_advance writes flags == True",
+      "pass": true,
+      "observed": 2
+    },
+    {
+      "check": "audit_b_block_enter writes flags == True",
+      "pass": true,
+      "observed": 2
+    },
+    {
+      "check": "audit_b_packet_first writes flags == False",
+      "pass": true,
+      "observed": 0
+    },
+    {
+      "check": "audit_b_packet_next writes flags == True",
+      "pass": true,
+      "observed": 3
+    }
+  ],
+  "boundaries": {
+    "audit_a_dim_preload": {
+      "symbol": "audit_a_dim_preload",
+      "instructions": 2,
+      "vector_instructions": 2,
+      "scalar_instructions": 0,
+      "mnemonics": {
+        "vmovdqa32": 2
+      },
+      "memory_operands": 2,
+      "loads": 2,
+      "load_bytes": 128,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [
+        {
+          "insn": "vmovdqa32 0x140(%r15),%zmm16",
+          "operand": "0x140(%r15)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovdqa32 0x180(%r15),%zmm17",
+          "operand": "0x180(%r15)",
+          "bytes": 64
+        }
+      ],
+      "zmm_registers": [
+        "zmm16",
+        "zmm17"
+      ],
+      "gpr_registers": [
+        "r15"
+      ],
+      "zmm_written": [
+        "zmm16",
+        "zmm17"
+      ],
+      "gpr_written": [],
+      "code_bytes": 14,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 0,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 1,
+      "dependency_chain": [
+        "vmovdqa32 0x140(%r15),%zmm16"
+      ],
+      "listing": [
+        "0x0000: vmovdqa32 0x140(%r15),%zmm16",
+        "0x0007: vmovdqa32 0x180(%r15),%zmm17"
+      ]
+    },
+    "audit_a_packet": {
+      "symbol": "audit_a_packet",
+      "instructions": 11,
+      "vector_instructions": 7,
+      "scalar_instructions": 4,
+      "mnemonics": {
+        "movzbl": 2,
+        "shl": 1,
+        "vmovdqa32": 2,
+        "vpbroadcastd": 1,
+        "vpermd": 2,
+        "vpxord": 2,
+        "xor": 1
+      },
+      "memory_operands": 4,
+      "loads": 4,
+      "load_bytes": 130,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [
+        {
+          "insn": "movzbl (%r15,%rsi,2),%r8d",
+          "operand": "(%r15,%rsi,2)",
+          "bytes": 1
+        },
+        {
+          "insn": "movzbl 0x1(%r15,%rsi,2),%r9d",
+          "operand": "0x1(%r15,%rsi,2)",
+          "bytes": 1
+        },
+        {
+          "insn": "vmovdqa32 (%r14,%r8,1),%zmm2",
+          "operand": "(%r14,%r8,1)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovdqa32 (%r14,%r8,1),%zmm3",
+          "operand": "(%r14,%r8,1)",
+          "bytes": 64
+        }
+      ],
+      "zmm_registers": [
+        "zmm0",
+        "zmm1",
+        "zmm2",
+        "zmm3",
+        "zmm16",
+        "zmm17"
+      ],
+      "gpr_registers": [
+        "r14",
+        "r15",
+        "r8",
+        "r9",
+        "rsi"
+      ],
+      "zmm_written": [
+        "zmm0",
+        "zmm1",
+        "zmm2",
+        "zmm3"
+      ],
+      "gpr_written": [
+        "r8",
+        "r9"
+      ],
+      "code_bytes": 63,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 2,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 5,
+      "dependency_chain": [
+        "movzbl (%r15,%rsi,2),%r8d",
+        "shl    $0x6,%r8d",
+        "xor    $0x40,%r8d",
+        "vmovdqa32 (%r14,%r8,1),%zmm3",
+        "vpermd %zmm3,%zmm1,%zmm1"
+      ],
+      "listing": [
+        "0x0080: movzbl (%r15,%rsi,2),%r8d",
+        "0x0085: movzbl 0x1(%r15,%rsi,2),%r9d",
+        "0x008b: shl    $0x6,%r8d",
+        "0x008f: vmovdqa32 (%r14,%r8,1),%zmm2",
+        "0x0096: xor    $0x40,%r8d",
+        "0x009a: vmovdqa32 (%r14,%r8,1),%zmm3",
+        "0x00a1: vpbroadcastd %r9d,%zmm0",
+        "0x00a7: vpxord %zmm16,%zmm0,%zmm0",
+        "0x00ad: vpxord %zmm17,%zmm0,%zmm1",
+        "0x00b3: vpermd %zmm2,%zmm0,%zmm0",
+        "0x00b9: vpermd %zmm3,%zmm1,%zmm1"
+      ]
+    },
+    "audit_b_dim_preload": {
+      "symbol": "audit_b_dim_preload",
+      "instructions": 2,
+      "vector_instructions": 2,
+      "scalar_instructions": 0,
+      "mnemonics": {
+        "vpbroadcastd": 1,
+        "vpmovzxbd": 1
+      },
+      "memory_operands": 2,
+      "loads": 2,
+      "load_bytes": 20,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [
+        {
+          "insn": "vpmovzxbd (%r15),%zmm16",
+          "operand": "(%r15)",
+          "bytes": 16
+        },
+        {
+          "insn": "vpbroadcastd 0x10(%r15),%zmm17",
+          "operand": "0x10(%r15)",
+          "bytes": 4
+        }
+      ],
+      "zmm_registers": [
+        "zmm16",
+        "zmm17"
+      ],
+      "gpr_registers": [
+        "r15"
+      ],
+      "zmm_written": [
+        "zmm16",
+        "zmm17"
+      ],
+      "gpr_written": [],
+      "code_bytes": 13,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 0,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 1,
+      "dependency_chain": [
+        "vpmovzxbd (%r15),%zmm16"
+      ],
+      "listing": [
+        "0x00c0: vpmovzxbd (%r15),%zmm16",
+        "0x00c6: vpbroadcastd 0x10(%r15),%zmm17"
+      ]
+    },
+    "audit_b_block_advance": {
+      "symbol": "audit_b_block_advance",
+      "instructions": 2,
+      "vector_instructions": 0,
+      "scalar_instructions": 2,
+      "mnemonics": {
+        "tzcnt": 1,
+        "xor": 1
+      },
+      "memory_operands": 1,
+      "loads": 1,
+      "load_bytes": 4,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [
+        {
+          "insn": "xor    0x60(%r15,%r9,4),%r10d",
+          "operand": "0x60(%r15,%r9,4)",
+          "bytes": 4
+        }
+      ],
+      "zmm_registers": [],
+      "gpr_registers": [
+        "r10",
+        "r15",
+        "r8",
+        "r9"
+      ],
+      "zmm_written": [],
+      "gpr_written": [
+        "r10",
+        "r9"
+      ],
+      "code_bytes": 10,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 2,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 2,
+      "dependency_chain": [
+        "tzcnt  %r8d,%r9d",
+        "xor    0x60(%r15,%r9,4),%r10d"
+      ],
+      "listing": [
+        "0x0100: tzcnt  %r8d,%r9d",
+        "0x0105: xor    0x60(%r15,%r9,4),%r10d"
+      ]
+    },
+    "audit_b_block_enter": {
+      "symbol": "audit_b_block_enter",
+      "instructions": 6,
+      "vector_instructions": 2,
+      "scalar_instructions": 4,
+      "mnemonics": {
+        "mov": 2,
+        "shr": 1,
+        "vpbroadcastd": 1,
+        "vpxord": 1,
+        "xor": 1
+      },
+      "memory_operands": 0,
+      "loads": 0,
+      "load_bytes": 0,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [],
+      "zmm_registers": [
+        "zmm16",
+        "zmm18"
+      ],
+      "gpr_registers": [
+        "r10",
+        "r11",
+        "r9"
+      ],
+      "zmm_written": [
+        "zmm18"
+      ],
+      "gpr_written": [
+        "r11",
+        "r9"
+      ],
+      "code_bytes": 26,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 2,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 4,
+      "dependency_chain": [
+        "mov    %r10d,%r9d",
+        "shr    $0x10,%r9d",
+        "mov    %r9d,%r11d",
+        "xor    $0x40,%r11d"
+      ],
+      "listing": [
+        "0x0140: mov    %r10d,%r9d",
+        "0x0143: shr    $0x10,%r9d",
+        "0x0147: mov    %r9d,%r11d",
+        "0x014a: xor    $0x40,%r11d",
+        "0x014e: vpbroadcastd %r10d,%zmm18",
+        "0x0154: vpxord %zmm16,%zmm18,%zmm18"
+      ]
+    },
+    "audit_b_packet_first": {
+      "symbol": "audit_b_packet_first",
+      "instructions": 3,
+      "vector_instructions": 3,
+      "scalar_instructions": 0,
+      "mnemonics": {
+        "vpermd": 2,
+        "vpxord": 1
+      },
+      "memory_operands": 2,
+      "loads": 2,
+      "load_bytes": 128,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [
+        {
+          "insn": "vpermd (%r14,%r9,1),%zmm18,%zmm0",
+          "operand": "(%r14,%r9,1)",
+          "bytes": 64
+        },
+        {
+          "insn": "vpermd (%r14,%r11,1),%zmm1,%zmm1",
+          "operand": "(%r14,%r11,1)",
+          "bytes": 64
+        }
+      ],
+      "zmm_registers": [
+        "zmm0",
+        "zmm1",
+        "zmm17",
+        "zmm18"
+      ],
+      "gpr_registers": [
+        "r11",
+        "r14",
+        "r9"
+      ],
+      "zmm_written": [
+        "zmm0",
+        "zmm1"
+      ],
+      "gpr_written": [],
+      "code_bytes": 20,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 0,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 2,
+      "dependency_chain": [
+        "vpxord %zmm17,%zmm18,%zmm1",
+        "vpermd (%r14,%r11,1),%zmm1,%zmm1"
+      ],
+      "listing": [
+        "0x0180: vpxord %zmm17,%zmm18,%zmm1",
+        "0x0186: vpermd (%r14,%r9,1),%zmm18,%zmm0",
+        "0x018d: vpermd (%r14,%r11,1),%zmm1,%zmm1"
+      ]
+    },
+    "audit_b_packet_next": {
+      "symbol": "audit_b_packet_next",
+      "instructions": 7,
+      "vector_instructions": 4,
+      "scalar_instructions": 3,
+      "mnemonics": {
+        "tzcnt": 1,
+        "vpermd": 2,
+        "vpxord": 2,
+        "xor": 2
+      },
+      "memory_operands": 5,
+      "loads": 5,
+      "load_bytes": 140,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [
+        {
+          "insn": "xor    0x20(%r15,%r10,4),%r9d",
+          "operand": "0x20(%r15,%r10,4)",
+          "bytes": 4
+        },
+        {
+          "insn": "xor    0x20(%r15,%r10,4),%r11d",
+          "operand": "0x20(%r15,%r10,4)",
+          "bytes": 4
+        },
+        {
+          "insn": "vpxord 0x40(%r15,%r10,4){1to16},%zmm18,%zmm18",
+          "operand": "0x40(%r15,%r10,4){1to16}",
+          "bytes": 4
+        },
+        {
+          "insn": "vpermd (%r14,%r9,1),%zmm18,%zmm0",
+          "operand": "(%r14,%r9,1)",
+          "bytes": 64
+        },
+        {
+          "insn": "vpermd (%r14,%r11,1),%zmm1,%zmm1",
+          "operand": "(%r14,%r11,1)",
+          "bytes": 64
+        }
+      ],
+      "zmm_registers": [
+        "zmm0",
+        "zmm1",
+        "zmm17",
+        "zmm18"
+      ],
+      "gpr_registers": [
+        "r10",
+        "r11",
+        "r14",
+        "r15",
+        "r8",
+        "r9"
+      ],
+      "zmm_written": [
+        "zmm0",
+        "zmm1",
+        "zmm18"
+      ],
+      "gpr_written": [
+        "r10",
+        "r11",
+        "r9"
+      ],
+      "code_bytes": 43,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 3,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 4,
+      "dependency_chain": [
+        "tzcnt  %r8d,%r10d",
+        "vpxord 0x40(%r15,%r10,4){1to16},%zmm18,%zmm18",
+        "vpxord %zmm17,%zmm18,%zmm1",
+        "vpermd (%r14,%r11,1),%zmm1,%zmm1"
+      ],
+      "listing": [
+        "0x01c0: tzcnt  %r8d,%r10d",
+        "0x01c5: xor    0x20(%r15,%r10,4),%r9d",
+        "0x01ca: xor    0x20(%r15,%r10,4),%r11d",
+        "0x01cf: vpxord 0x40(%r15,%r10,4){1to16},%zmm18,%zmm18",
+        "0x01d7: vpxord %zmm17,%zmm18,%zmm1",
+        "0x01dd: vpermd (%r14,%r9,1),%zmm18,%zmm0",
+        "0x01e4: vpermd (%r14,%r11,1),%zmm1,%zmm1"
+      ]
+    },
+    "audit_a_context_select": {
+      "symbol": "audit_a_context_select",
+      "instructions": 5,
+      "vector_instructions": 0,
+      "scalar_instructions": 5,
+      "mnemonics": {
+        "add": 2,
+        "imul": 2,
+        "mov": 1
+      },
+      "memory_operands": 2,
+      "loads": 2,
+      "load_bytes": 16,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [
+        {
+          "insn": "imul   0x40(%rbx),%r15",
+          "operand": "0x40(%rbx)",
+          "bytes": 8
+        },
+        {
+          "insn": "add    0x8(%rbx),%r15",
+          "operand": "0x8(%rbx)",
+          "bytes": 8
+        }
+      ],
+      "zmm_registers": [],
+      "gpr_registers": [
+        "r12",
+        "r13",
+        "r15",
+        "rbx"
+      ],
+      "zmm_written": [],
+      "gpr_written": [
+        "r15"
+      ],
+      "code_bytes": 22,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 4,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 5,
+      "dependency_chain": [
+        "mov    %r12,%r15",
+        "imul   0x40(%rbx),%r15",
+        "add    %r13,%r15",
+        "imul   $0x1c0,%r15,%r15",
+        "add    0x8(%rbx),%r15"
+      ],
+      "listing": [
+        "0x0040: mov    %r12,%r15",
+        "0x0043: imul   0x40(%rbx),%r15",
+        "0x0048: add    %r13,%r15",
+        "0x004b: imul   $0x1c0,%r15,%r15",
+        "0x0052: add    0x8(%rbx),%r15"
+      ]
+    },
+    "audit_b_record_select": {
+      "symbol": "audit_b_record_select",
+      "instructions": 2,
+      "vector_instructions": 0,
+      "scalar_instructions": 2,
+      "mnemonics": {
+        "add": 1,
+        "imul": 1
+      },
+      "memory_operands": 1,
+      "loads": 1,
+      "load_bytes": 8,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [
+        {
+          "insn": "add    0x10(%rbx),%r15",
+          "operand": "0x10(%rbx)",
+          "bytes": 8
+        }
+      ],
+      "zmm_registers": [],
+      "gpr_registers": [
+        "r13",
+        "r15",
+        "rbx"
+      ],
+      "zmm_written": [],
+      "gpr_written": [
+        "r15"
+      ],
+      "code_bytes": 11,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 2,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 2,
+      "dependency_chain": [
+        "imul   $0xc0,%r13,%r15",
+        "add    0x10(%rbx),%r15"
+      ],
+      "listing": [
+        "0x0200: imul   $0xc0,%r13,%r15",
+        "0x0207: add    0x10(%rbx),%r15"
+      ]
+    },
+    "audit_consumer_sink": {
+      "symbol": "audit_consumer_sink",
+      "instructions": 2,
+      "vector_instructions": 2,
+      "scalar_instructions": 0,
+      "mnemonics": {
+        "vpxord": 2
+      },
+      "memory_operands": 0,
+      "loads": 0,
+      "load_bytes": 0,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [],
+      "zmm_registers": [
+        "zmm0",
+        "zmm1",
+        "zmm20",
+        "zmm21"
+      ],
+      "gpr_registers": [],
+      "zmm_written": [
+        "zmm20",
+        "zmm21"
+      ],
+      "gpr_written": [],
+      "code_bytes": 12,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 0,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 1,
+      "dependency_chain": [
+        "vpxord %zmm0,%zmm20,%zmm20"
+      ],
+      "listing": [
+        "0x0240: vpxord %zmm0,%zmm20,%zmm20",
+        "0x0246: vpxord %zmm1,%zmm21,%zmm21"
+      ]
+    },
+    "audit_consumer_fused": {
+      "symbol": "audit_consumer_fused",
+      "instructions": 13,
+      "vector_instructions": 12,
+      "scalar_instructions": 1,
+      "mnemonics": {
+        "add": 1,
+        "vaddps": 2,
+        "vfmadd213ps": 2,
+        "vmovaps": 6,
+        "vmulps": 2
+      },
+      "memory_operands": 12,
+      "loads": 6,
+      "load_bytes": 384,
+      "stores": 6,
+      "store_bytes": 384,
+      "memory_detail": [
+        {
+          "insn": "vmulps (%rdx),%zmm0,%zmm4",
+          "operand": "(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vaddps 0x4000(%rdx),%zmm4,%zmm5",
+          "operand": "0x4000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vfmadd213ps 0x8000(%rdx),%zmm22,%zmm0",
+          "operand": "0x8000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmulps 0x40(%rdx),%zmm1,%zmm6",
+          "operand": "0x40(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vaddps 0x4040(%rdx),%zmm6,%zmm7",
+          "operand": "0x4040(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vfmadd213ps 0x8040(%rdx),%zmm22,%zmm1",
+          "operand": "0x8040(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm4,(%rdx)",
+          "operand": "(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm5,0x4000(%rdx)",
+          "operand": "0x4000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm0,0x8000(%rdx)",
+          "operand": "0x8000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm6,0x40(%rdx)",
+          "operand": "0x40(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm7,0x4040(%rdx)",
+          "operand": "0x4040(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm1,0x8040(%rdx)",
+          "operand": "0x8040(%rdx)",
+          "bytes": 64
+        }
+      ],
+      "zmm_registers": [
+        "zmm0",
+        "zmm1",
+        "zmm4",
+        "zmm5",
+        "zmm6",
+        "zmm7",
+        "zmm22"
+      ],
+      "gpr_registers": [
+        "rdx"
+      ],
+      "zmm_written": [
+        "zmm0",
+        "zmm1",
+        "zmm4",
+        "zmm5",
+        "zmm6",
+        "zmm7"
+      ],
+      "gpr_written": [
+        "rdx"
+      ],
+      "code_bytes": 113,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 1,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 3,
+      "dependency_chain": [
+        "vmulps (%rdx),%zmm0,%zmm4",
+        "vaddps 0x4000(%rdx),%zmm4,%zmm5",
+        "vmovaps %zmm5,0x4000(%rdx)"
+      ],
+      "listing": [
+        "0x0280: vmulps (%rdx),%zmm0,%zmm4",
+        "0x0286: vmovaps %zmm4,(%rdx)",
+        "0x028c: vaddps 0x4000(%rdx),%zmm4,%zmm5",
+        "0x0296: vmovaps %zmm5,0x4000(%rdx)",
+        "0x02a0: vfmadd213ps 0x8000(%rdx),%zmm22,%zmm0",
+        "0x02aa: vmovaps %zmm0,0x8000(%rdx)",
+        "0x02b4: vmulps 0x40(%rdx),%zmm1,%zmm6",
+        "0x02bb: vmovaps %zmm6,0x40(%rdx)",
+        "0x02c2: vaddps 0x4040(%rdx),%zmm6,%zmm7",
+        "0x02cc: vmovaps %zmm7,0x4040(%rdx)",
+        "0x02d6: vfmadd213ps 0x8040(%rdx),%zmm22,%zmm1",
+        "0x02e0: vmovaps %zmm1,0x8040(%rdx)",
+        "0x02ea: add    $0x80,%rdx"
+      ]
+    }
+  },
+  "loop_bodies": {
+    "bench_a_sink": {
+      "symbol": "bench_a_sink per-packet loop body",
+      "instructions": 16,
+      "vector_instructions": 9,
+      "scalar_instructions": 7,
+      "mnemonics": {
+        "add": 1,
+        "cmp": 1,
+        "jne": 1,
+        "movzbl": 2,
+        "shl": 1,
+        "vmovdqa32": 2,
+        "vpbroadcastd": 1,
+        "vpermd": 2,
+        "vpxord": 4,
+        "xor": 1
+      },
+      "memory_operands": 4,
+      "loads": 4,
+      "load_bytes": 130,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [
+        {
+          "insn": "movzbl (%r15,%rsi,2),%r8d",
+          "operand": "(%r15,%rsi,2)",
+          "bytes": 1
+        },
+        {
+          "insn": "movzbl 0x1(%r15,%rsi,2),%r9d",
+          "operand": "0x1(%r15,%rsi,2)",
+          "bytes": 1
+        },
+        {
+          "insn": "vmovdqa32 (%r14,%r8,1),%zmm2",
+          "operand": "(%r14,%r8,1)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovdqa32 (%r14,%r8,1),%zmm3",
+          "operand": "(%r14,%r8,1)",
+          "bytes": 64
+        }
+      ],
+      "zmm_registers": [
+        "zmm0",
+        "zmm1",
+        "zmm2",
+        "zmm3",
+        "zmm16",
+        "zmm17",
+        "zmm20",
+        "zmm21"
+      ],
+      "gpr_registers": [
+        "r14",
+        "r15",
+        "r8",
+        "r9",
+        "rsi"
+      ],
+      "zmm_written": [
+        "zmm0",
+        "zmm1",
+        "zmm2",
+        "zmm3",
+        "zmm20",
+        "zmm21"
+      ],
+      "gpr_written": [
+        "r8",
+        "r9",
+        "rsi"
+      ],
+      "code_bytes": 88,
+      "calls": 0,
+      "branches": 1,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 4,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 6,
+      "dependency_chain": [
+        "movzbl (%r15,%rsi,2),%r8d",
+        "shl    $0x6,%r8d",
+        "xor    $0x40,%r8d",
+        "vmovdqa32 (%r14,%r8,1),%zmm3",
+        "vpermd %zmm3,%zmm1,%zmm1",
+        "vpxord %zmm1,%zmm21,%zmm21"
+      ],
+      "listing": [
+        "0x004f: movzbl (%r15,%rsi,2),%r8d",
+        "0x0054: movzbl 0x1(%r15,%rsi,2),%r9d",
+        "0x005a: shl    $0x6,%r8d",
+        "0x005e: vmovdqa32 (%r14,%r8,1),%zmm2",
+        "0x0065: xor    $0x40,%r8d",
+        "0x0069: vmovdqa32 (%r14,%r8,1),%zmm3",
+        "0x0070: vpbroadcastd %r9d,%zmm0",
+        "0x0076: vpxord %zmm16,%zmm0,%zmm0",
+        "0x007c: vpxord %zmm17,%zmm0,%zmm1",
+        "0x0082: vpermd %zmm2,%zmm0,%zmm0",
+        "0x0088: vpermd %zmm3,%zmm1,%zmm1",
+        "0x008e: vpxord %zmm0,%zmm20,%zmm20",
+        "0x0094: vpxord %zmm1,%zmm21,%zmm21",
+        "0x009a: add    $0x1,%rsi",
+        "0x009e: cmp    $0x80,%rsi",
+        "0x00a5: jne    4f <bench_a_sink_packet_begin>"
+      ],
+      "loop_carried_chain_instructions": {
+        "rsi": 1,
+        "zmm20": 1,
+        "zmm21": 1
+      },
+      "kernel_code_bytes": 226
+    },
+    "bench_b_sink": {
+      "symbol": "bench_b_sink per-packet loop body",
+      "instructions": 12,
+      "vector_instructions": 6,
+      "scalar_instructions": 6,
+      "mnemonics": {
+        "add": 1,
+        "cmp": 1,
+        "jne": 1,
+        "tzcnt": 1,
+        "vpermd": 2,
+        "vpxord": 4,
+        "xor": 2
+      },
+      "memory_operands": 5,
+      "loads": 5,
+      "load_bytes": 140,
+      "stores": 0,
+      "store_bytes": 0,
+      "memory_detail": [
+        {
+          "insn": "xor    0x20(%r15,%r10,4),%r9d",
+          "operand": "0x20(%r15,%r10,4)",
+          "bytes": 4
+        },
+        {
+          "insn": "xor    0x20(%r15,%r10,4),%r11d",
+          "operand": "0x20(%r15,%r10,4)",
+          "bytes": 4
+        },
+        {
+          "insn": "vpxord 0x40(%r15,%r10,4){1to16},%zmm18,%zmm18",
+          "operand": "0x40(%r15,%r10,4){1to16}",
+          "bytes": 4
+        },
+        {
+          "insn": "vpermd (%r14,%r9,1),%zmm18,%zmm0",
+          "operand": "(%r14,%r9,1)",
+          "bytes": 64
+        },
+        {
+          "insn": "vpermd (%r14,%r11,1),%zmm1,%zmm1",
+          "operand": "(%r14,%r11,1)",
+          "bytes": 64
+        }
+      ],
+      "zmm_registers": [
+        "zmm0",
+        "zmm1",
+        "zmm17",
+        "zmm18",
+        "zmm20",
+        "zmm21"
+      ],
+      "gpr_registers": [
+        "r10",
+        "r11",
+        "r14",
+        "r15",
+        "r8",
+        "r9"
+      ],
+      "zmm_written": [
+        "zmm0",
+        "zmm1",
+        "zmm18",
+        "zmm20",
+        "zmm21"
+      ],
+      "gpr_written": [
+        "r10",
+        "r11",
+        "r8",
+        "r9"
+      ],
+      "code_bytes": 68,
+      "calls": 0,
+      "branches": 1,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 5,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 5,
+      "dependency_chain": [
+        "tzcnt  %r8d,%r10d",
+        "vpxord 0x40(%r15,%r10,4){1to16},%zmm18,%zmm18",
+        "vpxord %zmm17,%zmm18,%zmm1",
+        "vpermd (%r14,%r11,1),%zmm1,%zmm1",
+        "vpxord %zmm1,%zmm21,%zmm21"
+      ],
+      "listing": [
+        "0x01a3: tzcnt  %r8d,%r10d",
+        "0x01a8: xor    0x20(%r15,%r10,4),%r9d",
+        "0x01ad: xor    0x20(%r15,%r10,4),%r11d",
+        "0x01b2: vpxord 0x40(%r15,%r10,4){1to16},%zmm18,%zmm18",
+        "0x01ba: vpxord %zmm17,%zmm18,%zmm1",
+        "0x01c0: vpermd (%r14,%r9,1),%zmm18,%zmm0",
+        "0x01c7: vpermd (%r14,%r11,1),%zmm1,%zmm1",
+        "0x01ce: vpxord %zmm0,%zmm20,%zmm20",
+        "0x01d4: vpxord %zmm1,%zmm21,%zmm21",
+        "0x01da: add    $0x1,%r8d",
+        "0x01de: cmp    $0x80,%r8d",
+        "0x01e5: jne    1a3 <bench_b_sink_packet_begin>"
+      ],
+      "loop_carried_chain_instructions": {
+        "r11": 1,
+        "r8": 1,
+        "r9": 1,
+        "zmm18": 1,
+        "zmm20": 1,
+        "zmm21": 1
+      },
+      "kernel_code_bytes": 290
+    },
+    "bench_b_sink_transition": {
+      "symbol": "bench_b_sink block transition",
+      "instructions": 3,
+      "vector_instructions": 0,
+      "scalar_instructions": 3,
+      "mnemonics": {
+        "mov": 1,
+        "tzcnt": 1,
+        "xor": 1
+      },
+      "memory_operands": 2,
+      "loads": 1,
+      "load_bytes": 4,
+      "stores": 1,
+      "store_bytes": 4,
+      "memory_detail": [
+        {
+          "insn": "xor    0x60(%r15,%r9,4),%r10d",
+          "operand": "0x60(%r15,%r9,4)",
+          "bytes": 4
+        },
+        {
+          "insn": "mov    %r10d,(%rax,%r13,4)",
+          "operand": "(%rax,%r13,4)",
+          "bytes": 4
+        }
+      ],
+      "zmm_registers": [],
+      "gpr_registers": [
+        "r10",
+        "r13",
+        "r15",
+        "r8",
+        "r9",
+        "rax"
+      ],
+      "zmm_written": [],
+      "gpr_written": [
+        "r10",
+        "r9"
+      ],
+      "code_bytes": 14,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 2,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 3,
+      "dependency_chain": [
+        "tzcnt  %r8d,%r9d",
+        "xor    0x60(%r15,%r9,4),%r10d",
+        "mov    %r10d,(%rax,%r13,4)"
+      ],
+      "listing": [
+        "0x0148: tzcnt  %r8d,%r9d",
+        "0x014d: xor    0x60(%r15,%r9,4),%r10d",
+        "0x0152: mov    %r10d,(%rax,%r13,4)"
+      ]
+    },
+    "bench_a_fused": {
+      "symbol": "bench_a_fused per-packet loop body",
+      "instructions": 27,
+      "vector_instructions": 19,
+      "scalar_instructions": 8,
+      "mnemonics": {
+        "add": 2,
+        "cmp": 1,
+        "jne": 1,
+        "movzbl": 2,
+        "shl": 1,
+        "vaddps": 2,
+        "vfmadd213ps": 2,
+        "vmovaps": 6,
+        "vmovdqa32": 2,
+        "vmulps": 2,
+        "vpbroadcastd": 1,
+        "vpermd": 2,
+        "vpxord": 2,
+        "xor": 1
+      },
+      "memory_operands": 16,
+      "loads": 10,
+      "load_bytes": 514,
+      "stores": 6,
+      "store_bytes": 384,
+      "memory_detail": [
+        {
+          "insn": "movzbl (%r15,%rsi,2),%r8d",
+          "operand": "(%r15,%rsi,2)",
+          "bytes": 1
+        },
+        {
+          "insn": "movzbl 0x1(%r15,%rsi,2),%r9d",
+          "operand": "0x1(%r15,%rsi,2)",
+          "bytes": 1
+        },
+        {
+          "insn": "vmovdqa32 (%r14,%r8,1),%zmm2",
+          "operand": "(%r14,%r8,1)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovdqa32 (%r14,%r8,1),%zmm3",
+          "operand": "(%r14,%r8,1)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmulps (%rdx),%zmm0,%zmm4",
+          "operand": "(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vaddps 0x4000(%rdx),%zmm4,%zmm5",
+          "operand": "0x4000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vfmadd213ps 0x8000(%rdx),%zmm22,%zmm0",
+          "operand": "0x8000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmulps 0x40(%rdx),%zmm1,%zmm6",
+          "operand": "0x40(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vaddps 0x4040(%rdx),%zmm6,%zmm7",
+          "operand": "0x4040(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vfmadd213ps 0x8040(%rdx),%zmm22,%zmm1",
+          "operand": "0x8040(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm4,(%rdx)",
+          "operand": "(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm5,0x4000(%rdx)",
+          "operand": "0x4000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm0,0x8000(%rdx)",
+          "operand": "0x8000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm6,0x40(%rdx)",
+          "operand": "0x40(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm7,0x4040(%rdx)",
+          "operand": "0x4040(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm1,0x8040(%rdx)",
+          "operand": "0x8040(%rdx)",
+          "bytes": 64
+        }
+      ],
+      "zmm_registers": [
+        "zmm0",
+        "zmm1",
+        "zmm2",
+        "zmm3",
+        "zmm4",
+        "zmm5",
+        "zmm6",
+        "zmm7",
+        "zmm16",
+        "zmm17",
+        "zmm22"
+      ],
+      "gpr_registers": [
+        "r14",
+        "r15",
+        "r8",
+        "r9",
+        "rdx",
+        "rsi"
+      ],
+      "zmm_written": [
+        "zmm0",
+        "zmm1",
+        "zmm2",
+        "zmm3",
+        "zmm4",
+        "zmm5",
+        "zmm6",
+        "zmm7"
+      ],
+      "gpr_written": [
+        "r8",
+        "r9",
+        "rdx",
+        "rsi"
+      ],
+      "code_bytes": 193,
+      "calls": 0,
+      "branches": 1,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 5,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 8,
+      "dependency_chain": [
+        "movzbl (%r15,%rsi,2),%r8d",
+        "shl    $0x6,%r8d",
+        "xor    $0x40,%r8d",
+        "vmovdqa32 (%r14,%r8,1),%zmm3",
+        "vpermd %zmm3,%zmm1,%zmm1",
+        "vmulps 0x40(%rdx),%zmm1,%zmm6",
+        "vaddps 0x4040(%rdx),%zmm6,%zmm7",
+        "vmovaps %zmm7,0x4040(%rdx)"
+      ],
+      "listing": [
+        "0x029e: movzbl (%r15,%rsi,2),%r8d",
+        "0x02a3: movzbl 0x1(%r15,%rsi,2),%r9d",
+        "0x02a9: shl    $0x6,%r8d",
+        "0x02ad: vmovdqa32 (%r14,%r8,1),%zmm2",
+        "0x02b4: xor    $0x40,%r8d",
+        "0x02b8: vmovdqa32 (%r14,%r8,1),%zmm3",
+        "0x02bf: vpbroadcastd %r9d,%zmm0",
+        "0x02c5: vpxord %zmm16,%zmm0,%zmm0",
+        "0x02cb: vpxord %zmm17,%zmm0,%zmm1",
+        "0x02d1: vpermd %zmm2,%zmm0,%zmm0",
+        "0x02d7: vpermd %zmm3,%zmm1,%zmm1",
+        "0x02dd: vmulps (%rdx),%zmm0,%zmm4",
+        "0x02e3: vmovaps %zmm4,(%rdx)",
+        "0x02e9: vaddps 0x4000(%rdx),%zmm4,%zmm5",
+        "0x02f3: vmovaps %zmm5,0x4000(%rdx)",
+        "0x02fd: vfmadd213ps 0x8000(%rdx),%zmm22,%zmm0",
+        "0x0307: vmovaps %zmm0,0x8000(%rdx)",
+        "0x0311: vmulps 0x40(%rdx),%zmm1,%zmm6",
+        "0x0318: vmovaps %zmm6,0x40(%rdx)",
+        "0x031f: vaddps 0x4040(%rdx),%zmm6,%zmm7",
+        "0x0329: vmovaps %zmm7,0x4040(%rdx)",
+        "0x0333: vfmadd213ps 0x8040(%rdx),%zmm22,%zmm1",
+        "0x033d: vmovaps %zmm1,0x8040(%rdx)",
+        "0x0347: add    $0x80,%rdx",
+        "0x034e: add    $0x1,%rsi",
+        "0x0352: cmp    $0x80,%rsi",
+        "0x0359: jne    29e <bench_a_fused_packet_begin>"
+      ],
+      "loop_carried_chain_instructions": {
+        "rdx": 1,
+        "rsi": 1
+      },
+      "kernel_code_bytes": 346
+    },
+    "bench_b_fused": {
+      "symbol": "bench_b_fused per-packet loop body",
+      "instructions": 23,
+      "vector_instructions": 16,
+      "scalar_instructions": 7,
+      "mnemonics": {
+        "add": 2,
+        "cmp": 1,
+        "jne": 1,
+        "tzcnt": 1,
+        "vaddps": 2,
+        "vfmadd213ps": 2,
+        "vmovaps": 6,
+        "vmulps": 2,
+        "vpermd": 2,
+        "vpxord": 2,
+        "xor": 2
+      },
+      "memory_operands": 17,
+      "loads": 11,
+      "load_bytes": 524,
+      "stores": 6,
+      "store_bytes": 384,
+      "memory_detail": [
+        {
+          "insn": "xor    0x20(%r15,%r10,4),%r9d",
+          "operand": "0x20(%r15,%r10,4)",
+          "bytes": 4
+        },
+        {
+          "insn": "xor    0x20(%r15,%r10,4),%r11d",
+          "operand": "0x20(%r15,%r10,4)",
+          "bytes": 4
+        },
+        {
+          "insn": "vpxord 0x40(%r15,%r10,4){1to16},%zmm18,%zmm18",
+          "operand": "0x40(%r15,%r10,4){1to16}",
+          "bytes": 4
+        },
+        {
+          "insn": "vpermd (%r14,%r9,1),%zmm18,%zmm0",
+          "operand": "(%r14,%r9,1)",
+          "bytes": 64
+        },
+        {
+          "insn": "vpermd (%r14,%r11,1),%zmm1,%zmm1",
+          "operand": "(%r14,%r11,1)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmulps (%rdx),%zmm0,%zmm4",
+          "operand": "(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vaddps 0x4000(%rdx),%zmm4,%zmm5",
+          "operand": "0x4000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vfmadd213ps 0x8000(%rdx),%zmm22,%zmm0",
+          "operand": "0x8000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmulps 0x40(%rdx),%zmm1,%zmm6",
+          "operand": "0x40(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vaddps 0x4040(%rdx),%zmm6,%zmm7",
+          "operand": "0x4040(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vfmadd213ps 0x8040(%rdx),%zmm22,%zmm1",
+          "operand": "0x8040(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm4,(%rdx)",
+          "operand": "(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm5,0x4000(%rdx)",
+          "operand": "0x4000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm0,0x8000(%rdx)",
+          "operand": "0x8000(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm6,0x40(%rdx)",
+          "operand": "0x40(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm7,0x4040(%rdx)",
+          "operand": "0x4040(%rdx)",
+          "bytes": 64
+        },
+        {
+          "insn": "vmovaps %zmm1,0x8040(%rdx)",
+          "operand": "0x8040(%rdx)",
+          "bytes": 64
+        }
+      ],
+      "zmm_registers": [
+        "zmm0",
+        "zmm1",
+        "zmm4",
+        "zmm5",
+        "zmm6",
+        "zmm7",
+        "zmm17",
+        "zmm18",
+        "zmm22"
+      ],
+      "gpr_registers": [
+        "r10",
+        "r11",
+        "r14",
+        "r15",
+        "r8",
+        "r9",
+        "rdx"
+      ],
+      "zmm_written": [
+        "zmm0",
+        "zmm1",
+        "zmm4",
+        "zmm5",
+        "zmm6",
+        "zmm7",
+        "zmm18"
+      ],
+      "gpr_written": [
+        "r10",
+        "r11",
+        "r8",
+        "r9",
+        "rdx"
+      ],
+      "code_bytes": 173,
+      "calls": 0,
+      "branches": 1,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 6,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 7,
+      "dependency_chain": [
+        "tzcnt  %r8d,%r10d",
+        "vpxord 0x40(%r15,%r10,4){1to16},%zmm18,%zmm18",
+        "vpxord %zmm17,%zmm18,%zmm1",
+        "vpermd (%r14,%r11,1),%zmm1,%zmm1",
+        "vmulps 0x40(%rdx),%zmm1,%zmm6",
+        "vaddps 0x4040(%rdx),%zmm6,%zmm7",
+        "vmovaps %zmm7,0x4040(%rdx)"
+      ],
+      "listing": [
+        "0x04d7: tzcnt  %r8d,%r10d",
+        "0x04dc: xor    0x20(%r15,%r10,4),%r9d",
+        "0x04e1: xor    0x20(%r15,%r10,4),%r11d",
+        "0x04e6: vpxord 0x40(%r15,%r10,4){1to16},%zmm18,%zmm18",
+        "0x04ee: vpxord %zmm17,%zmm18,%zmm1",
+        "0x04f4: vpermd (%r14,%r9,1),%zmm18,%zmm0",
+        "0x04fb: vpermd (%r14,%r11,1),%zmm1,%zmm1",
+        "0x0502: vmulps (%rdx),%zmm0,%zmm4",
+        "0x0508: vmovaps %zmm4,(%rdx)",
+        "0x050e: vaddps 0x4000(%rdx),%zmm4,%zmm5",
+        "0x0518: vmovaps %zmm5,0x4000(%rdx)",
+        "0x0522: vfmadd213ps 0x8000(%rdx),%zmm22,%zmm0",
+        "0x052c: vmovaps %zmm0,0x8000(%rdx)",
+        "0x0536: vmulps 0x40(%rdx),%zmm1,%zmm6",
+        "0x053d: vmovaps %zmm6,0x40(%rdx)",
+        "0x0544: vaddps 0x4040(%rdx),%zmm6,%zmm7",
+        "0x054e: vmovaps %zmm7,0x4040(%rdx)",
+        "0x0558: vfmadd213ps 0x8040(%rdx),%zmm22,%zmm1",
+        "0x0562: vmovaps %zmm1,0x8040(%rdx)",
+        "0x056c: add    $0x80,%rdx",
+        "0x0573: add    $0x1,%r8d",
+        "0x0577: cmp    $0x80,%r8d",
+        "0x057e: jne    4d7 <bench_b_fused_packet_begin>"
+      ],
+      "loop_carried_chain_instructions": {
+        "r11": 1,
+        "r8": 1,
+        "r9": 1,
+        "rdx": 1,
+        "zmm18": 1
+      },
+      "kernel_code_bytes": 511
+    },
+    "bench_b_fused_transition": {
+      "symbol": "bench_b_fused block transition",
+      "instructions": 3,
+      "vector_instructions": 0,
+      "scalar_instructions": 3,
+      "mnemonics": {
+        "mov": 1,
+        "tzcnt": 1,
+        "xor": 1
+      },
+      "memory_operands": 2,
+      "loads": 1,
+      "load_bytes": 4,
+      "stores": 1,
+      "store_bytes": 4,
+      "memory_detail": [
+        {
+          "insn": "xor    0x60(%r15,%r9,4),%r10d",
+          "operand": "0x60(%r15,%r9,4)",
+          "bytes": 4
+        },
+        {
+          "insn": "mov    %r10d,(%rax,%r13,4)",
+          "operand": "(%rax,%r13,4)",
+          "bytes": 4
+        }
+      ],
+      "zmm_registers": [],
+      "gpr_registers": [
+        "r10",
+        "r13",
+        "r15",
+        "r8",
+        "r9",
+        "rax"
+      ],
+      "zmm_written": [],
+      "gpr_written": [
+        "r10",
+        "r9"
+      ],
+      "code_bytes": 14,
+      "calls": 0,
+      "branches": 0,
+      "gathers": 0,
+      "stack_operations": 0,
+      "spills": 0,
+      "mask_register_uses": 0,
+      "flags_writers": 2,
+      "vzeroupper": 0,
+      "dependency_chain_instructions": 3,
+      "dependency_chain": [
+        "tzcnt  %r8d,%r9d",
+        "xor    0x60(%r15,%r9,4),%r10d",
+        "mov    %r10d,(%rax,%r13,4)"
+      ],
+      "listing": [
+        "0x0417: tzcnt  %r8d,%r9d",
+        "0x041c: xor    0x60(%r15,%r9,4),%r10d",
+        "0x0421: mov    %r10d,(%rax,%r13,4)"
+      ]
+    }
+  },
+  "per_unit_accounting": {
+    "A_affine448": {
+      "preload_per_context": 2,
+      "preload_note": "each 448-byte context belongs to one (block, dimension), so the preload runs once per (block, dimension)",
+      "caller_context_select_per_block_x_dimension": 5,
+      "per_block_transition": 0,
+      "per_packet_provider": 11,
+      "provider_instructions_per_block_x_dimension": 1415
+    },
+    "B_computed": {
+      "per_dimension_preload": 2,
+      "preload_note": "the record is block-independent: once per dimension when blocks are the inner loop, once per (block, dimension) when dimensions are the inner loop (the bench order)",
+      "caller_record_select_per_dimension": 2,
+      "per_block_transition": 8,
+      "per_block_transition_detail": {
+        "CPP_BLOCK_ADVANCE": 2,
+        "CPP_BLOCK_ENTER": 6,
+        "caller_state_load_store_when_dimensions_are_inner": 2
+      },
+      "per_packet_provider_first": 3,
+      "per_packet_provider_next": 7,
+      "provider_instructions_per_block_x_dimension": 904
+    },
+    "note": "Instruction counts per (block, dimension) unit of 128 packets, from the boundary symbols. Consumer and loop control are excluded here and are reported in loop_bodies."
+  }
+}
